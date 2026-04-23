@@ -1,0 +1,118 @@
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+import 'package:sqflite/sqflite.dart';
+import '../../app/app_flavor.dart';
+import '../../core/constants/default_categories.dart';
+import '../models/app_settings.dart';
+
+class DatabaseHelper {
+  static DatabaseHelper? _instance;
+  Database? _db;
+
+  DatabaseHelper._();
+
+  static DatabaseHelper get instance {
+    _instance ??= DatabaseHelper._();
+    return _instance!;
+  }
+
+  Future<Database> get database async {
+    _db ??= await _openDatabase();
+    return _db!;
+  }
+
+  Future<Database> _openDatabase() async {
+    final docDir = await getApplicationDocumentsDirectory();
+    final dbPath = p.join(docDir.path, AppFlavor.databaseName);
+    return openDatabase(
+      dbPath,
+      version: 1,
+      onCreate: _onCreate,
+    );
+  }
+
+  Future<void> _onCreate(Database db, int version) async {
+    await db.execute('''
+      CREATE TABLE budgets (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        year INTEGER NOT NULL,
+        month INTEGER NOT NULL,
+        amount REAL NOT NULL,
+        currency_code TEXT NOT NULL,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
+        UNIQUE(year, month)
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE transactions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        uuid TEXT NOT NULL UNIQUE,
+        amount REAL NOT NULL,
+        type TEXT NOT NULL,
+        description TEXT NOT NULL,
+        category_uuid TEXT NOT NULL,
+        transaction_date INTEGER NOT NULL,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE INDEX idx_transactions_date ON transactions(transaction_date)
+    ''');
+
+    await db.execute('''
+      CREATE INDEX idx_transactions_category ON transactions(category_uuid)
+    ''');
+
+    await db.execute('''
+      CREATE TABLE categories (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        uuid TEXT NOT NULL UNIQUE,
+        name TEXT NOT NULL,
+        color_value INTEGER NOT NULL,
+        icon_code_point INTEGER NOT NULL,
+        icon_font_family TEXT NOT NULL,
+        is_custom INTEGER NOT NULL DEFAULT 0,
+        is_active INTEGER NOT NULL DEFAULT 1,
+        sort_order INTEGER NOT NULL,
+        created_at INTEGER NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE app_settings (
+        id INTEGER PRIMARY KEY,
+        currency_code TEXT NOT NULL DEFAULT 'AED',
+        currency_symbol TEXT NOT NULL DEFAULT 'AED',
+        currency_symbol_leading INTEGER NOT NULL DEFAULT 0,
+        month_start_day INTEGER NOT NULL DEFAULT 1,
+        theme_mode TEXT NOT NULL DEFAULT 'system',
+        google_backup_enabled INTEGER NOT NULL DEFAULT 0,
+        last_backup_at INTEGER,
+        updated_at INTEGER NOT NULL
+      )
+    ''');
+
+    await _seed(db);
+  }
+
+  Future<void> _seed(Database db) async {
+    // Default settings
+    await db.insert('app_settings', AppSettings.defaults.toMap());
+
+    // Default categories
+    final batch = db.batch();
+    for (final cat in buildDefaultCategories()) {
+      batch.insert('categories', cat.toMap());
+    }
+    await batch.commit(noResult: true);
+  }
+
+  Future<void> close() async {
+    await _db?.close();
+    _db = null;
+  }
+}
