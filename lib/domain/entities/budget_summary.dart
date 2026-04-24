@@ -1,6 +1,9 @@
+import 'package:intl/intl.dart';
 import 'budget_period.dart';
 
 class BudgetSummary {
+  static final _nf = NumberFormat('#,##0.00');
+
   final double budgetAmount;
   final double totalExpenses;
   final double totalIncome;
@@ -29,7 +32,7 @@ class BudgetSummary {
   bool get isOverBudget => remaining < 0;
 
   String formatAmount(double amount) {
-    final formatted = amount.toStringAsFixed(2);
+    final formatted = _nf.format(amount.abs());
     return currencySymbolLeading
         ? '$currencySymbol $formatted'
         : '$formatted $currencySymbol';
