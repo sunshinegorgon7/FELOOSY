@@ -1,13 +1,323 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gap/gap.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import '../../core/constants/currencies.dart';
+import '../../data/models/app_settings.dart';
+import '../../providers/settings_provider.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settingsAsync = ref.watch(settingsProvider);
+
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
-      body: const Center(child: Text('Settings — coming in Session 4')),
+      body: settingsAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('Error: $e')),
+        data: (settings) => _SettingsBody(settings: settings),
+      ),
+    );
+  }
+}
+
+class _SettingsBody extends ConsumerWidget {
+  final AppSettings settings;
+  const _SettingsBody({required this.settings});
+
+  void _save(WidgetRef ref, AppSettings updated) {
+    ref.read(settingsProvider.notifier).saveSettings(updated);
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tt = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
+
+    return ListView(
+      children: [
+        // ── Appearance ──────────────────────────────────────────────────
+        const _SectionHeader('Appearance'),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Theme', style: tt.bodyMedium),
+              const Gap(10),
+              SegmentedButton<String>(
+                segments: const [
+                  ButtonSegment(
+                    value: 'light',
+                    icon: Icon(Icons.light_mode_outlined),
+                    label: Text('Light'),
+                  ),
+                  ButtonSegment(
+                    value: 'system',
+                    icon: Icon(Icons.brightness_auto_outlined),
+                    label: Text('System'),
+                  ),
+                  ButtonSegment(
+                    value: 'dark',
+                    icon: Icon(Icons.dark_mode_outlined),
+                    label: Text('Dark'),
+                  ),
+                ],
+                selected: {settings.themeMode},
+                onSelectionChanged: (s) =>
+                    _save(ref, settings.copyWith(themeMode: s.first)),
+              ),
+            ],
+          ),
+        ),
+
+        // ── Budget ───────────────────────────────────────────────────────
+        const _SectionHeader('Budget'),
+        ListTile(
+          leading: const Icon(Icons.attach_money),
+          title: const Text('Currency'),
+          subtitle: Text(
+              '${settings.currencySymbol} — ${_currencyName(settings.currencyCode)}'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => _showCurrencyPicker(context, ref, settings),
+        ),
+        ListTile(
+          leading: const Icon(Icons.calendar_today_outlined),
+          title: const Text('Month starts on'),
+          subtitle: Text(
+              'Day ${settings.monthStartDay}${_ordinal(settings.monthStartDay)} of each month'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => _showDayPicker(context, ref, settings),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          child: Text(
+            'Day 29–31 not available to ensure February compatibility.',
+            style:
+                tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+          ),
+        ),
+
+        // ── About ────────────────────────────────────────────────────────
+        const _SectionHeader('About'),
+        FutureBuilder<PackageInfo>(
+          future: PackageInfo.fromPlatform(),
+          builder: (context, snap) {
+            final version = snap.hasData
+                ? '${snap.data!.version} (${snap.data!.buildNumber})'
+                : '—';
+            return ListTile(
+              leading: const Icon(Icons.info_outline),
+              title: const Text('App version'),
+              trailing: Text(version,
+                  style: tt.bodySmall
+                      ?.copyWith(color: cs.onSurfaceVariant)),
+            );
+          },
+        ),
+        const Gap(32),
+      ],
+    );
+  }
+
+  String _currencyName(String code) {
+    return kCurrencies
+            .where((c) => c.code == code)
+            .firstOrNull
+            ?.name ??
+        code;
+  }
+
+  String _ordinal(int n) {
+    if (n >= 11 && n <= 13) return 'th';
+    return switch (n % 10) { 1 => 'st', 2 => 'nd', 3 => 'rd', _ => 'th' };
+  }
+
+  void _showCurrencyPicker(
+      BuildContext context, WidgetRef ref, AppSettings settings) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (ctx, scrollController) => Column(
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              child: Text('Select Currency',
+                  style: Theme.of(context).textTheme.titleMedium),
+            ),
+            const Divider(height: 1),
+            Expanded(
+              child: ListView.builder(
+                controller: scrollController,
+                itemCount: kCurrencies.length,
+                itemBuilder: (context, i) {
+                  final c = kCurrencies[i];
+                  final isSelected = c.code == settings.currencyCode;
+                  return ListTile(
+                    leading: SizedBox(
+                      width: 48,
+                      child: Text(
+                        c.symbol,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w600, fontSize: 16),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    title: Text(c.name),
+                    subtitle: Text(c.code),
+                    trailing: isSelected
+                        ? Icon(Icons.check_circle,
+                            color: Theme.of(context).colorScheme.primary)
+                        : null,
+                    onTap: () {
+                      _save(
+                        ref,
+                        settings.copyWith(
+                          currencyCode: c.code,
+                          currencySymbol: c.symbol,
+                          currencySymbolLeading: c.symbolLeading,
+                        ),
+                      );
+                      Navigator.pop(ctx);
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showDayPicker(
+      BuildContext context, WidgetRef ref, AppSettings settings) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Month starts on day…'),
+        content: SizedBox(
+          width: 280,
+          child: GridView.builder(
+            shrinkWrap: true,
+            gridDelegate:
+                const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 7,
+              mainAxisSpacing: 4,
+              crossAxisSpacing: 4,
+            ),
+            itemCount: 28,
+            itemBuilder: (context, i) {
+              final day = i + 1;
+              final isSelected = day == settings.monthStartDay;
+              return InkWell(
+                onTap: () {
+                  if (day != settings.monthStartDay) {
+                    _showDayChangeWarning(ctx, ref, settings, day);
+                  } else {
+                    Navigator.pop(ctx);
+                  }
+                },
+                borderRadius: BorderRadius.circular(20),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isSelected
+                        ? Theme.of(context).colorScheme.primary
+                        : null,
+                  ),
+                  child: Center(
+                    child: Text(
+                      '$day',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: isSelected ? Colors.white : null,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDayChangeWarning(BuildContext ctx, WidgetRef ref,
+      AppSettings settings, int newDay) {
+    showDialog(
+      context: ctx,
+      builder: (warnCtx) => AlertDialog(
+        title: const Text('Change start day?'),
+        content: Text(
+          'Changing from day ${settings.monthStartDay} to day $newDay '
+          'will shift the period boundaries for all months. '
+          'Existing transactions stay as-is.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(warnCtx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              _save(ref, settings.copyWith(monthStartDay: newDay));
+              Navigator.pop(warnCtx);
+              Navigator.pop(ctx);
+            },
+            child: const Text('Change'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  const _SectionHeader(this.title);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 4),
+      child: Text(
+        title.toUpperCase(),
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: Theme.of(context).colorScheme.primary,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.2,
+            ),
+      ),
     );
   }
 }

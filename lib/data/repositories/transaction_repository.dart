@@ -1,6 +1,13 @@
 import '../database/database_helper.dart';
 import '../models/transaction.dart' as model;
 
+class DescriptionSuggestion {
+  final String description;
+  final String categoryUuid;
+  const DescriptionSuggestion(
+      {required this.description, required this.categoryUuid});
+}
+
 class TransactionRepository {
   final DatabaseHelper _db;
   TransactionRepository(this._db);
@@ -63,5 +70,32 @@ class TransactionRepository {
     final rows =
         await db.query('transactions', orderBy: 'transaction_date DESC');
     return rows.map(model.Transaction.fromMap).toList();
+  }
+
+  /// Returns up to 8 distinct descriptions containing [query] (case-insensitive),
+  /// each paired with the most recently used category for that description.
+  Future<List<DescriptionSuggestion>> getDescriptionSuggestions(
+      String query) async {
+    if (query.trim().isEmpty) return [];
+    final db = await _db.database;
+    // Group by normalised description so "Farooj" and "farooj" collapse.
+    // Pick the category_uuid from the most recent transaction per description.
+    final rows = await db.rawQuery(
+      '''
+      SELECT description, category_uuid
+      FROM transactions
+      WHERE LOWER(description) LIKE LOWER(?)
+      GROUP BY LOWER(description)
+      ORDER BY MAX(created_at) DESC
+      LIMIT 8
+      ''',
+      ['%${query.trim()}%'],
+    );
+    return rows
+        .map((r) => DescriptionSuggestion(
+              description: r['description'] as String,
+              categoryUuid: r['category_uuid'] as String,
+            ))
+        .toList();
   }
 }
