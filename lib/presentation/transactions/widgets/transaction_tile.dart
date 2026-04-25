@@ -9,11 +9,13 @@ import '../../../providers/settings_provider.dart';
 class TransactionTile extends ConsumerWidget {
   final Transaction transaction;
   final Category? category;
+  final VoidCallback? onTap;
 
   const TransactionTile({
     super.key,
     required this.transaction,
     required this.category,
+    this.onTap,
   });
 
   @override
@@ -37,6 +39,7 @@ class TransactionTile extends ConsumerWidget {
         : Icons.receipt_outlined;
 
     return ListTile(
+      onTap: onTap,
       leading: CircleAvatar(
         backgroundColor: iconColor.withValues(alpha: 0.15),
         child: Icon(iconData, color: iconColor, size: 20),

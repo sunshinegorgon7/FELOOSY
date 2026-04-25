@@ -15,19 +15,24 @@ import '../../providers/transactions_provider.dart';
 
 class AddTransactionScreen extends ConsumerStatefulWidget {
   final String type; // 'expense' | 'income'
-  const AddTransactionScreen({super.key, required this.type});
+  final Transaction? initialTransaction;
+
+  const AddTransactionScreen({
+    super.key,
+    required this.type,
+    this.initialTransaction,
+  });
 
   @override
   ConsumerState<AddTransactionScreen> createState() =>
       _AddTransactionScreenState();
 }
 
-class _AddTransactionScreenState
-    extends ConsumerState<AddTransactionScreen> {
+class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   late TransactionType _type;
 
-  // Autocomplete manages its own controller; we keep a reference for _save().
   TextEditingController? _descFieldController;
+  bool _descInitialized = false;
 
   final _amountController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -35,12 +40,22 @@ class _AddTransactionScreenState
   String? _selectedCategoryUuid;
   bool _saving = false;
 
+  bool get _isEditing => widget.initialTransaction != null;
+
   @override
   void initState() {
     super.initState();
     _type = widget.type == 'income'
         ? TransactionType.income
         : TransactionType.expense;
+
+    final initial = widget.initialTransaction;
+    if (initial != null) {
+      _type = initial.type;
+      _amountController.text = initial.amount.toStringAsFixed(2);
+      _date = initial.transactionDate;
+      _selectedCategoryUuid = initial.categoryUuid;
+    }
   }
 
   @override
@@ -70,17 +85,34 @@ class _AddTransactionScreenState
       final amount =
           double.parse(_amountController.text.replaceAll(',', ''));
       final now = DateTime.now();
-      final tx = Transaction(
-        uuid: const Uuid().v4(),
-        amount: amount,
-        type: _type,
-        description: desc,
-        categoryUuid: _selectedCategoryUuid!,
-        transactionDate: _date,
-        createdAt: now,
-        updatedAt: now,
-      );
-      await ref.read(transactionsProvider.notifier).add(tx);
+      final initial = widget.initialTransaction;
+
+      if (initial != null) {
+        final updated = Transaction(
+          id: initial.id,
+          uuid: initial.uuid,
+          amount: amount,
+          type: _type,
+          description: desc,
+          categoryUuid: _selectedCategoryUuid!,
+          transactionDate: _date,
+          createdAt: initial.createdAt,
+          updatedAt: now,
+        );
+        await ref.read(transactionsProvider.notifier).edit(updated);
+      } else {
+        final tx = Transaction(
+          uuid: const Uuid().v4(),
+          amount: amount,
+          type: _type,
+          description: desc,
+          categoryUuid: _selectedCategoryUuid!,
+          transactionDate: _date,
+          createdAt: now,
+          updatedAt: now,
+        );
+        await ref.read(transactionsProvider.notifier).add(tx);
+      }
       if (mounted) context.pop();
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -105,9 +137,11 @@ class _AddTransactionScreenState
     final symbol =
         settingsAsync.whenOrNull(data: (s) => s.currencySymbol) ?? 'AED';
 
+    final titlePrefix = _isEditing ? 'Edit' : 'Add';
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(isExpense ? 'Add Expense' : 'Add Income'),
+        title: Text(isExpense ? '$titlePrefix Expense' : '$titlePrefix Income'),
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => context.pop(),
@@ -134,7 +168,6 @@ class _AddTransactionScreenState
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            // Expense / Income toggle
             SegmentedButton<TransactionType>(
               segments: const [
                 ButtonSegment(
@@ -154,7 +187,6 @@ class _AddTransactionScreenState
             ),
             const Gap(24),
 
-            // Amount
             TextFormField(
               controller: _amountController,
               keyboardType:
@@ -162,8 +194,8 @@ class _AddTransactionScreenState
               inputFormatters: [
                 FilteringTextInputFormatter.allow(RegExp(r'[\d.]')),
               ],
-              style:
-                  const TextStyle(fontSize: 32, fontWeight: FontWeight.w600),
+              style: const TextStyle(
+                  fontSize: 32, fontWeight: FontWeight.w600),
               textAlign: TextAlign.center,
               decoration: InputDecoration(
                 labelText: 'Amount',
@@ -185,17 +217,27 @@ class _AddTransactionScreenState
             ),
             const Gap(16),
 
-            // Description with autocomplete
             _DescriptionAutocomplete(
-              onControllerReady: (c) => _descFieldController = c,
+              initialDescription: widget.initialTransaction?.description,
+              onControllerReady: (c) {
+                _descFieldController = c;
+                if (!_descInitialized &&
+                    widget.initialTransaction != null) {
+                  _descInitialized = true;
+                  c.text = widget.initialTransaction!.description;
+                  c.selection = TextSelection.collapsed(
+                      offset: c.text.length);
+                }
+              },
               onSuggestionSelected: (suggestion) {
-                setState(() => _selectedCategoryUuid = suggestion.categoryUuid);
+                setState(
+                    () => _selectedCategoryUuid = suggestion.categoryUuid);
               },
             ),
             const Gap(24),
 
-            // Category
-            Text('Category', style: Theme.of(context).textTheme.titleSmall),
+            Text('Category',
+                style: Theme.of(context).textTheme.titleSmall),
             const Gap(8),
             ref.watch(categoriesProvider).when(
                   loading: () =>
@@ -210,7 +252,6 @@ class _AddTransactionScreenState
                 ),
             const Gap(24),
 
-            // Date
             Text('Date', style: Theme.of(context).textTheme.titleSmall),
             const Gap(8),
             InkWell(
@@ -231,7 +272,8 @@ class _AddTransactionScreenState
                     Text(_formatDate(_date),
                         style: Theme.of(context).textTheme.bodyLarge),
                     const Spacer(),
-                    Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
+                    Icon(Icons.chevron_right,
+                        color: cs.onSurfaceVariant),
                   ],
                 ),
               ),
@@ -240,7 +282,8 @@ class _AddTransactionScreenState
 
             FilledButton(
               onPressed: _saving ? null : _save,
-              child: const Text('Save Transaction'),
+              child: Text(
+                  _isEditing ? 'Save Changes' : 'Save Transaction'),
             ),
             const Gap(16),
           ],
@@ -266,12 +309,14 @@ class _AddTransactionScreenState
 // ---------------------------------------------------------------------------
 
 class _DescriptionAutocomplete extends ConsumerWidget {
+  final String? initialDescription;
   final ValueChanged<TextEditingController> onControllerReady;
   final ValueChanged<DescriptionSuggestion> onSuggestionSelected;
 
   const _DescriptionAutocomplete({
     required this.onControllerReady,
     required this.onSuggestionSelected,
+    this.initialDescription,
   });
 
   @override
@@ -325,14 +370,13 @@ class _DescriptionAutocomplete extends ConsumerWidget {
                             radius: 14,
                             backgroundColor:
                                 iconColor.withValues(alpha: 0.15),
-                            child:
-                                Icon(iconData, color: iconColor, size: 14),
+                            child: Icon(iconData,
+                                color: iconColor, size: 14),
                           ),
                           const Gap(10),
                           Expanded(
                             child: Column(
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(opt.description,
                                     style: const TextStyle(
@@ -358,9 +402,8 @@ class _DescriptionAutocomplete extends ConsumerWidget {
         );
       },
       fieldViewBuilder: (context, controller, focusNode, onSubmit) {
-        // Expose the controller so _save() can read the typed value
-        WidgetsBinding.instance.addPostFrameCallback(
-            (_) => onControllerReady(controller));
+        WidgetsBinding.instance
+            .addPostFrameCallback((_) => onControllerReady(controller));
         return TextFormField(
           controller: controller,
           focusNode: focusNode,
@@ -377,7 +420,7 @@ class _DescriptionAutocomplete extends ConsumerWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Category chip grid
+// Uniform category grid
 // ---------------------------------------------------------------------------
 
 class _CategoryGrid extends StatelessWidget {
@@ -393,35 +436,69 @@ class _CategoryGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: categories.map((cat) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 4,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
+        childAspectRatio: 0.9,
+      ),
+      itemCount: categories.length,
+      itemBuilder: (context, index) {
+        final cat = categories[index];
         final isSelected = cat.uuid == selected;
         final color = Color(cat.colorValue);
-        return FilterChip(
-          avatar: Icon(
-            IconData(cat.iconCodePoint, fontFamily: cat.iconFontFamily),
-            size: 16,
-            color: isSelected ? Colors.white : color,
-          ),
-          label: Text(cat.name),
-          selected: isSelected,
-          onSelected: (_) => onSelect(cat.uuid),
-          backgroundColor: color.withValues(alpha: 0.08),
-          selectedColor: color,
-          labelStyle: TextStyle(
-            color: isSelected
-                ? Colors.white
-                : Theme.of(context).colorScheme.onSurface,
-            fontSize: 13,
-          ),
-          checkmarkColor: Colors.white,
-          side: BorderSide(
-            color: isSelected ? color : color.withValues(alpha: 0.3),
+        return GestureDetector(
+          onTap: () => onSelect(cat.uuid),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? color
+                  : color.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isSelected
+                    ? color
+                    : color.withValues(alpha: 0.3),
+                width: isSelected ? 1.5 : 1,
+              ),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  IconData(cat.iconCodePoint,
+                      fontFamily: cat.iconFontFamily),
+                  size: 20,
+                  color: isSelected ? Colors.white : color,
+                ),
+                const SizedBox(height: 4),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Text(
+                    cat.name,
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: isSelected
+                          ? Colors.white
+                          : Theme.of(context).colorScheme.onSurface,
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.normal,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
           ),
         );
-      }).toList(),
+      },
     );
   }
 }

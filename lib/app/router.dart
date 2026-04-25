@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../data/models/transaction.dart';
 import '../presentation/budget/budget_screen.dart';
 import '../presentation/budget/set_budget_sheet.dart';
 import '../presentation/home/home_screen.dart';
 import '../presentation/settings/settings_screen.dart';
 import '../presentation/transactions/add_transaction_screen.dart';
-import '../presentation/transactions/transaction_list_screen.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/',
@@ -13,7 +13,6 @@ final appRouter = GoRouter(
     StatefulShellRoute.indexedStack(
       builder: (context, state, shell) => ScaffoldWithNavBar(shell: shell),
       branches: [
-        // Home tab
         StatefulShellBranch(routes: [
           GoRoute(
             path: '/',
@@ -21,15 +20,6 @@ final appRouter = GoRouter(
           ),
         ]),
 
-        // Transactions tab
-        StatefulShellBranch(routes: [
-          GoRoute(
-            path: '/transactions',
-            builder: (context, state) => const TransactionListScreen(),
-          ),
-        ]),
-
-        // Budget tab
         StatefulShellBranch(routes: [
           GoRoute(
             path: '/budget',
@@ -37,7 +27,6 @@ final appRouter = GoRouter(
           ),
         ]),
 
-        // Settings tab
         StatefulShellBranch(routes: [
           GoRoute(
             path: '/settings',
@@ -47,7 +36,6 @@ final appRouter = GoRouter(
       ],
     ),
 
-    // Add transaction — outside shell so it's full-screen push
     GoRoute(
       path: '/transactions/add',
       builder: (context, state) {
@@ -56,7 +44,17 @@ final appRouter = GoRouter(
       },
     ),
 
-    // Set budget — outside shell so it works as a standalone push too
+    GoRoute(
+      path: '/transactions/edit',
+      builder: (context, state) {
+        final tx = state.extra! as Transaction;
+        return AddTransactionScreen(
+          type: tx.type == TransactionType.expense ? 'expense' : 'income',
+          initialTransaction: tx,
+        );
+      },
+    ),
+
     GoRoute(
       path: '/budget/set',
       builder: (context, state) => Scaffold(
@@ -86,11 +84,6 @@ class ScaffoldWithNavBar extends StatelessWidget {
             icon: Icon(Icons.home_outlined),
             selectedIcon: Icon(Icons.home),
             label: 'Home',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.receipt_long_outlined),
-            selectedIcon: Icon(Icons.receipt_long),
-            label: 'Transactions',
           ),
           NavigationDestination(
             icon: Icon(Icons.calendar_month_outlined),
