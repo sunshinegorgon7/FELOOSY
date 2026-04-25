@@ -149,148 +149,132 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
         actions: [
           _saving
               ? const Padding(
-                  padding: EdgeInsets.all(16),
+                  padding: EdgeInsets.symmetric(horizontal: 16),
                   child: SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   ),
                 )
-              : TextButton(
-                  onPressed: _save,
-                  child: const Text('Save',
-                      style: TextStyle(fontWeight: FontWeight.w700)),
+              : Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: FilledButton(
+                    onPressed: _save,
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      minimumSize: const Size(0, 36),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: const Text('Save',
+                        style: TextStyle(fontWeight: FontWeight.w700)),
+                  ),
                 ),
         ],
       ),
       body: SafeArea(
         top: false,
         child: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            SegmentedButton<TransactionType>(
-              segments: const [
-                ButtonSegment(
-                  value: TransactionType.expense,
-                  icon: Icon(Icons.remove_circle_outline),
-                  label: Text('Expense'),
-                ),
-                ButtonSegment(
-                  value: TransactionType.income,
-                  icon: Icon(Icons.add_circle_outline),
-                  label: Text('Income'),
-                ),
-              ],
-              selected: {_type},
-              onSelectionChanged: (s) =>
-                  setState(() => _type = s.first),
-            ),
-            const Gap(24),
-
-            TextFormField(
-              controller: _amountController,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[\d.]')),
-              ],
-              style: const TextStyle(
-                  fontSize: 32, fontWeight: FontWeight.w600),
-              textAlign: TextAlign.center,
-              decoration: InputDecoration(
-                labelText: 'Amount',
-                prefixText: '$symbol  ',
-                prefixStyle: TextStyle(
-                  fontSize: 20,
-                  color: cs.onSurfaceVariant,
-                  fontWeight: FontWeight.w500,
-                ),
-                border: const OutlineInputBorder(),
-                hintText: '0.00',
-              ),
-              validator: (v) {
-                if (v == null || v.isEmpty) return 'Enter an amount';
-                final n = double.tryParse(v.replaceAll(',', ''));
-                if (n == null || n <= 0) return 'Enter a valid amount';
-                return null;
-              },
-            ),
-            const Gap(16),
-
-            _DescriptionAutocomplete(
-              initialDescription: widget.initialTransaction?.description,
-              onControllerReady: (c) {
-                _descFieldController = c;
-                if (!_descInitialized &&
-                    widget.initialTransaction != null) {
-                  _descInitialized = true;
-                  c.text = widget.initialTransaction!.description;
-                  c.selection = TextSelection.collapsed(
-                      offset: c.text.length);
-                }
-              },
-              onSuggestionSelected: (suggestion) {
-                setState(
-                    () => _selectedCategoryUuid = suggestion.categoryUuid);
-              },
-            ),
-            const Gap(24),
-
-            Text('Category',
-                style: Theme.of(context).textTheme.titleSmall),
-            const Gap(8),
-            ref.watch(categoriesProvider).when(
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Text('$e'),
-                  data: (cats) => _CategoryGrid(
-                    categories: cats.where((c) => c.isActive).toList(),
-                    selected: _selectedCategoryUuid,
-                    onSelect: (uuid) =>
-                        setState(() => _selectedCategoryUuid = uuid),
+          key: _formKey,
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              // Date
+              InkWell(
+                onTap: _pickDate,
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: cs.outline),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.calendar_today_outlined,
+                          size: 18, color: cs.primary),
+                      const Gap(10),
+                      Text(_formatDate(_date),
+                          style: Theme.of(context).textTheme.bodyLarge),
+                      const Spacer(),
+                      Icon(Icons.chevron_right,
+                          color: cs.onSurfaceVariant),
+                    ],
                   ),
                 ),
-            const Gap(24),
-
-            Text('Date', style: Theme.of(context).textTheme.titleSmall),
-            const Gap(8),
-            InkWell(
-              onTap: _pickDate,
-              borderRadius: BorderRadius.circular(8),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 14),
-                decoration: BoxDecoration(
-                  border: Border.all(color: cs.outline),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.calendar_today_outlined,
-                        size: 18, color: cs.primary),
-                    const Gap(10),
-                    Text(_formatDate(_date),
-                        style: Theme.of(context).textTheme.bodyLarge),
-                    const Spacer(),
-                    Icon(Icons.chevron_right,
-                        color: cs.onSurfaceVariant),
-                  ],
-                ),
               ),
-            ),
-            const Gap(32),
+              const Gap(16),
 
-            FilledButton(
-              onPressed: _saving ? null : _save,
-              child: Text(
-                  _isEditing ? 'Save Changes' : 'Save Transaction'),
-            ),
-            const Gap(16),
-          ],
+              // Amount
+              TextFormField(
+                controller: _amountController,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[\d.]')),
+                ],
+                style: const TextStyle(
+                    fontSize: 32, fontWeight: FontWeight.w600),
+                textAlign: TextAlign.center,
+                decoration: InputDecoration(
+                  labelText: 'Amount',
+                  prefixText: '$symbol  ',
+                  prefixStyle: TextStyle(
+                    fontSize: 20,
+                    color: cs.onSurfaceVariant,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  border: const OutlineInputBorder(),
+                  hintText: '0.00',
+                ),
+                validator: (v) {
+                  if (v == null || v.isEmpty) return 'Enter an amount';
+                  final n = double.tryParse(v.replaceAll(',', ''));
+                  if (n == null || n <= 0) return 'Enter a valid amount';
+                  return null;
+                },
+              ),
+              const Gap(16),
+
+              // Description
+              _DescriptionAutocomplete(
+                initialDescription: widget.initialTransaction?.description,
+                onControllerReady: (c) {
+                  _descFieldController = c;
+                  if (!_descInitialized &&
+                      widget.initialTransaction != null) {
+                    _descInitialized = true;
+                    c.text = widget.initialTransaction!.description;
+                    c.selection = TextSelection.collapsed(
+                        offset: c.text.length);
+                  }
+                },
+                onSuggestionSelected: (suggestion) {
+                  setState(
+                      () => _selectedCategoryUuid = suggestion.categoryUuid);
+                },
+              ),
+              const Gap(24),
+
+              // Category
+              Text('Category',
+                  style: Theme.of(context).textTheme.titleSmall),
+              const Gap(8),
+              ref.watch(categoriesProvider).when(
+                    loading: () =>
+                        const Center(child: CircularProgressIndicator()),
+                    error: (e, _) => Text('$e'),
+                    data: (cats) => _CategoryGrid(
+                      categories: cats.where((c) => c.isActive).toList(),
+                      selected: _selectedCategoryUuid,
+                      onSelect: (uuid) =>
+                          setState(() => _selectedCategoryUuid = uuid),
+                    ),
+                  ),
+              const Gap(32),
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
