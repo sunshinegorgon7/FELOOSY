@@ -115,6 +115,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     final grouped = _groupByDate(filteredTxs);
 
+    // Period totals for the section header
+    double periodExpenses = 0;
+    double periodIncome = 0;
+    for (final tx in filteredTxs) {
+      if (tx.type == TransactionType.expense) {
+        periodExpenses += tx.amount;
+      } else {
+        periodIncome += tx.amount;
+      }
+    }
+
     return CustomScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
@@ -156,7 +167,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ),
 
-        // Transactions section header
+        // Transactions section header with period totals
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 20, 16, 4),
@@ -174,6 +185,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     child: Icon(Icons.close_rounded,
                         size: 16, color: cs.onSurfaceVariant),
                   ),
+                ],
+                const Spacer(),
+                if (filteredTxs.isNotEmpty) ...[
+                  if (periodExpenses > 0)
+                    Text(
+                      '−${summary.formatAmount(periodExpenses)}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.red.shade400,
+                      ),
+                    ),
+                  if (periodExpenses > 0 && periodIncome > 0)
+                    const SizedBox(width: 6),
+                  if (periodIncome > 0)
+                    Text(
+                      '+${summary.formatAmount(periodIncome)}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.green.shade600,
+                      ),
+                    ),
                 ],
               ],
             ),
@@ -203,12 +237,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               (context, index) {
                 final item = grouped[index];
                 if (item is _DateHeader) {
+                  final isPos = item.dayNet >= 0;
+                  final sign = isPos ? '+' : '−';
+                  final dayColor =
+                      isPos ? Colors.green.shade600 : Colors.red.shade400;
                   return Padding(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                    child: Text(
-                      item.label,
-                      style: tt.labelMedium
-                          ?.copyWith(color: cs.onSurfaceVariant),
+                    child: Row(
+                      children: [
+                        Text(
+                          item.label,
+                          style: tt.labelMedium
+                              ?.copyWith(color: cs.onSurfaceVariant),
+                        ),
+                        const Spacer(),
+                        Text(
+                          '$sign${summary.formatAmount(item.dayNet.abs())}',
+                          style: tt.labelMedium?.copyWith(
+                            color: dayColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
                   );
                 }
@@ -250,15 +300,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   List<Object> _groupByDate(List<Transaction> txs) {
-    final result = <Object>[];
-    String? lastLabel;
+    if (txs.isEmpty) return [];
+
+    final groupTxs = <String, List<Transaction>>{};
+    final groupOrder = <String>[];
+
     for (final tx in txs) {
       final label = _dateLabel(tx.transactionDate);
-      if (label != lastLabel) {
-        result.add(_DateHeader(label));
-        lastLabel = label;
+      if (!groupTxs.containsKey(label)) {
+        groupTxs[label] = [];
+        groupOrder.add(label);
       }
-      result.add(_TxEntry(tx));
+      groupTxs[label]!.add(tx);
+    }
+
+    final result = <Object>[];
+    for (final label in groupOrder) {
+      final dayTxs = groupTxs[label]!;
+      final dayNet = dayTxs.fold(0.0, (sum, tx) => tx.type == TransactionType.income
+          ? sum + tx.amount
+          : sum - tx.amount);
+      result.add(_DateHeader(label, dayNet));
+      result.addAll(dayTxs.map(_TxEntry.new));
     }
     return result;
   }
@@ -300,7 +363,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
 class _DateHeader {
   final String label;
-  _DateHeader(this.label);
+  final double dayNet;
+  _DateHeader(this.label, this.dayNet);
 }
 
 class _TxEntry {
