@@ -31,6 +31,7 @@ final transactionsProvider =
     AsyncNotifierProvider<TransactionsNotifier, List<Transaction>>(
         TransactionsNotifier.new);
 
-final mostUsedCategoryUuidsProvider = FutureProvider<List<String>>((ref) {
-  return ref.watch(transactionRepositoryProvider).getMostUsedCategoryUuids();
+final mostUsedCategoryUuidsProvider = FutureProvider<List<String>>((ref) async {
+  ref.watch(transactionsProvider); // re-run when transactions change
+  return ref.read(transactionRepositoryProvider).getMostUsedCategoryUuids();
 });

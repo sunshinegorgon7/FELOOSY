@@ -105,6 +105,7 @@ class SpendingPieChart extends StatelessWidget {
             category: item.category,
             isLit: isLit,
             isSel: isSel,
+            isTop: i == 0,
           ));
         }
 
@@ -181,6 +182,13 @@ class SpendingPieChart extends StatelessWidget {
                               : Colors.white.withValues(alpha: 0.88),
                           shape: BoxShape.circle,
                           boxShadow: [
+                            if (o.isTop)
+                              BoxShadow(
+                                color: Color(o.category.colorValue)
+                                    .withValues(alpha: 0.65),
+                                blurRadius: 18,
+                                spreadRadius: 4,
+                              ),
                             BoxShadow(
                               color: Color(o.category.colorValue)
                                   .withValues(
@@ -218,12 +226,13 @@ class _Stat {
 class _Overlay {
   final double x, y;
   final Category category;
-  final bool isLit, isSel;
+  final bool isLit, isSel, isTop;
   const _Overlay({
     required this.x,
     required this.y,
     required this.category,
     required this.isLit,
     required this.isSel,
+    this.isTop = false,
   });
 }
