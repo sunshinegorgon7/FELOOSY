@@ -6,6 +6,7 @@ class AppSettings {
   final int monthStartDay;
   final String themeMode;
   final bool googleBackupEnabled;
+  final double defaultMonthlyBudget;
   final DateTime? lastBackupAt;
   final DateTime updatedAt;
 
@@ -17,6 +18,7 @@ class AppSettings {
     this.monthStartDay = 1,
     this.themeMode = 'system',
     this.googleBackupEnabled = false,
+    this.defaultMonthlyBudget = 0,
     this.lastBackupAt,
     required this.updatedAt,
   });
@@ -30,6 +32,7 @@ class AppSettings {
     int? monthStartDay,
     String? themeMode,
     bool? googleBackupEnabled,
+    double? defaultMonthlyBudget,
     DateTime? lastBackupAt,
   }) {
     return AppSettings(
@@ -41,6 +44,7 @@ class AppSettings {
       monthStartDay: monthStartDay ?? this.monthStartDay,
       themeMode: themeMode ?? this.themeMode,
       googleBackupEnabled: googleBackupEnabled ?? this.googleBackupEnabled,
+      defaultMonthlyBudget: defaultMonthlyBudget ?? this.defaultMonthlyBudget,
       lastBackupAt: lastBackupAt ?? this.lastBackupAt,
       updatedAt: DateTime.now(),
     );
@@ -55,6 +59,8 @@ class AppSettings {
       monthStartDay: map['month_start_day'] as int,
       themeMode: map['theme_mode'] as String,
       googleBackupEnabled: (map['google_backup_enabled'] as int) == 1,
+      defaultMonthlyBudget:
+          (map['default_monthly_budget'] as num?)?.toDouble() ?? 0,
       lastBackupAt: map['last_backup_at'] != null
           ? DateTime.fromMillisecondsSinceEpoch(map['last_backup_at'] as int)
           : null,
@@ -72,6 +78,7 @@ class AppSettings {
       'month_start_day': monthStartDay,
       'theme_mode': themeMode,
       'google_backup_enabled': googleBackupEnabled ? 1 : 0,
+      'default_monthly_budget': defaultMonthlyBudget,
       'last_backup_at': lastBackupAt?.millisecondsSinceEpoch,
       'updated_at': updatedAt.millisecondsSinceEpoch,
     };

@@ -163,7 +163,9 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                 ),
         ],
       ),
-      body: Form(
+      body: SafeArea(
+        top: false,
+        child: Form(
         key: _formKey,
         child: ListView(
           padding: const EdgeInsets.all(16),
@@ -244,7 +246,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                       const Center(child: CircularProgressIndicator()),
                   error: (e, _) => Text('$e'),
                   data: (cats) => _CategoryGrid(
-                    categories: cats,
+                    categories: cats.where((c) => c.isActive).toList(),
                     selected: _selectedCategoryUuid,
                     onSelect: (uuid) =>
                         setState(() => _selectedCategoryUuid = uuid),
@@ -289,6 +291,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
           ],
         ),
       ),
+      ),
     );
   }
 
@@ -322,7 +325,9 @@ class _DescriptionAutocomplete extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final repo = ref.read(transactionRepositoryProvider);
-    final cats = ref.watch(categoriesProvider).valueOrNull ?? [];
+    final cats = (ref.watch(categoriesProvider).valueOrNull ?? [])
+        .where((c) => c.isActive)
+        .toList();
     final cs = Theme.of(context).colorScheme;
 
     return Autocomplete<DescriptionSuggestion>(

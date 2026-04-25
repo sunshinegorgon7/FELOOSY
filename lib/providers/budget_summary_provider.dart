@@ -13,7 +13,7 @@ final budgetSummaryProvider = FutureProvider<BudgetSummary>((ref) async {
   final settings = await ref.watch(settingsProvider.future);
 
   return BudgetService.computeSummary(
-    budgetAmount: budget?.amount ?? 0,
+    budgetAmount: budget?.amount ?? settings.defaultMonthlyBudget,
     transactions: transactions,
     settings: settings,
     period: period,

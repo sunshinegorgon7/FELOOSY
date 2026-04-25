@@ -6,11 +6,21 @@ class CategoriesNotifier extends AsyncNotifier<List<Category>> {
   @override
   Future<List<Category>> build() async {
     final repo = ref.watch(categoryRepositoryProvider);
-    return repo.getAll();
+    return repo.getAll(activeOnly: false);
   }
 
   Future<void> add(Category category) async {
     await ref.read(categoryRepositoryProvider).insert(category);
+    ref.invalidateSelf();
+  }
+
+  Future<void> saveCategory(Category category) async {
+    await ref.read(categoryRepositoryProvider).update(category);
+    ref.invalidateSelf();
+  }
+
+  Future<void> delete(String uuid) async {
+    await ref.read(categoryRepositoryProvider).delete(uuid);
     ref.invalidateSelf();
   }
 

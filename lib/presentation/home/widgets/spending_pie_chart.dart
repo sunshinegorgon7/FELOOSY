@@ -1,14 +1,10 @@
+import 'dart:math' as math;
+
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import '../../../data/models/category.dart';
 import '../../../data/models/transaction.dart';
 import '../../../domain/entities/budget_summary.dart';
-
-class _CategoryStat {
-  final Category category;
-  final double amount;
-  const _CategoryStat(this.category, this.amount);
-}
 
 class SpendingPieChart extends StatelessWidget {
   final List<Transaction> transactions;
@@ -26,13 +22,18 @@ class SpendingPieChart extends StatelessWidget {
     required this.onCategoryToggle,
   });
 
+  static const double _startDeg = 270.0; // 12 o'clock
+  static const double _minFraction = 0.04; // skip icon below 4%
+  static const double _iconSize = 28.0;
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
 
     final totals = <String, double>{};
-    for (final tx in transactions.where((t) => t.type == TransactionType.expense)) {
+    for (final tx
+        in transactions.where((t) => t.type == TransactionType.expense)) {
       totals[tx.categoryUuid] = (totals[tx.categoryUuid] ?? 0) + tx.amount;
     }
 
@@ -51,12 +52,11 @@ class SpendingPieChart extends StatelessWidget {
     final sorted = totals.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
-    final data = <_CategoryStat>[];
+    final data = <_Stat>[];
     for (final e in sorted) {
       final cat = categories.where((c) => c.uuid == e.key).firstOrNull;
-      if (cat != null) data.add(_CategoryStat(cat, e.value));
+      if (cat != null) data.add(_Stat(cat, e.value));
     }
-
     if (data.isEmpty) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 24),
@@ -69,146 +69,171 @@ class SpendingPieChart extends StatelessWidget {
       );
     }
 
-    final sections = <PieChartSectionData>[];
-    for (int i = 0; i < data.length; i++) {
-      final item = data[i];
-      final color = Color(item.category.colorValue);
-      final isSelected = item.category.uuid == selectedCategoryUuid;
-      final isHighlighted = selectedCategoryUuid == null || isSelected;
-      sections.add(PieChartSectionData(
-        color: isHighlighted ? color : color.withValues(alpha: 0.18),
-        value: item.amount,
-        radius: isSelected ? 54 : 48,
-        showTitle: false,
-      ));
-    }
+    final total = data.fold(0.0, (s, d) => s + d.amount);
 
-    final remainingColor = summary.isOverBudget
-        ? Colors.red
-        : summary.spentPercentage > 0.8
-            ? Colors.orange
-            : cs.primary;
+    return LayoutBuilder(builder: (context, constraints) {
+      final size = math.min(constraints.maxWidth, 300.0);
+      final centerR = size * 0.24;
+      final sectionR = size * 0.175;
+      final iconR = centerR + sectionR * 0.5;
 
-    return SizedBox(
-      height: 180,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          SizedBox(
-            width: 180,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                PieChart(
-                  PieChartData(
-                    sections: sections,
-                    centerSpaceRadius: 58,
-                    sectionsSpace: 2,
-                    pieTouchData: PieTouchData(
-                      touchCallback: (event, response) {
-                        if (event is! FlTapUpEvent) return;
-                        final index =
-                            response?.touchedSection?.touchedSectionIndex;
-                        if (index == null || index < 0 || index >= data.length) {
-                          return;
-                        }
-                        final uuid = data[index].category.uuid;
-                        onCategoryToggle(
-                            selectedCategoryUuid == uuid ? null : uuid);
-                      },
-                    ),
+      final sections = <PieChartSectionData>[];
+      final overlays = <_Overlay>[];
+      double angle = _startDeg;
+
+      for (int i = 0; i < data.length; i++) {
+        final item = data[i];
+        final fraction = item.amount / total;
+        final sweep = fraction * 360;
+        final mid = angle + sweep / 2;
+        final color = Color(item.category.colorValue);
+        final isSel = item.category.uuid == selectedCategoryUuid;
+        final isLit = selectedCategoryUuid == null || isSel;
+
+        sections.add(PieChartSectionData(
+          color: isLit ? color : color.withValues(alpha: 0.15),
+          value: item.amount,
+          radius: isSel ? sectionR + 8 : sectionR,
+          showTitle: false,
+        ));
+
+        if (fraction >= _minFraction) {
+          final rad = mid * math.pi / 180;
+          overlays.add(_Overlay(
+            x: iconR * math.cos(rad),
+            y: iconR * math.sin(rad),
+            category: item.category,
+            isLit: isLit,
+            isSel: isSel,
+          ));
+        }
+
+        angle += sweep;
+      }
+
+      final remainColor = summary.isOverBudget
+          ? Colors.red
+          : summary.spentPercentage > 0.8
+              ? Colors.orange
+              : cs.primary;
+
+      final half = size / 2;
+
+      return Center(
+        child: SizedBox(
+          width: size,
+          height: size,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              PieChart(
+                PieChartData(
+                  sections: sections,
+                  centerSpaceRadius: centerR,
+                  sectionsSpace: 2,
+                  startDegreeOffset: _startDeg,
+                  pieTouchData: PieTouchData(
+                    touchCallback: (event, response) {
+                      if (event is! FlTapUpEvent) return;
+                      final idx =
+                          response?.touchedSection?.touchedSectionIndex;
+                      if (idx == null || idx < 0 || idx >= data.length) {
+                        return;
+                      }
+                      final uuid = data[idx].category.uuid;
+                      onCategoryToggle(
+                          selectedCategoryUuid == uuid ? null : uuid);
+                    },
                   ),
                 ),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      summary.formatAmount(summary.remaining),
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
-                        color: remainingColor,
-                      ),
-                      textAlign: TextAlign.center,
+              ),
+
+              // Remaining in center
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    summary.formatAmount(summary.remaining),
+                    style: tt.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: remainColor,
                     ),
+                    textAlign: TextAlign.center,
+                  ),
+                  if (summary.budgetAmount > 0)
                     Text(
-                      'remaining',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: cs.onSurfaceVariant,
-                      ),
+                      'of ${summary.formatAmount(summary.budgetAmount)}',
+                      style: tt.labelSmall
+                          ?.copyWith(color: cs.onSurfaceVariant),
                     ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: data.map((item) {
-                  final color = Color(item.category.colorValue);
-                  final isHighlighted = selectedCategoryUuid == null ||
-                      item.category.uuid == selectedCategoryUuid;
-                  return GestureDetector(
-                    behavior: HitTestBehavior.opaque,
+                ],
+              ),
+
+              // Category icons on slices
+              for (final o in overlays)
+                Positioned(
+                  left: half + o.x - _iconSize / 2,
+                  top: half + o.y - _iconSize / 2,
+                  child: GestureDetector(
                     onTap: () => onCategoryToggle(
-                      selectedCategoryUuid == item.category.uuid
+                      selectedCategoryUuid == o.category.uuid
                           ? null
-                          : item.category.uuid,
+                          : o.category.uuid,
                     ),
                     child: AnimatedOpacity(
-                      opacity: isHighlighted ? 1.0 : 0.3,
+                      opacity: o.isLit ? 1.0 : 0.25,
                       duration: const Duration(milliseconds: 200),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 3.5),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: color,
-                                shape: BoxShape.circle,
-                              ),
+                      child: Container(
+                        width: _iconSize,
+                        height: _iconSize,
+                        decoration: BoxDecoration(
+                          color: o.isSel
+                              ? Colors.white
+                              : Colors.white.withValues(alpha: 0.88),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Color(o.category.colorValue)
+                                  .withValues(alpha: o.isSel ? 0.5 : 0.25),
+                              blurRadius: o.isSel ? 6 : 2,
                             ),
-                            const SizedBox(width: 6),
-                            Icon(
-                              IconData(
-                                item.category.iconCodePoint,
-                                fontFamily: item.category.iconFontFamily,
-                              ),
-                              size: 13,
-                              color: color,
-                            ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                item.category.name,
-                                style: const TextStyle(fontSize: 11),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            Text(
-                              summary.formatAmount(item.amount),
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
                           ],
+                        ),
+                        child: Icon(
+                          IconData(
+                            o.category.iconCodePoint,
+                            fontFamily: o.category.iconFontFamily,
+                          ),
+                          size: 14,
+                          color: Color(o.category.colorValue),
                         ),
                       ),
                     ),
-                  );
-                }).toList(),
-              ),
-            ),
+                  ),
+                ),
+            ],
           ),
-        ],
-      ),
-    );
+        ),
+      );
+    });
   }
+}
+
+class _Stat {
+  final Category category;
+  final double amount;
+  const _Stat(this.category, this.amount);
+}
+
+class _Overlay {
+  final double x, y;
+  final Category category;
+  final bool isLit, isSel;
+  const _Overlay({
+    required this.x,
+    required this.y,
+    required this.category,
+    required this.isLit,
+    required this.isSel,
+  });
 }

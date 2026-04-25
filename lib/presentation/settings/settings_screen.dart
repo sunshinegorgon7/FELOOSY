@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
+import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../../core/constants/currencies.dart';
 import '../../data/models/app_settings.dart';
@@ -96,9 +98,29 @@ class _SettingsBody extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
           child: Text(
             'Day 29–31 not available to ensure February compatibility.',
-            style:
-                tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+            style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
           ),
+        ),
+        ListTile(
+          leading: const Icon(Icons.wallet_outlined),
+          title: const Text('Default monthly budget'),
+          subtitle: Text(
+            settings.defaultMonthlyBudget > 0
+                ? '${settings.currencySymbol} ${settings.defaultMonthlyBudget.toStringAsFixed(2)}'
+                : 'Not set — tap to configure',
+          ),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => _showDefaultBudgetDialog(context, ref, settings),
+        ),
+
+        // ── Categories ───────────────────────────────────────────────────
+        const _SectionHeader('Categories'),
+        ListTile(
+          leading: const Icon(Icons.category_outlined),
+          title: const Text('Manage categories'),
+          subtitle: const Text('Edit, add or hide spending categories'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => context.push('/categories'),
         ),
 
         // ── About ────────────────────────────────────────────────────────
@@ -134,6 +156,70 @@ class _SettingsBody extends ConsumerWidget {
   String _ordinal(int n) {
     if (n >= 11 && n <= 13) return 'th';
     return switch (n % 10) { 1 => 'st', 2 => 'nd', 3 => 'rd', _ => 'th' };
+  }
+
+  void _showDefaultBudgetDialog(
+      BuildContext context, WidgetRef ref, AppSettings settings) {
+    final ctrl = TextEditingController(
+      text: settings.defaultMonthlyBudget > 0
+          ? settings.defaultMonthlyBudget.toStringAsFixed(2)
+          : '',
+    );
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Default monthly budget'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Applied automatically when no budget has been set for the current month.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: ctrl,
+              autofocus: true,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[\d.]')),
+              ],
+              decoration: InputDecoration(
+                hintText: '0.00',
+                prefixText: '${settings.currencySymbol}  ',
+                border: const OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          if (settings.defaultMonthlyBudget > 0)
+            TextButton(
+              onPressed: () {
+                _save(ref, settings.copyWith(defaultMonthlyBudget: 0));
+                Navigator.pop(ctx);
+              },
+              child: const Text('Clear'),
+            ),
+          FilledButton(
+            onPressed: () {
+              final amount =
+                  double.tryParse(ctrl.text.replaceAll(',', '')) ?? 0;
+              _save(ref, settings.copyWith(defaultMonthlyBudget: amount));
+              Navigator.pop(ctx);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showCurrencyPicker(

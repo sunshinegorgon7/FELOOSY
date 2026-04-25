@@ -100,6 +100,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
 
+    // Only active categories for display purposes
+    final activeCats = cats.where((c) => c.isActive).toList();
+
     final filteredTxs = _selectedCategoryUuid == null
         ? txs
         : txs
@@ -115,14 +118,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return CustomScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
-        SliverToBoxAdapter(child: _BudgetHeader(summary: summary)),
-
+        // Period header
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: Row(
+              children: [
+                Text(
+                  summary.period.label,
+                  style: tt.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w600),
+                ),
+                const Spacer(),
+                if (summary.budgetAmount == 0)
+                  TextButton.icon(
+                    onPressed: () => context.push('/budget/set'),
+                    icon: const Icon(Icons.add, size: 14),
+                    label: const Text('Set Budget'),
+                  ),
+              ],
+            ),
+          ),
+        ),
+
+        // Pie chart
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
             child: SpendingPieChart(
               transactions: txs,
-              categories: cats,
+              categories: activeCats,
               summary: summary,
               selectedCategoryUuid: _selectedCategoryUuid,
               onCategoryToggle: (uuid) =>
@@ -131,11 +156,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ),
 
-        SliverToBoxAdapter(child: _StatsRow(summary: summary)),
-
+        // Transactions section header
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 4),
             child: Row(
               children: [
                 Text(
@@ -145,7 +169,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 if (selectedCat != null) ...[
                   const SizedBox(width: 4),
                   GestureDetector(
-                    onTap: () => setState(() => _selectedCategoryUuid = null),
+                    onTap: () =>
+                        setState(() => _selectedCategoryUuid = null),
                     child: Icon(Icons.close_rounded,
                         size: 16, color: cs.onSurfaceVariant),
                   ),
@@ -270,154 +295,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (confirmed == true && mounted) {
       await ref.read(transactionsProvider.notifier).remove(tx.uuid);
     }
-  }
-}
-
-class _BudgetHeader extends StatelessWidget {
-  final BudgetSummary summary;
-  const _BudgetHeader({required this.summary});
-
-  @override
-  Widget build(BuildContext context) {
-    final tt = Theme.of(context).textTheme;
-    final cs = Theme.of(context).colorScheme;
-
-    if (summary.budgetAmount == 0) {
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-        child: Row(
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(summary.period.label,
-                    style:
-                        tt.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
-                const SizedBox(height: 2),
-                Text('No budget set', style: tt.titleMedium),
-              ],
-            ),
-            const Spacer(),
-            FilledButton.tonal(
-              onPressed: () => context.push('/budget/set'),
-              child: const Text('Set Budget'),
-            ),
-          ],
-        ),
-      );
-    }
-
-    final remainingColor = summary.isOverBudget
-        ? Colors.red
-        : summary.spentPercentage > 0.8
-            ? Colors.orange
-            : cs.primary;
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(summary.period.label,
-                  style:
-                      tt.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
-              const SizedBox(height: 2),
-              RichText(
-                text: TextSpan(
-                  children: [
-                    TextSpan(
-                      text: summary.formatAmount(summary.remaining),
-                      style: tt.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: remainingColor,
-                      ),
-                    ),
-                    TextSpan(
-                      text: ' remaining',
-                      style:
-                          tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StatsRow extends StatelessWidget {
-  final BudgetSummary summary;
-  const _StatsRow({required this.summary});
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-      child: Row(
-        children: [
-          _StatChip(
-            label: 'Budget',
-            value: summary.formatAmount(summary.budgetAmount),
-            color: cs.onSurface,
-          ),
-          const SizedBox(width: 8),
-          _StatChip(
-            label: 'Spent',
-            value: summary.formatAmount(summary.totalExpenses),
-            color: Colors.red.shade400,
-          ),
-          const SizedBox(width: 8),
-          _StatChip(
-            label: 'Income',
-            value: summary.formatAmount(summary.totalIncome),
-            color: Colors.green.shade600,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StatChip extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color color;
-  const _StatChip(
-      {required this.label, required this.value, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    final tt = Theme.of(context).textTheme;
-    final cs = Theme.of(context).colorScheme;
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-        decoration: BoxDecoration(
-          color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label,
-                style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant)),
-            const SizedBox(height: 2),
-            Text(value,
-                style: tt.labelMedium
-                    ?.copyWith(fontWeight: FontWeight.w600, color: color),
-                overflow: TextOverflow.ellipsis),
-          ],
-        ),
-      ),
-    );
   }
 }
 
