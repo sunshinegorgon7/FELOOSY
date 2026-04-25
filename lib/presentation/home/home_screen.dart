@@ -9,6 +9,7 @@ import '../../domain/entities/budget_summary.dart';
 import '../../providers/budget_summary_provider.dart';
 import '../../providers/categories_provider.dart';
 import '../../providers/transactions_provider.dart';
+import '../settings/settings_screen.dart';
 import '../transactions/widgets/transaction_tile.dart';
 import 'widgets/spending_pie_chart.dart';
 
@@ -35,6 +36,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           'FELOOSY',
           style: TextStyle(fontWeight: FontWeight.w700, letterSpacing: 1.5),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => _openSettings(context),
+          ),
+        ],
       ),
       body: Stack(
         children: [
@@ -213,11 +220,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 if (item is _DayGroup) {
                   final isExpanded =
                       _expandedDates.contains(item.label);
-                  final isPos = item.dayNet >= 0;
-                  final sign = isPos ? '+' : '−';
-                  final dayColor = isPos
-                      ? Colors.green.shade600
-                      : Colors.red.shade400;
+                  final sign = item.dayNet >= 0 ? '+' : '−';
                   return InkWell(
                     onTap: () => setState(() {
                       if (isExpanded) {
@@ -248,7 +251,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           Text(
                             '$sign${summary.formatAmount(item.dayNet.abs())}',
                             style: tt.labelMedium?.copyWith(
-                              color: dayColor,
+                              color: cs.onSurface,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -294,6 +297,51 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
         const SliverToBoxAdapter(child: SizedBox(height: 96)),
       ],
+    );
+  }
+
+  void _openSettings(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      barrierColor: Colors.black54,
+      builder: (ctx) {
+        final topPad = MediaQuery.paddingOf(context).top;
+        final botPad = MediaQuery.paddingOf(context).bottom;
+        return Dialog(
+          insetPadding: EdgeInsets.fromLTRB(20, topPad + 16, 20, botPad + 16),
+          clipBehavior: Clip.antiAlias,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(20)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 8, 0),
+                child: Row(
+                  children: [
+                    Text(
+                      'Settings',
+                      style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.of(ctx).pop(),
+                    ),
+                  ],
+                ),
+              ),
+              Divider(
+                  height: 1,
+                  color: Theme.of(ctx).colorScheme.outlineVariant),
+              const Expanded(child: SettingsScreen(isModal: true)),
+            ],
+          ),
+        );
+      },
     );
   }
 

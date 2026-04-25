@@ -26,7 +26,7 @@ class DatabaseHelper {
     final dbPath = p.join(docDir.path, AppFlavor.databaseName);
     return openDatabase(
       dbPath,
-      version: 2,
+      version: 3,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -104,6 +104,12 @@ class DatabaseHelper {
     if (oldVersion < 2) {
       await db.execute(
         'ALTER TABLE app_settings ADD COLUMN default_monthly_budget REAL NOT NULL DEFAULT 0',
+      );
+    }
+    if (oldVersion < 3) {
+      // Deactivate the built-in "Other" catch-all category
+      await db.execute(
+        "UPDATE categories SET is_active = 0 WHERE name = 'Other' AND is_custom = 0",
       );
     }
   }

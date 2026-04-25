@@ -22,7 +22,9 @@ class CategoriesScreen extends ConsumerWidget {
           }
           final sorted = [...cats]
             ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+          final bottomPad = MediaQuery.paddingOf(context).bottom;
           return ReorderableListView.builder(
+            padding: EdgeInsets.only(bottom: bottomPad + 80),
             itemCount: sorted.length,
             onReorder: (oldIndex, newIndex) {
               if (newIndex > oldIndex) newIndex--;

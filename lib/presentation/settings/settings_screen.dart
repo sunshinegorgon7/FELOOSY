@@ -9,29 +9,47 @@ import '../../data/models/app_settings.dart';
 import '../../providers/settings_provider.dart';
 
 class SettingsScreen extends ConsumerWidget {
-  const SettingsScreen({super.key});
+  final bool isModal;
+  const SettingsScreen({super.key, this.isModal = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settingsAsync = ref.watch(settingsProvider);
 
+    final body = settingsAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('Error: $e')),
+      data: (settings) =>
+          _SettingsBody(settings: settings, isModal: isModal),
+    );
+
+    if (isModal) return body;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
-      body: settingsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
-        data: (settings) => _SettingsBody(settings: settings),
-      ),
+      body: body,
     );
   }
 }
 
 class _SettingsBody extends ConsumerWidget {
   final AppSettings settings;
-  const _SettingsBody({required this.settings});
+  final bool isModal;
+  const _SettingsBody({required this.settings, this.isModal = false});
 
   void _save(WidgetRef ref, AppSettings updated) {
     ref.read(settingsProvider.notifier).saveSettings(updated);
+  }
+
+  void _navigateCategories(BuildContext context) {
+    if (isModal) {
+      Navigator.of(context).pop();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted) context.push('/categories');
+      });
+    } else {
+      context.push('/categories');
+    }
   }
 
   @override
@@ -120,7 +138,7 @@ class _SettingsBody extends ConsumerWidget {
           title: const Text('Manage categories'),
           subtitle: const Text('Edit, add or hide spending categories'),
           trailing: const Icon(Icons.chevron_right),
-          onTap: () => context.push('/categories'),
+          onTap: () => _navigateCategories(context),
         ),
 
         // ── About ────────────────────────────────────────────────────────

@@ -29,14 +29,12 @@ final appRouter = GoRouter(
             builder: (context, state) => const BudgetScreen(),
           ),
         ]),
-
-        StatefulShellBranch(routes: [
-          GoRoute(
-            path: '/settings',
-            builder: (context, state) => const SettingsScreen(),
-          ),
-        ]),
       ],
+    ),
+
+    GoRoute(
+      path: '/settings',
+      builder: (context, state) => const SettingsScreen(),
     ),
 
     GoRoute(
@@ -108,11 +106,6 @@ class ScaffoldWithNavBar extends StatelessWidget {
             icon: Icon(Icons.calendar_month_outlined),
             selectedIcon: Icon(Icons.calendar_month),
             label: 'Budget',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.settings_outlined),
-            selectedIcon: Icon(Icons.settings),
-            label: 'Settings',
           ),
         ],
       ),

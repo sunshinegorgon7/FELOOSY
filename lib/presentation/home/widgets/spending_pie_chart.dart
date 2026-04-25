@@ -149,23 +149,13 @@ class SpendingPieChart extends StatelessWidget {
               ),
 
               // Total spent in center
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    summary.formatAmount(total),
-                    style: tt.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: spentColor,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  Text(
-                    'spent',
-                    style: tt.labelSmall
-                        ?.copyWith(color: cs.onSurfaceVariant),
-                  ),
-                ],
+              Text(
+                summary.formatAmount(total),
+                style: tt.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: spentColor,
+                ),
+                textAlign: TextAlign.center,
               ),
 
               // Category icons on slices
