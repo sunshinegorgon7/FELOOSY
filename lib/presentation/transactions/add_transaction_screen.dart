@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
@@ -133,21 +132,23 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   Widget build(BuildContext context) {
     final isExpense = _type == TransactionType.expense;
     final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
     final settingsAsync = ref.watch(settingsProvider);
     final symbol =
         settingsAsync.whenOrNull(data: (s) => s.currencySymbol) ?? 'AED';
     final mostUsedUuids =
         ref.watch(mostUsedCategoryUuidsProvider).valueOrNull ?? [];
 
-    final titlePrefix = _isEditing ? 'Edit' : 'Add';
+    final amountColor =
+        isExpense ? Colors.red.shade400 : Colors.green.shade500;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isExpense ? '$titlePrefix Expense' : '$titlePrefix Income'),
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => context.pop(),
         ),
+        title: Text(_isEditing ? 'Edit Transaction' : 'New Transaction'),
         actions: [
           _saving
               ? const Padding(
@@ -177,124 +178,186 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
         top: false,
         child: Form(
           key: _formKey,
-          child: ListView(
-            padding: const EdgeInsets.all(16),
+          child: Column(
             children: [
-              // Date
-              InkWell(
-                onTap: _pickDate,
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 14),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: cs.outline),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.calendar_today_outlined,
-                          size: 18, color: cs.primary),
-                      const Gap(10),
-                      Text(_formatDate(_date),
-                          style: Theme.of(context).textTheme.bodyLarge),
-                      const Spacer(),
-                      Icon(Icons.chevron_right,
-                          color: cs.onSurfaceVariant),
-                    ],
-                  ),
-                ),
-              ),
-              const Gap(16),
-
-              // Amount
-              TextFormField(
-                controller: _amountController,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[\d.]')),
-                ],
-                style: const TextStyle(
-                    fontSize: 32, fontWeight: FontWeight.w600),
-                textAlign: TextAlign.center,
-                decoration: InputDecoration(
-                  labelText: 'Amount',
-                  prefixText: '$symbol  ',
-                  prefixStyle: TextStyle(
-                    fontSize: 20,
-                    color: cs.onSurfaceVariant,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  border: const OutlineInputBorder(),
-                  hintText: '0.00',
-                ),
-                validator: (v) {
-                  if (v == null || v.isEmpty) return 'Enter an amount';
-                  final n = double.tryParse(v.replaceAll(',', ''));
-                  if (n == null || n <= 0) return 'Enter a valid amount';
-                  return null;
-                },
-              ),
-              const Gap(16),
-
-              // Description
-              _DescriptionAutocomplete(
-                initialDescription: widget.initialTransaction?.description,
-                onControllerReady: (c) {
-                  _descFieldController = c;
-                  if (!_descInitialized &&
-                      widget.initialTransaction != null) {
-                    _descInitialized = true;
-                    c.text = widget.initialTransaction!.description;
-                    c.selection = TextSelection.collapsed(
-                        offset: c.text.length);
-                  }
-                },
-                onSuggestionSelected: (suggestion) {
-                  setState(
-                      () => _selectedCategoryUuid = suggestion.categoryUuid);
-                },
-              ),
-              const Gap(24),
-
-              // Category header with New button
-              Row(
-                children: [
-                  Text('Category',
-                      style: Theme.of(context).textTheme.titleSmall),
-                  const Spacer(),
-                  TextButton.icon(
-                    icon: const Icon(Icons.add, size: 14),
-                    label: const Text('New'),
-                    onPressed: () => context.push('/categories/edit'),
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      visualDensity: VisualDensity.compact,
+              // ── Fixed top: type toggle + date + amount hero ──────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                child: Column(
+                  children: [
+                    // Type toggle + date chip row
+                    Row(
+                      children: [
+                        _TypeToggle(
+                          isExpense: isExpense,
+                          onExpense: () => setState(
+                              () => _type = TransactionType.expense),
+                          onIncome: () => setState(
+                              () => _type = TransactionType.income),
+                        ),
+                        const Spacer(),
+                        GestureDetector(
+                          onTap: _pickDate,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 7),
+                            decoration: BoxDecoration(
+                              color: cs.surfaceContainerLow,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.calendar_today_outlined,
+                                    size: 13,
+                                    color: cs.onSurfaceVariant),
+                                const SizedBox(width: 6),
+                                Text(
+                                  _formatDateShort(_date),
+                                  style: tt.labelMedium?.copyWith(
+                                      color: cs.onSurfaceVariant),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 16),
+
+                    // Amount hero input
+                    TextFormField(
+                      controller: _amountController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(
+                            RegExp(r'[\d.]')),
+                      ],
+                      autofocus: !_isEditing,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 52,
+                        fontWeight: FontWeight.w300,
+                        color: amountColor,
+                        letterSpacing: -1,
+                        height: 1.1,
+                      ),
+                      decoration: InputDecoration(
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        errorBorder: InputBorder.none,
+                        focusedErrorBorder: InputBorder.none,
+                        hintText: '0.00',
+                        hintStyle: TextStyle(
+                          fontSize: 52,
+                          fontWeight: FontWeight.w300,
+                          color: cs.onSurface.withValues(alpha: 0.18),
+                          letterSpacing: -1,
+                          height: 1.1,
+                        ),
+                        prefixText: '$symbol  ',
+                        prefixStyle: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w300,
+                          color: amountColor.withValues(alpha: 0.7),
+                        ),
+                        isDense: true,
+                        contentPadding: EdgeInsets.zero,
+                        errorStyle: const TextStyle(height: 0),
+                      ),
+                      validator: (v) {
+                        if (v == null || v.isEmpty) return '';
+                        final n =
+                            double.tryParse(v.replaceAll(',', ''));
+                        if (n == null || n <= 0) return '';
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 4),
+                  ],
+                ),
               ),
-              const Gap(8),
-              ref.watch(categoriesProvider).when(
-                    loading: () =>
-                        const Center(child: CircularProgressIndicator()),
-                    error: (e, _) => Text('$e'),
-                    data: (cats) {
-                      final active = (cats.where((c) => c.isActive).toList()
-                            ..sort((a, b) =>
-                                a.sortOrder.compareTo(b.sortOrder)))
-                          .toList();
-                      return _CategoryGrid(
-                        categories: active,
-                        selected: _selectedCategoryUuid,
-                        onSelect: (uuid) =>
-                            setState(() => _selectedCategoryUuid = uuid),
-                        mostUsedUuids: mostUsedUuids,
-                      );
-                    },
-                  ),
-              const Gap(32),
+
+              Divider(
+                height: 1,
+                indent: 20,
+                endIndent: 20,
+                color: cs.outlineVariant,
+              ),
+
+              // ── Scrollable bottom: description + categories ──────────
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  children: [
+                    // Description
+                    _DescriptionAutocomplete(
+                      initialDescription:
+                          widget.initialTransaction?.description,
+                      onControllerReady: (c) {
+                        _descFieldController = c;
+                        if (!_descInitialized &&
+                            widget.initialTransaction != null) {
+                          _descInitialized = true;
+                          c.text =
+                              widget.initialTransaction!.description;
+                          c.selection = TextSelection.collapsed(
+                              offset: c.text.length);
+                        }
+                      },
+                      onSuggestionSelected: (suggestion) {
+                        setState(() => _selectedCategoryUuid =
+                            suggestion.categoryUuid);
+                      },
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Category header
+                    Row(
+                      children: [
+                        Text('Category',
+                            style: tt.titleSmall),
+                        const Spacer(),
+                        TextButton.icon(
+                          icon: const Icon(Icons.add, size: 14),
+                          label: const Text('New'),
+                          onPressed: () =>
+                              context.push('/categories/edit'),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8),
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    ref.watch(categoriesProvider).when(
+                          loading: () => const Center(
+                              child: CircularProgressIndicator()),
+                          error: (e, _) => Text('$e'),
+                          data: (cats) {
+                            final active =
+                                (cats.where((c) => c.isActive).toList()
+                                      ..sort((a, b) => a.sortOrder
+                                          .compareTo(b.sortOrder)))
+                                    .toList();
+                            return _CategoryGrid(
+                              categories: active,
+                              selected: _selectedCategoryUuid,
+                              onSelect: (uuid) => setState(
+                                  () => _selectedCategoryUuid = uuid),
+                              mostUsedUuids: mostUsedUuids,
+                            );
+                          },
+                        ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -302,15 +365,99 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     );
   }
 
-  String _formatDate(DateTime date) {
+  String _formatDateShort(DateTime date) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final d = DateTime(date.year, date.month, date.day);
-    if (d == today) return 'Today, ${DateFormat('MMMM d').format(date)}';
-    if (d == today.subtract(const Duration(days: 1))) {
-      return 'Yesterday, ${DateFormat('MMMM d').format(date)}';
-    }
-    return DateFormat('EEEE, MMMM d, y').format(date);
+    if (d == today) return 'Today';
+    if (d == today.subtract(const Duration(days: 1))) return 'Yesterday';
+    return DateFormat('MMM d').format(date);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Type toggle chips
+// ---------------------------------------------------------------------------
+
+class _TypeToggle extends StatelessWidget {
+  final bool isExpense;
+  final VoidCallback onExpense;
+  final VoidCallback onIncome;
+
+  const _TypeToggle({
+    required this.isExpense,
+    required this.onExpense,
+    required this.onIncome,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _Chip(
+          label: 'Expense',
+          selected: isExpense,
+          selectedColor: Colors.red.shade400,
+          onTap: onExpense,
+        ),
+        const SizedBox(width: 8),
+        _Chip(
+          label: 'Income',
+          selected: !isExpense,
+          selectedColor: Colors.green.shade500,
+          onTap: onIncome,
+        ),
+      ],
+    );
+  }
+}
+
+class _Chip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final Color selectedColor;
+  final VoidCallback onTap;
+
+  const _Chip({
+    required this.label,
+    required this.selected,
+    required this.selectedColor,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        decoration: BoxDecoration(
+          color: selected
+              ? selectedColor.withValues(alpha: 0.15)
+              : cs.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected
+                ? selectedColor.withValues(alpha: 0.6)
+                : Colors.transparent,
+            width: 1.5,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight:
+                selected ? FontWeight.w600 : FontWeight.normal,
+            color: selected ? selectedColor : cs.onSurfaceVariant,
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -350,7 +497,7 @@ class _DescriptionAutocomplete extends ConsumerWidget {
           alignment: Alignment.topLeft,
           child: Material(
             elevation: 4,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(12),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxHeight: 240),
               child: ListView.separated(
@@ -385,10 +532,11 @@ class _DescriptionAutocomplete extends ConsumerWidget {
                             child: Icon(iconData,
                                 color: iconColor, size: 14),
                           ),
-                          const Gap(10),
+                          const SizedBox(width: 10),
                           Expanded(
                             child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                              crossAxisAlignment:
+                                  CrossAxisAlignment.start,
                               children: [
                                 Text(opt.description,
                                     style: const TextStyle(
@@ -420,10 +568,26 @@ class _DescriptionAutocomplete extends ConsumerWidget {
           controller: controller,
           focusNode: focusNode,
           textCapitalization: TextCapitalization.sentences,
-          decoration: const InputDecoration(
-            labelText: 'Description',
-            border: OutlineInputBorder(),
-            hintText: 'e.g. Lunch at the office',
+          decoration: InputDecoration(
+            hintText: 'Description',
+            filled: true,
+            fillColor: cs.surfaceContainerLow,
+            prefixIcon:
+                Icon(Icons.edit_outlined, size: 18, color: cs.onSurfaceVariant),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: cs.primary, width: 2),
+            ),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           ),
         );
       },

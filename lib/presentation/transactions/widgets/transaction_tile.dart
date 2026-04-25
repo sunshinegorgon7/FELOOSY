@@ -9,12 +9,14 @@ class TransactionTile extends ConsumerWidget {
   final Transaction transaction;
   final Category? category;
   final VoidCallback? onTap;
+  final bool compact;
 
   const TransactionTile({
     super.key,
     required this.transaction,
     required this.category,
     this.onTap,
+    this.compact = false,
   });
 
   @override
@@ -40,6 +42,36 @@ class TransactionTile extends ConsumerWidget {
         ? IconData(category!.iconCodePoint,
             fontFamily: category!.iconFontFamily)
         : Icons.receipt_outlined;
+
+    if (compact) {
+      return ListTile(
+        onTap: onTap,
+        tileColor: tileColor,
+        dense: true,
+        contentPadding:
+            const EdgeInsets.only(left: 32, right: 16, top: 0, bottom: 0),
+        minLeadingWidth: 32,
+        leading: CircleAvatar(
+          radius: 14,
+          backgroundColor: iconColor.withValues(alpha: 0.15),
+          child: Icon(iconData, color: iconColor, size: 14),
+        ),
+        title: Text(
+          transaction.description,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontSize: 13),
+        ),
+        trailing: Text(
+          amountText,
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            color: amountColor,
+            fontSize: 13,
+          ),
+        ),
+      );
+    }
 
     return ListTile(
       onTap: onTap,

@@ -286,6 +286,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   child: TransactionTile(
                     transaction: tx,
                     category: cat,
+                    compact: true,
                     onTap: () =>
                         context.push('/transactions/edit', extra: tx),
                   ),
