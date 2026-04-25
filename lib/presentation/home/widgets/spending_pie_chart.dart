@@ -22,8 +22,8 @@ class SpendingPieChart extends StatelessWidget {
     required this.onCategoryToggle,
   });
 
-  static const double _startDeg = 270.0; // 12 o'clock
-  static const double _minFraction = 0.04; // skip icon below 4%
+  static const double _startDeg = 270.0;
+  static const double _minFraction = 0.04;
   static const double _iconSize = 28.0;
 
   @override
@@ -111,7 +111,7 @@ class SpendingPieChart extends StatelessWidget {
         angle += sweep;
       }
 
-      final remainColor = summary.isOverBudget
+      final spentColor = summary.isOverBudget
           ? Colors.red
           : summary.spentPercentage > 0.8
               ? Colors.orange
@@ -148,24 +148,23 @@ class SpendingPieChart extends StatelessWidget {
                 ),
               ),
 
-              // Remaining in center
+              // Total spent in center
               Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    summary.formatAmount(summary.remaining),
+                    summary.formatAmount(total),
                     style: tt.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: remainColor,
+                      color: spentColor,
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  if (summary.budgetAmount > 0)
-                    Text(
-                      'of ${summary.formatAmount(summary.budgetAmount)}',
-                      style: tt.labelSmall
-                          ?.copyWith(color: cs.onSurfaceVariant),
-                    ),
+                  Text(
+                    'spent',
+                    style: tt.labelSmall
+                        ?.copyWith(color: cs.onSurfaceVariant),
+                  ),
                 ],
               ),
 
@@ -194,7 +193,8 @@ class SpendingPieChart extends StatelessWidget {
                           boxShadow: [
                             BoxShadow(
                               color: Color(o.category.colorValue)
-                                  .withValues(alpha: o.isSel ? 0.5 : 0.25),
+                                  .withValues(
+                                      alpha: o.isSel ? 0.5 : 0.25),
                               blurRadius: o.isSel ? 6 : 2,
                             ),
                           ],

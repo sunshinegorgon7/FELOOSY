@@ -21,6 +21,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   String? _selectedCategoryUuid;
+  final Set<String> _expandedDates = {};
 
   @override
   Widget build(BuildContext context) {
@@ -100,7 +101,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
 
-    // Only active categories for display purposes
     final activeCats = cats.where((c) => c.isActive).toList();
 
     final filteredTxs = _selectedCategoryUuid == null
@@ -113,16 +113,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ? cats.where((c) => c.uuid == _selectedCategoryUuid).firstOrNull
         : null;
 
-    final grouped = _groupByDate(filteredTxs);
+    final groups = _groupByDate(filteredTxs);
 
-    // Period totals for the section header
-    double periodExpenses = 0;
-    double periodIncome = 0;
-    for (final tx in filteredTxs) {
-      if (tx.type == TransactionType.expense) {
-        periodExpenses += tx.amount;
-      } else {
-        periodIncome += tx.amount;
+    // Flatten groups based on expanded state (collapsed by default)
+    final flatItems = <Object>[];
+    for (final g in groups) {
+      flatItems.add(g);
+      if (_expandedDates.contains(g.label)) {
+        flatItems.addAll(g.txs);
       }
     }
 
@@ -167,17 +165,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ),
 
-        // Transactions section header with period totals
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 20, 16, 4),
-            child: Row(
-              children: [
-                Text(
-                  selectedCat != null ? selectedCat.name : 'Transactions',
-                  style: tt.titleSmall,
-                ),
-                if (selectedCat != null) ...[
+        // Category filter label (only when a category is selected)
+        if (selectedCat != null)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 4),
+              child: Row(
+                children: [
+                  Text(selectedCat.name, style: tt.titleSmall),
                   const SizedBox(width: 4),
                   GestureDetector(
                     onTap: () =>
@@ -186,33 +181,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         size: 16, color: cs.onSurfaceVariant),
                   ),
                 ],
-                const Spacer(),
-                if (filteredTxs.isNotEmpty) ...[
-                  if (periodExpenses > 0)
-                    Text(
-                      '−${summary.formatAmount(periodExpenses)}',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.red.shade400,
-                      ),
-                    ),
-                  if (periodExpenses > 0 && periodIncome > 0)
-                    const SizedBox(width: 6),
-                  if (periodIncome > 0)
-                    Text(
-                      '+${summary.formatAmount(periodIncome)}',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.green.shade600,
-                      ),
-                    ),
-                ],
-              ],
+              ),
             ),
-          ),
-        ),
+          )
+        else
+          const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
         if (filteredTxs.isEmpty)
           SliverFillRemaining(
@@ -235,36 +208,60 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           SliverList(
             delegate: SliverChildBuilderDelegate(
               (context, index) {
-                final item = grouped[index];
-                if (item is _DateHeader) {
+                final item = flatItems[index];
+
+                if (item is _DayGroup) {
+                  final isExpanded =
+                      _expandedDates.contains(item.label);
                   final isPos = item.dayNet >= 0;
                   final sign = isPos ? '+' : '−';
-                  final dayColor =
-                      isPos ? Colors.green.shade600 : Colors.red.shade400;
-                  return Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                    child: Row(
-                      children: [
-                        Text(
-                          item.label,
-                          style: tt.labelMedium
-                              ?.copyWith(color: cs.onSurfaceVariant),
-                        ),
-                        const Spacer(),
-                        Text(
-                          '$sign${summary.formatAmount(item.dayNet.abs())}',
-                          style: tt.labelMedium?.copyWith(
-                            color: dayColor,
-                            fontWeight: FontWeight.w600,
+                  final dayColor = isPos
+                      ? Colors.green.shade600
+                      : Colors.red.shade400;
+                  return InkWell(
+                    onTap: () => setState(() {
+                      if (isExpanded) {
+                        _expandedDates.remove(item.label);
+                      } else {
+                        _expandedDates.add(item.label);
+                      }
+                    }),
+                    child: Padding(
+                      padding:
+                          const EdgeInsets.fromLTRB(16, 10, 16, 4),
+                      child: Row(
+                        children: [
+                          Icon(
+                            isExpanded
+                                ? Icons.expand_more
+                                : Icons.chevron_right,
+                            size: 16,
+                            color: cs.onSurfaceVariant,
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 4),
+                          Text(
+                            item.label,
+                            style: tt.labelMedium
+                                ?.copyWith(color: cs.onSurfaceVariant),
+                          ),
+                          const Spacer(),
+                          Text(
+                            '$sign${summary.formatAmount(item.dayNet.abs())}',
+                            style: tt.labelMedium?.copyWith(
+                              color: dayColor,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 }
-                final tx = (item as _TxEntry).tx;
-                final cat =
-                    cats.where((c) => c.uuid == tx.categoryUuid).firstOrNull;
+
+                final tx = item as Transaction;
+                final cat = cats
+                    .where((c) => c.uuid == tx.categoryUuid)
+                    .firstOrNull;
                 return Slidable(
                   key: ValueKey(tx.uuid),
                   endActionPane: ActionPane(
@@ -272,7 +269,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     extentRatio: 0.25,
                     children: [
                       SlidableAction(
-                        onPressed: (_) => _confirmDelete(context, tx),
+                        onPressed: (_) =>
+                            _confirmDelete(context, tx),
                         backgroundColor: Colors.red,
                         foregroundColor: Colors.white,
                         icon: Icons.delete_outline,
@@ -290,7 +288,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 );
               },
-              childCount: grouped.length,
+              childCount: flatItems.length,
             ),
           ),
 
@@ -299,7 +297,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  List<Object> _groupByDate(List<Transaction> txs) {
+  List<_DayGroup> _groupByDate(List<Transaction> txs) {
     if (txs.isEmpty) return [];
 
     final groupTxs = <String, List<Transaction>>{};
@@ -314,16 +312,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       groupTxs[label]!.add(tx);
     }
 
-    final result = <Object>[];
-    for (final label in groupOrder) {
+    return groupOrder.map((label) {
       final dayTxs = groupTxs[label]!;
-      final dayNet = dayTxs.fold(0.0, (sum, tx) => tx.type == TransactionType.income
-          ? sum + tx.amount
-          : sum - tx.amount);
-      result.add(_DateHeader(label, dayNet));
-      result.addAll(dayTxs.map(_TxEntry.new));
-    }
-    return result;
+      final dayNet = dayTxs.fold(
+          0.0,
+          (sum, tx) => tx.type == TransactionType.income
+              ? sum + tx.amount
+              : sum - tx.amount);
+      return _DayGroup(label, dayNet, dayTxs);
+    }).toList();
   }
 
   String _dateLabel(DateTime date) {
@@ -361,13 +358,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 }
 
-class _DateHeader {
+class _DayGroup {
   final String label;
   final double dayNet;
-  _DateHeader(this.label, this.dayNet);
-}
-
-class _TxEntry {
-  final Transaction tx;
-  _TxEntry(this.tx);
+  final List<Transaction> txs;
+  _DayGroup(this.label, this.dayNet, this.txs);
 }

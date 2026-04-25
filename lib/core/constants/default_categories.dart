@@ -26,8 +26,6 @@ List<Category> buildDefaultCategories() {
     ('Salary', Icons.account_balance_wallet, const Color(0xFF43A047)),
     ('Cashback', Icons.card_giftcard, const Color(0xFF8BC34A)),
     ('Refund', Icons.replay, const Color(0xFF009688)),
-    // Catch-all
-    ('Other', Icons.more_horiz, const Color(0xFF9E9E9E)),
   ];
 
   return data.indexed.map((entry) {

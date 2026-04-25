@@ -136,6 +136,8 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     final settingsAsync = ref.watch(settingsProvider);
     final symbol =
         settingsAsync.whenOrNull(data: (s) => s.currencySymbol) ?? 'AED';
+    final mostUsedUuids =
+        ref.watch(mostUsedCategoryUuidsProvider).valueOrNull ?? [];
 
     final titlePrefix = _isEditing ? 'Edit' : 'Add';
 
@@ -256,20 +258,41 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
               ),
               const Gap(24),
 
-              // Category
-              Text('Category',
-                  style: Theme.of(context).textTheme.titleSmall),
+              // Category header with New button
+              Row(
+                children: [
+                  Text('Category',
+                      style: Theme.of(context).textTheme.titleSmall),
+                  const Spacer(),
+                  TextButton.icon(
+                    icon: const Icon(Icons.add, size: 14),
+                    label: const Text('New'),
+                    onPressed: () => context.push('/categories/edit'),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
+                ],
+              ),
               const Gap(8),
               ref.watch(categoriesProvider).when(
                     loading: () =>
                         const Center(child: CircularProgressIndicator()),
                     error: (e, _) => Text('$e'),
-                    data: (cats) => _CategoryGrid(
-                      categories: cats.where((c) => c.isActive).toList(),
-                      selected: _selectedCategoryUuid,
-                      onSelect: (uuid) =>
-                          setState(() => _selectedCategoryUuid = uuid),
-                    ),
+                    data: (cats) {
+                      final active = (cats.where((c) => c.isActive).toList()
+                            ..sort((a, b) =>
+                                a.sortOrder.compareTo(b.sortOrder)))
+                          .toList();
+                      return _CategoryGrid(
+                        categories: active,
+                        selected: _selectedCategoryUuid,
+                        onSelect: (uuid) =>
+                            setState(() => _selectedCategoryUuid = uuid),
+                        mostUsedUuids: mostUsedUuids,
+                      );
+                    },
                   ),
               const Gap(32),
             ],
@@ -409,85 +432,141 @@ class _DescriptionAutocomplete extends ConsumerWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Uniform category grid
+// Category grid with optional frequent row
 // ---------------------------------------------------------------------------
 
 class _CategoryGrid extends StatelessWidget {
   final List<Category> categories;
   final String? selected;
   final ValueChanged<String> onSelect;
+  final List<String> mostUsedUuids;
 
   const _CategoryGrid({
     required this.categories,
     required this.selected,
     required this.onSelect,
+    this.mostUsedUuids = const [],
   });
 
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 4,
-        crossAxisSpacing: 8,
-        mainAxisSpacing: 8,
-        childAspectRatio: 0.9,
-      ),
-      itemCount: categories.length,
-      itemBuilder: (context, index) {
-        final cat = categories[index];
-        final isSelected = cat.uuid == selected;
-        final color = Color(cat.colorValue);
-        return GestureDetector(
-          onTap: () => onSelect(cat.uuid),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? color
-                  : color.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isSelected
-                    ? color
-                    : color.withValues(alpha: 0.3),
-                width: isSelected ? 1.5 : 1,
-              ),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+
+    final mostUsed = mostUsedUuids
+        .map((uuid) =>
+            categories.where((c) => c.uuid == uuid).firstOrNull)
+        .whereType<Category>()
+        .take(4)
+        .toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (mostUsed.isNotEmpty) ...[
+          Text('Frequent',
+              style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant)),
+          const SizedBox(height: 6),
+          SizedBox(
+            height: 76,
+            child: Row(
               children: [
-                Icon(
-                  IconData(cat.iconCodePoint,
-                      fontFamily: cat.iconFontFamily),
-                  size: 20,
-                  color: isSelected ? Colors.white : color,
-                ),
-                const SizedBox(height: 4),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Text(
-                    cat.name,
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: isSelected
-                          ? Colors.white
-                          : Theme.of(context).colorScheme.onSurface,
-                      fontWeight: isSelected
-                          ? FontWeight.w600
-                          : FontWeight.normal,
+                for (int i = 0; i < mostUsed.length; i++) ...[
+                  if (i > 0) const SizedBox(width: 8),
+                  Expanded(
+                    child: _CategoryCell(
+                      cat: mostUsed[i],
+                      isSelected: mostUsed[i].uuid == selected,
+                      onSelect: onSelect,
                     ),
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
+                ],
               ],
             ),
           ),
-        );
-      },
+          const SizedBox(height: 12),
+          Divider(height: 1, color: cs.outlineVariant),
+          const SizedBox(height: 12),
+        ],
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 4,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+            childAspectRatio: 0.9,
+          ),
+          itemCount: categories.length,
+          itemBuilder: (context, index) {
+            final cat = categories[index];
+            return _CategoryCell(
+              cat: cat,
+              isSelected: cat.uuid == selected,
+              onSelect: onSelect,
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _CategoryCell extends StatelessWidget {
+  final Category cat;
+  final bool isSelected;
+  final ValueChanged<String> onSelect;
+
+  const _CategoryCell({
+    required this.cat,
+    required this.isSelected,
+    required this.onSelect,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Color(cat.colorValue);
+    return GestureDetector(
+      onTap: () => onSelect(cat.uuid),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        decoration: BoxDecoration(
+          color: isSelected ? color : color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? color : color.withValues(alpha: 0.3),
+            width: isSelected ? 1.5 : 1,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              IconData(cat.iconCodePoint, fontFamily: cat.iconFontFamily),
+              size: 20,
+              color: isSelected ? Colors.white : color,
+            ),
+            const SizedBox(height: 4),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Text(
+                cat.name,
+                style: TextStyle(
+                  fontSize: 10,
+                  color: isSelected
+                      ? Colors.white
+                      : Theme.of(context).colorScheme.onSurface,
+                  fontWeight:
+                      isSelected ? FontWeight.w600 : FontWeight.normal,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

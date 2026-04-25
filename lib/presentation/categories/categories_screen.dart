@@ -20,10 +20,21 @@ class CategoriesScreen extends ConsumerWidget {
           if (cats.isEmpty) {
             return const Center(child: Text('No categories found.'));
           }
-          return ListView.builder(
-            itemCount: cats.length,
-            itemBuilder: (context, index) =>
-                _CategoryTile(category: cats[index]),
+          final sorted = [...cats]
+            ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+          return ReorderableListView.builder(
+            itemCount: sorted.length,
+            onReorder: (oldIndex, newIndex) {
+              if (newIndex > oldIndex) newIndex--;
+              ref
+                  .read(categoriesProvider.notifier)
+                  .reorder(sorted, oldIndex, newIndex);
+            },
+            buildDefaultDragHandles: true,
+            itemBuilder: (context, index) => _CategoryTile(
+              key: ValueKey(sorted[index].uuid),
+              category: sorted[index],
+            ),
           );
         },
       ),
@@ -37,7 +48,7 @@ class CategoriesScreen extends ConsumerWidget {
 
 class _CategoryTile extends ConsumerWidget {
   final Category category;
-  const _CategoryTile({required this.category});
+  const _CategoryTile({super.key, required this.category});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

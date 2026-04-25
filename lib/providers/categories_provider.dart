@@ -30,6 +30,20 @@ class CategoriesNotifier extends AsyncNotifier<List<Category>> {
     if (cat != null) await repo.update(cat.copyWith(isActive: active));
     ref.invalidateSelf();
   }
+
+  Future<void> reorder(
+      List<Category> cats, int oldIndex, int newIndex) async {
+    final repo = ref.read(categoryRepositoryProvider);
+    final list = [...cats];
+    final item = list.removeAt(oldIndex);
+    list.insert(newIndex, item);
+    for (int i = 0; i < list.length; i++) {
+      if (list[i].sortOrder != i) {
+        await repo.update(list[i].copyWith(sortOrder: i));
+      }
+    }
+    ref.invalidateSelf();
+  }
 }
 
 final categoriesProvider =

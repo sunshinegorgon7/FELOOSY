@@ -30,3 +30,7 @@ class TransactionsNotifier extends AsyncNotifier<List<Transaction>> {
 final transactionsProvider =
     AsyncNotifierProvider<TransactionsNotifier, List<Transaction>>(
         TransactionsNotifier.new);
+
+final mostUsedCategoryUuidsProvider = FutureProvider<List<String>>((ref) {
+  return ref.watch(transactionRepositoryProvider).getMostUsedCategoryUuids();
+});

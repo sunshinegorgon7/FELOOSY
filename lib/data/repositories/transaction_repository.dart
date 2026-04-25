@@ -78,8 +78,6 @@ class TransactionRepository {
       String query) async {
     if (query.trim().isEmpty) return [];
     final db = await _db.database;
-    // Group by normalised description so "Farooj" and "farooj" collapse.
-    // Pick the category_uuid from the most recent transaction per description.
     final rows = await db.rawQuery(
       '''
       SELECT description, category_uuid
@@ -97,5 +95,21 @@ class TransactionRepository {
               categoryUuid: r['category_uuid'] as String,
             ))
         .toList();
+  }
+
+  /// Returns category UUIDs ordered by transaction frequency (most used first).
+  Future<List<String>> getMostUsedCategoryUuids({int limit = 4}) async {
+    final db = await _db.database;
+    final rows = await db.rawQuery(
+      '''
+      SELECT category_uuid, COUNT(*) as cnt
+      FROM transactions
+      GROUP BY category_uuid
+      ORDER BY cnt DESC
+      LIMIT ?
+      ''',
+      [limit],
+    );
+    return rows.map((r) => r['category_uuid'] as String).toList();
   }
 }
