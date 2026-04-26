@@ -1,18 +1,27 @@
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
-    show defaultTargetPlatform, kIsWeb, TargetPlatform;
+    show TargetPlatform, defaultTargetPlatform, kIsWeb;
+
 import 'app/app_flavor.dart';
 
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) throw UnsupportedError('Web not supported.');
+
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-        return AppFlavor.isDev ? androidDev : android;
+        if (AppFlavor.isDev) return androidDev;
+        if (AppFlavor.isUat) {
+          throw UnsupportedError(
+            'Android UAT is not configured in Firebase yet. Add com.feloosy.app.uat to Firebase and regenerate google-services.json.',
+          );
+        }
+        return android;
       case TargetPlatform.iOS:
         // TODO: add iOS GoogleService-Info.plist and replace this
         throw UnsupportedError(
-            'iOS not configured yet — add GoogleService-Info.plist.');
+          'iOS not configured yet - add GoogleService-Info.plist.',
+        );
       default:
         throw UnsupportedError('Unsupported platform.');
     }

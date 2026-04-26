@@ -11,11 +11,9 @@ final currentUserProvider = Provider<User?>((ref) {
 });
 
 class GoogleAuthActions {
-  // No serverClientId → Google Play Services returns an accessToken only
-  // (idToken stays null). Firebase Auth accepts accessToken alone and
-  // validates it via Google's tokeninfo endpoint. This avoids
-  // ApiException: 10 which is triggered by serverClientId pointing at an
-  // OAuth client whose consent screen is not yet published.
+  // Keep the Android Google sign-in request minimal here. The usual cause of
+  // ApiException: 10 is Firebase/Google OAuth misconfiguration such as a
+  // package-name or SHA mismatch.
   static final _googleSignIn = GoogleSignIn(
     scopes: ['email', 'profile'],
   );
@@ -32,8 +30,8 @@ class GoogleAuthActions {
 
     final credential = GoogleAuthProvider.credential(
       accessToken: accessToken,
-      // idToken intentionally omitted — requires serverClientId + published
-      // OAuth consent screen, which is not set up yet.
+      // idToken intentionally omitted until a matching server client ID is
+      // wired for the app's Firebase/Google OAuth setup.
     );
     final result =
         await FirebaseAuth.instance.signInWithCredential(credential);
@@ -41,7 +39,9 @@ class GoogleAuthActions {
   }
 
   Future<void> signOut() async {
-    try { await _googleSignIn.disconnect(); } catch (_) {}
+    try {
+      await _googleSignIn.disconnect();
+    } catch (_) {}
     await FirebaseAuth.instance.signOut();
   }
 }
