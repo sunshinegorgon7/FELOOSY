@@ -7,8 +7,10 @@ import 'package:package_info_plus/package_info_plus.dart';
 import '../../core/constants/currencies.dart';
 import '../../data/database/database_helper.dart';
 import '../../data/models/app_settings.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/budget_provider.dart';
 import '../../providers/categories_provider.dart';
+import '../../providers/firebase_sync_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/transactions_provider.dart';
 
@@ -144,6 +146,10 @@ class _SettingsBody extends ConsumerWidget {
           trailing: const Icon(Icons.chevron_right),
           onTap: () => _navigateCategories(context),
         ),
+
+        // ── Account (Firebase) ───────────────────────────────────────────
+        const _SectionHeader('Account'),
+        _AccountTile(isModal: isModal),
 
         // ── About ────────────────────────────────────────────────────────
         const _SectionHeader('About'),
@@ -462,6 +468,92 @@ class _SettingsBody extends ConsumerWidget {
         ],
       ),
     );
+  }
+}
+
+// ── Account tile ─────────────────────────────────────────────────────────────
+
+class _AccountTile extends ConsumerStatefulWidget {
+  final bool isModal;
+  const _AccountTile({this.isModal = false});
+
+  @override
+  ConsumerState<_AccountTile> createState() => _AccountTileState();
+}
+
+class _AccountTileState extends ConsumerState<_AccountTile> {
+  bool _busy = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final user = ref.watch(currentUserProvider);
+    final cs = Theme.of(context).colorScheme;
+
+    if (user != null) {
+      return ListTile(
+        leading: user.photoURL != null
+            ? CircleAvatar(
+                backgroundImage: NetworkImage(user.photoURL!),
+                radius: 18,
+              )
+            : const CircleAvatar(
+                radius: 18,
+                child: Icon(Icons.person_outline, size: 18),
+              ),
+        title: Text(user.displayName ?? 'Signed in',
+            style: const TextStyle(fontWeight: FontWeight.w500)),
+        subtitle: Text(user.email ?? '',
+            style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
+        trailing: _busy
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : TextButton(
+                onPressed: _signOut,
+                child: const Text('Sign out'),
+              ),
+      );
+    }
+
+    return ListTile(
+      leading: const Icon(Icons.account_circle_outlined),
+      title: const Text('Sign in with Google'),
+      subtitle: const Text('Sync your data across devices'),
+      trailing: _busy
+          ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : const Icon(Icons.chevron_right),
+      onTap: _busy ? null : _signIn,
+    );
+  }
+
+  Future<void> _signIn() async {
+    setState(() => _busy = true);
+    try {
+      final user =
+          await ref.read(googleAuthActionsProvider).signIn();
+      if (user != null && mounted) {
+        await ref
+            .read(syncOrchestratorProvider)
+            .onSignIn(user.uid);
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _signOut() async {
+    setState(() => _busy = true);
+    try {
+      await ref.read(googleAuthActionsProvider).signOut();
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 }
 

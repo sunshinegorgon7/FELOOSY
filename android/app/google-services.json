@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "623272973124",
+    "project_id": "feloosy-e13c3",
+    "storage_bucket": "feloosy-e13c3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:623272973124:android:ba7ec69e4cb336976cfd11",
+        "android_client_info": {
+          "package_name": "com.feloosy.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAAqxUDxqX_-nBgZ168DkgsyAd7nL3GLSU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/models/transaction.dart';
 import 'budget_period_provider.dart';
 import 'database_provider.dart';
+import 'firebase_sync_provider.dart';
 
 class TransactionsNotifier extends AsyncNotifier<List<Transaction>> {
   @override
@@ -13,16 +14,19 @@ class TransactionsNotifier extends AsyncNotifier<List<Transaction>> {
 
   Future<void> add(Transaction tx) async {
     await ref.read(transactionRepositoryProvider).insert(tx);
+    ref.read(firebaseSyncProvider)?.syncTransaction(tx);
     ref.invalidateSelf();
   }
 
   Future<void> remove(String uuid) async {
     await ref.read(transactionRepositoryProvider).delete(uuid);
+    ref.read(firebaseSyncProvider)?.deleteTransaction(uuid);
     ref.invalidateSelf();
   }
 
   Future<void> edit(Transaction tx) async {
     await ref.read(transactionRepositoryProvider).save(tx);
+    ref.read(firebaseSyncProvider)?.syncTransaction(tx);
     ref.invalidateSelf();
   }
 }
