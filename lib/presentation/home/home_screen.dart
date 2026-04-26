@@ -80,7 +80,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
           Positioned(
-            bottom: 16,
+            bottom: 16 + MediaQuery.paddingOf(context).bottom,
             left: 16,
             child: FloatingActionButton(
               heroTag: 'income_fab',
@@ -91,7 +91,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
           Positioned(
-            bottom: 16,
+            bottom: 16 + MediaQuery.paddingOf(context).bottom,
             right: 16,
             child: FloatingActionButton(
               heroTag: 'expense_fab',
@@ -428,11 +428,13 @@ class _BudgetBarIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color =
-        IconTheme.of(context).color ?? Theme.of(context).colorScheme.onSurface;
-    return CustomPaint(
-      size: const Size(22, 22),
-      painter: _BudgetBarPainter(color: color),
+    final it = IconTheme.of(context);
+    final color = it.color ?? Theme.of(context).colorScheme.onSurface;
+    final size = it.size ?? 24.0;
+    return SizedBox(
+      width: size,
+      height: size,
+      child: CustomPaint(painter: _BudgetBarPainter(color: color)),
     );
   }
 }
@@ -441,79 +443,75 @@ class _BudgetBarPainter extends CustomPainter {
   final Color color;
   const _BudgetBarPainter({required this.color});
 
+  // Design grid: 24 × 24 units, scaled to actual canvas size.
+  //
+  // Bars:  width=6, gap=2, start x=1
+  //   bar 1: x=1,  height=8  → top at y=14
+  //   bar 2: x=9,  height=13 → top at y=9
+  //   bar 3: x=17, height=18 → top at y=4
+  //   baseline: y=22, corner radius=3
+  //
+  // Arrow: straight line from bar-1 top-center (4, 14) to bar-3 top-center
+  //   (20, 4), extended ~2 units past bar-3, with open arrowhead.
+
   @override
   void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
-    final barW = w * 0.22;
-    final gap = w * 0.10;
-    final baseline = h * 0.92;
-    final rr = Radius.circular(barW * 0.45);
+    final s = size.width / 24.0; // scale factor
 
-    // Three ascending bars
-    final bars = [
-      (x: w * 0.04, bh: h * 0.38),
-      (x: w * 0.04 + barW + gap, bh: h * 0.62),
-      (x: w * 0.04 + (barW + gap) * 2, bh: h * 0.86),
-    ];
-    final alphas = [0.50, 0.72, 1.0];
+    const barW = 6.0;
+    const baseline = 22.0;
+    const cornerR = 3.0;
+    final xs = [1.0, 9.0, 17.0];
+    final hs = [8.0, 13.0, 18.0];
+    final alphas = [0.42, 0.65, 0.90];
 
-    final barPaint = Paint()..style = PaintingStyle.fill;
-    for (int i = 0; i < bars.length; i++) {
-      barPaint.color = color.withValues(alpha: alphas[i]);
+    final fill = Paint()..style = PaintingStyle.fill;
+    for (int i = 0; i < 3; i++) {
+      fill.color = color.withValues(alpha: alphas[i]);
+      final r = Radius.circular(cornerR * s);
       canvas.drawRRect(
         RRect.fromLTRBAndCorners(
-          bars[i].x, baseline - bars[i].bh,
-          bars[i].x + barW, baseline,
-          topLeft: rr, topRight: rr,
+          xs[i] * s, (baseline - hs[i]) * s,
+          (xs[i] + barW) * s, baseline * s,
+          topLeft: r, topRight: r,
         ),
-        barPaint,
+        fill,
       );
     }
 
-    // Trend arrow from bar-1 top → bar-3 top + small extension
-    final p0x = bars[0].x + barW * 0.5;
-    final p0y = baseline - bars[0].bh;
-    final p1x = bars[1].x + barW * 0.5;
-    final p1y = baseline - bars[1].bh;
-    final p2x = bars[2].x + barW * 0.5;
-    final p2y = baseline - bars[2].bh;
+    // Arrow: bar-1 top-center → bar-3 top-center + extension
+    final x1 = (xs[0] + barW / 2) * s; // 4 * s
+    final y1 = (baseline - hs[0]) * s; // 14 * s
+    final x3 = (xs[2] + barW / 2) * s; // 20 * s
+    final y3 = (baseline - hs[2]) * s; //  4 * s
 
-    final dx = p2x - p0x;
-    final dy = p2y - p0y;
-    final len = math.sqrt(dx * dx + dy * dy);
-    final ext = w * 0.14;
-    final endX = p2x + dx / len * ext;
-    final endY = p2y + dy / len * ext;
+    final ddx = x3 - x1;
+    final ddy = y3 - y1;
+    final len = math.sqrt(ddx * ddx + ddy * ddy);
+    final ext = 2.0 * s;
+    final ex = x3 + ddx / len * ext;
+    final ey = y3 + ddy / len * ext;
 
-    final linePaint = Paint()
+    final stroke = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.6
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
+      ..strokeWidth = 1.8 * s
+      ..strokeCap = StrokeCap.round;
 
-    final linePath = Path()
-      ..moveTo(p0x, p0y)
-      ..lineTo(p1x, p1y)
-      ..lineTo(endX, endY);
-    canvas.drawPath(linePath, linePaint);
+    canvas.drawLine(Offset(x1, y1), Offset(ex, ey), stroke);
 
-    // Arrowhead
-    final angle = math.atan2(endY - p1y, endX - p1x);
-    final headLen = w * 0.18;
+    final angle = math.atan2(ddy, ddx);
+    final hl = 3.5 * s;
     const spread = 0.42;
     canvas.drawLine(
-      Offset(endX, endY),
-      Offset(endX - headLen * math.cos(angle - spread),
-          endY - headLen * math.sin(angle - spread)),
-      linePaint,
+      Offset(ex, ey),
+      Offset(ex - hl * math.cos(angle - spread), ey - hl * math.sin(angle - spread)),
+      stroke,
     );
     canvas.drawLine(
-      Offset(endX, endY),
-      Offset(endX - headLen * math.cos(angle + spread),
-          endY - headLen * math.sin(angle + spread)),
-      linePaint,
+      Offset(ex, ey),
+      Offset(ex - hl * math.cos(angle + spread), ey - hl * math.sin(angle + spread)),
+      stroke,
     );
   }
 

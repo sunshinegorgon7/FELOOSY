@@ -5,7 +5,6 @@ class AppSettings {
   final bool currencySymbolLeading;
   final int monthStartDay;
   final String themeMode;
-  final String colorTheme;
   final bool googleBackupEnabled;
   final double defaultMonthlyBudget;
   final DateTime? lastBackupAt;
@@ -18,7 +17,6 @@ class AppSettings {
     this.currencySymbolLeading = false,
     this.monthStartDay = 1,
     this.themeMode = 'system',
-    this.colorTheme = 'green2',
     this.googleBackupEnabled = false,
     this.defaultMonthlyBudget = 0,
     this.lastBackupAt,
@@ -33,7 +31,6 @@ class AppSettings {
     bool? currencySymbolLeading,
     int? monthStartDay,
     String? themeMode,
-    String? colorTheme,
     bool? googleBackupEnabled,
     double? defaultMonthlyBudget,
     DateTime? lastBackupAt,
@@ -46,7 +43,6 @@ class AppSettings {
           currencySymbolLeading ?? this.currencySymbolLeading,
       monthStartDay: monthStartDay ?? this.monthStartDay,
       themeMode: themeMode ?? this.themeMode,
-      colorTheme: colorTheme ?? this.colorTheme,
       googleBackupEnabled: googleBackupEnabled ?? this.googleBackupEnabled,
       defaultMonthlyBudget: defaultMonthlyBudget ?? this.defaultMonthlyBudget,
       lastBackupAt: lastBackupAt ?? this.lastBackupAt,
@@ -62,7 +58,6 @@ class AppSettings {
       currencySymbolLeading: (map['currency_symbol_leading'] as int) == 1,
       monthStartDay: map['month_start_day'] as int,
       themeMode: map['theme_mode'] as String,
-      colorTheme: (map['color_theme'] as String?) ?? 'green2',
       googleBackupEnabled: (map['google_backup_enabled'] as int) == 1,
       defaultMonthlyBudget:
           (map['default_monthly_budget'] as num?)?.toDouble() ?? 0,
@@ -82,7 +77,6 @@ class AppSettings {
       'currency_symbol_leading': currencySymbolLeading ? 1 : 0,
       'month_start_day': monthStartDay,
       'theme_mode': themeMode,
-      'color_theme': colorTheme,
       'google_backup_enabled': googleBackupEnabled ? 1 : 0,
       'default_monthly_budget': defaultMonthlyBudget,
       'last_backup_at': lastBackupAt?.millisecondsSinceEpoch,
