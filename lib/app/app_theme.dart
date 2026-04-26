@@ -45,7 +45,8 @@ class AppTheme {
       scrim: Colors.black,
       shadow: Colors.black,
     ),
-    cardBorderColor: const Color(0xFFDCE4D5),
+    cardColor: const Color(0xFFC4D4C4),      // Almost Aqua
+    cardBorderColor: const Color(0xFFB8CABC),
   );
 
   static final ThemeData dark = _build(
@@ -87,20 +88,29 @@ class AppTheme {
       scrim: Colors.black,
       shadow: Colors.black,
     ),
-    cardBorderColor: const Color(0xFF1E2E3D),
+    cardColor: const Color(0xFF1E2E3D),      // Nimbus Surface
+    cardBorderColor: const Color(0xFF2A3D52),
   );
 
   static ThemeData _build({
     required Brightness brightness,
     required ColorScheme cs,
+    required Color cardColor,
     required Color cardBorderColor,
   }) =>
       ThemeData(
         useMaterial3: true,
         colorScheme: cs,
-        appBarTheme: const AppBarTheme(centerTitle: false, elevation: 0),
+        scaffoldBackgroundColor: cs.surface,
+        appBarTheme: AppBarTheme(
+          centerTitle: false,
+          elevation: 0,
+          backgroundColor: cs.surface,
+          foregroundColor: cs.onSurface,
+        ),
         cardTheme: CardThemeData(
           elevation: 0,
+          color: cardColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
             side: BorderSide(color: cardBorderColor),

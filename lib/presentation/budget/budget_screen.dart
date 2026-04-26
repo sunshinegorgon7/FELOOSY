@@ -17,18 +17,11 @@ import '../../providers/transactions_provider.dart';
 import '../transactions/widgets/transaction_tile.dart';
 import 'set_budget_sheet.dart';
 
-class BudgetScreen extends ConsumerStatefulWidget {
+class BudgetScreen extends ConsumerWidget {
   const BudgetScreen({super.key});
 
   @override
-  ConsumerState<BudgetScreen> createState() => _BudgetScreenState();
-}
-
-class _BudgetScreenState extends ConsumerState<BudgetScreen> {
-  bool _cardExpanded = false;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final period = ref.watch(currentBudgetPeriodProvider);
     final budgetAsync = ref.watch(currentBudgetProvider);
     final summaryAsync = ref.watch(budgetSummaryProvider);
@@ -60,8 +53,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
                           Icon(Icons.calendar_month,
                               color: cs.primary, size: 20),
                           const Gap(8),
-                          Text('Current Period',
-                              style: tt.labelLarge),
+                          Text('Current Period', style: tt.labelLarge),
                         ],
                       ),
                       const Gap(8),
@@ -90,54 +82,20 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
                   ),
                 ),
 
-                // ── Expand / collapse transactions ──────────────────────
+                // ── Transactions + top spending (always visible) ────────
                 txAsync.maybeWhen(
                   data: (txs) {
                     if (txs.isEmpty) return const SizedBox.shrink();
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const Divider(height: 1),
-                        InkWell(
-                          onTap: () => setState(
-                              () => _cardExpanded = !_cardExpanded),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 12),
-                            child: Row(
-                              children: [
-                                Text(
-                                  '${txs.length} transaction'
-                                  '${txs.length == 1 ? '' : 's'}'
-                                  ' this period',
-                                  style: tt.labelMedium
-                                      ?.copyWith(color: cs.primary),
-                                ),
-                                const Spacer(),
-                                Icon(
-                                  _cardExpanded
-                                      ? Icons.expand_less
-                                      : Icons.expand_more,
-                                  color: cs.primary,
-                                  size: 20,
-                                ),
-                              ],
-                            ),
-                          ),
+                    return catAsync.maybeWhen(
+                      data: (cats) => summaryAsync.maybeWhen(
+                        data: (summary) => _ExpandedContent(
+                          txs: txs,
+                          cats: cats,
+                          summary: summary,
                         ),
-                        if (_cardExpanded)
-                          catAsync.maybeWhen(
-                            data: (cats) => summaryAsync.maybeWhen(
-                              data: (summary) => _ExpandedContent(
-                                txs: txs,
-                                cats: cats,
-                                summary: summary,
-                              ),
-                              orElse: () => const SizedBox.shrink(),
-                            ),
-                            orElse: () => const SizedBox.shrink(),
-                          ),
-                      ],
+                        orElse: () => const SizedBox.shrink(),
+                      ),
+                      orElse: () => const SizedBox.shrink(),
                     );
                   },
                   orElse: () => const SizedBox.shrink(),
