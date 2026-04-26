@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "623272973124-jc18vromfnbt3hk9879inc7v6du4qbim.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.feloosy.app",
+            "certificate_hash": "556b3337ad0da85ab471e1ee5cb3679ebedc28e4"
+          }
+        },
+        {
           "client_id": "623272973124-mnu6801i3rlbls311al4490cntfn80q1.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -50,6 +58,14 @@
         }
       },
       "oauth_client": [
+        {
+          "client_id": "623272973124-7keeoqthvkachvk8mtc94vsviugj9btv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.feloosy.app.dev",
+            "certificate_hash": "556b3337ad0da85ab471e1ee5cb3679ebedc28e4"
+          }
+        },
         {
           "client_id": "623272973124-m3mbj3415aq34jhrggn312dee3ortvlp.apps.googleusercontent.com",
           "client_type": 1,
