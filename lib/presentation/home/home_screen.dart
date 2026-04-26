@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -37,6 +39,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           style: TextStyle(fontWeight: FontWeight.w700, letterSpacing: 1.5),
         ),
         actions: [
+          IconButton(
+            tooltip: 'Budget',
+            icon: const _BudgetBarIcon(),
+            onPressed: () => context.push('/budget'),
+          ),
           IconButton(
             icon: const Icon(Icons.settings_outlined),
             onPressed: () => _openSettings(context),
@@ -412,4 +419,104 @@ class _DayGroup {
   final double dayNet;
   final List<Transaction> txs;
   _DayGroup(this.label, this.dayNet, this.txs);
+}
+
+// ── Budget bar icon (ascending bars + trend arrow) ────────────────────────────
+
+class _BudgetBarIcon extends StatelessWidget {
+  const _BudgetBarIcon();
+
+  @override
+  Widget build(BuildContext context) {
+    final color =
+        IconTheme.of(context).color ?? Theme.of(context).colorScheme.onSurface;
+    return CustomPaint(
+      size: const Size(22, 22),
+      painter: _BudgetBarPainter(color: color),
+    );
+  }
+}
+
+class _BudgetBarPainter extends CustomPainter {
+  final Color color;
+  const _BudgetBarPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    final barW = w * 0.22;
+    final gap = w * 0.10;
+    final baseline = h * 0.92;
+    final rr = Radius.circular(barW * 0.45);
+
+    // Three ascending bars
+    final bars = [
+      (x: w * 0.04, bh: h * 0.38),
+      (x: w * 0.04 + barW + gap, bh: h * 0.62),
+      (x: w * 0.04 + (barW + gap) * 2, bh: h * 0.86),
+    ];
+    final alphas = [0.50, 0.72, 1.0];
+
+    final barPaint = Paint()..style = PaintingStyle.fill;
+    for (int i = 0; i < bars.length; i++) {
+      barPaint.color = color.withValues(alpha: alphas[i]);
+      canvas.drawRRect(
+        RRect.fromLTRBAndCorners(
+          bars[i].x, baseline - bars[i].bh,
+          bars[i].x + barW, baseline,
+          topLeft: rr, topRight: rr,
+        ),
+        barPaint,
+      );
+    }
+
+    // Trend arrow from bar-1 top → bar-3 top + small extension
+    final p0x = bars[0].x + barW * 0.5;
+    final p0y = baseline - bars[0].bh;
+    final p1x = bars[1].x + barW * 0.5;
+    final p1y = baseline - bars[1].bh;
+    final p2x = bars[2].x + barW * 0.5;
+    final p2y = baseline - bars[2].bh;
+
+    final dx = p2x - p0x;
+    final dy = p2y - p0y;
+    final len = math.sqrt(dx * dx + dy * dy);
+    final ext = w * 0.14;
+    final endX = p2x + dx / len * ext;
+    final endY = p2y + dy / len * ext;
+
+    final linePaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.6
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    final linePath = Path()
+      ..moveTo(p0x, p0y)
+      ..lineTo(p1x, p1y)
+      ..lineTo(endX, endY);
+    canvas.drawPath(linePath, linePaint);
+
+    // Arrowhead
+    final angle = math.atan2(endY - p1y, endX - p1x);
+    final headLen = w * 0.18;
+    const spread = 0.42;
+    canvas.drawLine(
+      Offset(endX, endY),
+      Offset(endX - headLen * math.cos(angle - spread),
+          endY - headLen * math.sin(angle - spread)),
+      linePaint,
+    );
+    canvas.drawLine(
+      Offset(endX, endY),
+      Offset(endX - headLen * math.cos(angle + spread),
+          endY - headLen * math.sin(angle + spread)),
+      linePaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_BudgetBarPainter old) => old.color != color;
 }
