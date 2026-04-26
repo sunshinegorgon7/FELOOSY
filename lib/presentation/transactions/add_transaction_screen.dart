@@ -659,6 +659,10 @@ class _CategoryGrid extends StatelessWidget {
         .whereType<Category>()
         .take(4)
         .toList();
+    final frequentUuids = mostUsed.map((cat) => cat.uuid).toSet();
+    final remainingCategories = categories
+        .where((cat) => !frequentUuids.contains(cat.uuid))
+        .toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -695,11 +699,11 @@ class _CategoryGrid extends StatelessWidget {
             crossAxisCount: 4,
             crossAxisSpacing: 8,
             mainAxisSpacing: 8,
-            childAspectRatio: 0.9,
+            mainAxisExtent: 76,
           ),
-          itemCount: categories.length,
+          itemCount: remainingCategories.length,
           itemBuilder: (context, index) {
-            final cat = categories[index];
+            final cat = remainingCategories[index];
             return _CategoryCell(
               cat: cat,
               isSelected: cat.uuid == selected,

@@ -299,7 +299,7 @@ class _ExpandedContent extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
 
-    // Compute top 3 expense categories
+    // Compute top 5 expense categories
     final totals = <String, double>{};
     for (final tx
         in txs.where((t) => t.type == TransactionType.expense)) {
@@ -308,8 +308,8 @@ class _ExpandedContent extends StatelessWidget {
     }
     final sorted = totals.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
-    final top3 = sorted
-        .take(3)
+    final topCategories = sorted
+        .take(5)
         .map((e) {
           final cat =
               cats.where((c) => c.uuid == e.key).firstOrNull;
@@ -322,7 +322,7 @@ class _ExpandedContent extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // ── Top 3 bar chart ─────────────────────────────────────────
-        if (top3.isNotEmpty) ...[
+        if (topCategories.isNotEmpty) ...[
           const Divider(height: 1),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 14, 20, 4),
@@ -337,7 +337,10 @@ class _ExpandedContent extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-            child: _TopCategoriesChart(stats: top3, summary: summary),
+            child: _TopCategoriesChart(
+              stats: topCategories,
+              summary: summary,
+            ),
           ),
         ],
 
