@@ -1,7 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-
+import '../data/database/database_helper.dart';
+import '../domain/services/firebase_sync_service.dart';
 import '../firebase_options.dart';
 
 final authStateProvider = StreamProvider<User?>((ref) {
@@ -39,6 +41,20 @@ class GoogleAuthActions {
   }
 
   Future<void> signOut() async {
+    // Push all local data to Firestore before the session ends so nothing is
+    // lost on uninstall. This is a safety net for any sync calls that may have
+    // failed silently earlier in the session.
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      try {
+        await FirebaseSyncService(
+          uid: user.uid,
+          localDb: DatabaseHelper.instance,
+        ).pushAll();
+      } catch (e) {
+        debugPrint('Pre-signout pushAll error: $e');
+      }
+    }
     try {
       await _googleSignIn.disconnect();
     } catch (_) {}

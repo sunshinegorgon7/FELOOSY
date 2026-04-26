@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/models/transaction.dart';
 import 'budget_period_provider.dart';
@@ -14,19 +15,32 @@ class TransactionsNotifier extends AsyncNotifier<List<Transaction>> {
 
   Future<void> add(Transaction tx) async {
     await ref.read(transactionRepositoryProvider).insert(tx);
-    ref.read(firebaseSyncProvider)?.syncTransaction(tx);
+    try {
+      await ref.read(firebaseSyncProvider)?.syncTransaction(tx);
+    } catch (e) {
+      // Sync failure is non-fatal; sign-out will push all local data as safety net
+      debugPrint('Firestore sync (add) error: $e');
+    }
     ref.invalidateSelf();
   }
 
   Future<void> remove(String uuid) async {
     await ref.read(transactionRepositoryProvider).delete(uuid);
-    ref.read(firebaseSyncProvider)?.deleteTransaction(uuid);
+    try {
+      await ref.read(firebaseSyncProvider)?.deleteTransaction(uuid);
+    } catch (e) {
+      debugPrint('Firestore sync (delete) error: $e');
+    }
     ref.invalidateSelf();
   }
 
   Future<void> edit(Transaction tx) async {
     await ref.read(transactionRepositoryProvider).save(tx);
-    ref.read(firebaseSyncProvider)?.syncTransaction(tx);
+    try {
+      await ref.read(firebaseSyncProvider)?.syncTransaction(tx);
+    } catch (e) {
+      debugPrint('Firestore sync (edit) error: $e');
+    }
     ref.invalidateSelf();
   }
 }
