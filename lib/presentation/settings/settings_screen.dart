@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/constants/app_info.dart';
 import '../../core/constants/currencies.dart';
 import '../../data/database/database_helper.dart';
 import '../../data/models/app_settings.dart';
@@ -14,8 +15,7 @@ import '../../providers/categories_provider.dart';
 import '../../providers/firebase_sync_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/transactions_provider.dart';
-
-const _appVersionLabel = '1.0.0 (1)';
+import 'feedback_sheet.dart';
 
 class SettingsScreen extends ConsumerWidget {
   final bool isModal;
@@ -162,10 +162,26 @@ class _SettingsBody extends ConsumerWidget {
         // ── About ────────────────────────────────────────────────────────
         const _SectionHeader('About'),
         ListTile(
+          leading: const Icon(Icons.chat_bubble_outline),
+          title: const Text('Send feedback'),
+          subtitle: const Text('Share a bug, idea, or question'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () async {
+            final sent = await showFeedbackSheet(context);
+            if (sent == true && context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Thanks - your feedback was sent.'),
+                ),
+              );
+            }
+          },
+        ),
+        ListTile(
           leading: const Icon(Icons.info_outline),
           title: const Text('App version'),
           trailing: Text(
-            _appVersionLabel,
+            kAppVersionLabel,
             style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
           ),
         ),
