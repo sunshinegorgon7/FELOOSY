@@ -3,6 +3,7 @@ import 'package:sqflite/sqflite.dart' hide Transaction;
 import '../../data/database/database_helper.dart';
 import '../../data/models/app_settings.dart';
 import '../../data/models/budget.dart';
+import '../../data/models/category.dart';
 import '../../data/models/transaction.dart';
 
 class FirebaseSyncService {
@@ -22,6 +23,9 @@ class FirebaseSyncService {
   CollectionReference<Map<String, dynamic>> get _budgetCol =>
       _fs.collection('users').doc(uid).collection('budgets');
 
+  CollectionReference<Map<String, dynamic>> get _catCol =>
+      _fs.collection('users').doc(uid).collection('categories');
+
   DocumentReference<Map<String, dynamic>> get _settingsDoc =>
       _fs.collection('users').doc(uid).collection('settings').doc('main');
 
@@ -36,6 +40,11 @@ class FirebaseSyncService {
     final id = '${budget.year}-${budget.month}';
     return _budgetCol.doc(id).set(budget.toMap());
   }
+
+  Future<void> syncCategory(Category cat) =>
+      _catCol.doc(cat.uuid).set(cat.toMap());
+
+  Future<void> deleteCategory(String uuid) => _catCol.doc(uuid).delete();
 
   Future<void> syncSettings(AppSettings settings) =>
       _settingsDoc.set(settings.toMap());
@@ -62,6 +71,11 @@ class FirebaseSyncService {
     for (final row in budgetRows) {
       final id = '${row['year']}-${row['month']}';
       batch.set(_budgetCol.doc(id), _stripId(row));
+    }
+
+    final catRows = await db.query('categories');
+    for (final row in catRows) {
+      batch.set(_catCol.doc(row['uuid'] as String), _stripId(row));
     }
 
     final settingsRows = await db.query('app_settings');
@@ -94,6 +108,19 @@ class FirebaseSyncService {
       final batch = db.batch();
       for (final doc in budgetSnap.docs) {
         batch.insert('budgets', doc.data(),
+            conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+      await batch.commit(noResult: true);
+    }
+
+    // Restore categories from cloud so transaction category_uuid references
+    // always match local categories after reinstall.
+    final catSnap = await _catCol.get();
+    if (catSnap.docs.isNotEmpty) {
+      await db.delete('categories');
+      final batch = db.batch();
+      for (final doc in catSnap.docs) {
+        batch.insert('categories', doc.data(),
             conflictAlgorithm: ConflictAlgorithm.replace);
       }
       await batch.commit(noResult: true);

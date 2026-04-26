@@ -26,7 +26,7 @@ class DatabaseHelper {
     final dbPath = p.join(docDir.path, AppFlavor.databaseName);
     return openDatabase(
       dbPath,
-      version: 4,
+      version: 5,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -117,6 +117,33 @@ class DatabaseHelper {
       await db.execute(
         "ALTER TABLE app_settings ADD COLUMN color_theme TEXT NOT NULL DEFAULT 'green2'",
       );
+    }
+    if (oldVersion < 5) {
+      // Migrate default categories to stable hardcoded UUIDs.
+      // Also repairs any transaction references so autocomplete category
+      // auto-selection continues to work after reinstalls.
+      for (final (index, (name, _, _)) in kDefaultCategoryData.indexed) {
+        final stableUuid = kDefaultCategoryUuids[index];
+        final rows = await db.query(
+          'categories',
+          columns: ['uuid'],
+          where: 'name = ? AND is_custom = 0',
+          whereArgs: [name],
+        );
+        if (rows.isNotEmpty) {
+          final oldUuid = rows.first['uuid'] as String;
+          if (oldUuid != stableUuid) {
+            await db.rawUpdate(
+              'UPDATE categories SET uuid = ? WHERE uuid = ?',
+              [stableUuid, oldUuid],
+            );
+            await db.rawUpdate(
+              'UPDATE transactions SET category_uuid = ? WHERE category_uuid = ?',
+              [stableUuid, oldUuid],
+            );
+          }
+        }
+      }
     }
   }
 
