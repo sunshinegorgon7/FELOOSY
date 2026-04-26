@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -55,49 +53,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         titleSpacing: 16,
-        title: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 220),
-          switchInCurve: Curves.easeOut,
-          switchOutCurve: Curves.easeIn,
-          transitionBuilder: (child, anim) => FadeTransition(
-            opacity: anim,
-            child: SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(0.06, 0),
-                end: Offset.zero,
-              ).animate(anim),
-              child: child,
-            ),
-          ),
-          child: _isSearching
-              ? TextField(
-                  key: const ValueKey('search'),
-                  controller: _searchCtrl,
-                  autofocus: true,
-                  onChanged: (v) => setState(() => _searchQuery = v),
-                  style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurface),
-                  decoration: InputDecoration(
-                    hintText: 'Search transactions…',
-                    hintStyle: TextStyle(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurfaceVariant),
-                    border: InputBorder.none,
-                    isDense: true,
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                )
-              : Text(
-                  'FELOOSY',
-                  key: const ValueKey('title'),
-                  style: GoogleFonts.rajdhani(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 26,
-                    letterSpacing: 3,
-                  ),
+        title: _isSearching
+            ? TextField(
+                controller: _searchCtrl,
+                autofocus: true,
+                onChanged: (v) => setState(() => _searchQuery = v),
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontSize: 16),
+                decoration: InputDecoration(
+                  hintText: 'Search transactions…',
+                  hintStyle: TextStyle(
+                      color:
+                          Theme.of(context).colorScheme.onSurfaceVariant),
+                  border: InputBorder.none,
+                  isDense: true,
+                  contentPadding: EdgeInsets.zero,
                 ),
-        ),
+              )
+            : Text(
+                'FELOOSY',
+                style: GoogleFonts.rajdhani(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 26,
+                  letterSpacing: 3,
+                ),
+              ),
         actions: _isSearching
             ? [
                 IconButton(
@@ -107,13 +88,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ]
             : [
                 IconButton(
-                  icon: const Icon(Icons.search),
+                  icon: const Icon(Icons.search_outlined),
                   tooltip: 'Search',
                   onPressed: _startSearch,
                 ),
                 IconButton(
                   tooltip: 'Budget',
-                  icon: const _BudgetBarIcon(),
+                  icon: const Icon(Icons.analytics_outlined),
                   onPressed: () => context.push('/budget'),
                 ),
                 IconButton(
@@ -500,102 +481,4 @@ class _DayGroup {
   final double dayNet;
   final List<Transaction> txs;
   _DayGroup(this.label, this.dayNet, this.txs);
-}
-
-// ── Budget bar icon (ascending bars + trend arrow) ────────────────────────────
-
-class _BudgetBarIcon extends StatelessWidget {
-  const _BudgetBarIcon();
-
-  @override
-  Widget build(BuildContext context) {
-    final it = IconTheme.of(context);
-    final color = it.color ?? Theme.of(context).colorScheme.onSurface;
-    final size = it.size ?? 24.0;
-    return SizedBox(
-      width: size,
-      height: size,
-      child: CustomPaint(painter: _BudgetBarPainter(color: color)),
-    );
-  }
-}
-
-class _BudgetBarPainter extends CustomPainter {
-  final Color color;
-  const _BudgetBarPainter({required this.color});
-
-  // Design grid: 24 × 24 units, scaled to actual canvas size.
-  //
-  // Bars:  width=6, gap=2, start x=1
-  //   bar 1: x=1,  height=8  → top at y=14
-  //   bar 2: x=9,  height=13 → top at y=9
-  //   bar 3: x=17, height=18 → top at y=4
-  //   baseline: y=22, corner radius=3
-  //
-  // Arrow: straight line from bar-1 top-center (4, 14) to bar-3 top-center
-  //   (20, 4), extended ~2 units past bar-3, with open arrowhead.
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final s = size.width / 24.0; // scale factor
-
-    const barW = 6.0;
-    const baseline = 22.0;
-    const cornerR = 3.0;
-    final xs = [1.0, 9.0, 17.0];
-    final hs = [8.0, 13.0, 18.0];
-    final alphas = [0.42, 0.65, 0.90];
-
-    final fill = Paint()..style = PaintingStyle.fill;
-    for (int i = 0; i < 3; i++) {
-      fill.color = color.withValues(alpha: alphas[i]);
-      final r = Radius.circular(cornerR * s);
-      canvas.drawRRect(
-        RRect.fromLTRBAndCorners(
-          xs[i] * s, (baseline - hs[i]) * s,
-          (xs[i] + barW) * s, baseline * s,
-          topLeft: r, topRight: r,
-        ),
-        fill,
-      );
-    }
-
-    // Arrow: bar-1 top-center → bar-3 top-center + extension
-    final x1 = (xs[0] + barW / 2) * s; // 4 * s
-    final y1 = (baseline - hs[0]) * s; // 14 * s
-    final x3 = (xs[2] + barW / 2) * s; // 20 * s
-    final y3 = (baseline - hs[2]) * s; //  4 * s
-
-    final ddx = x3 - x1;
-    final ddy = y3 - y1;
-    final len = math.sqrt(ddx * ddx + ddy * ddy);
-    final ext = 2.0 * s;
-    final ex = x3 + ddx / len * ext;
-    final ey = y3 + ddy / len * ext;
-
-    final stroke = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.8 * s
-      ..strokeCap = StrokeCap.round;
-
-    canvas.drawLine(Offset(x1, y1), Offset(ex, ey), stroke);
-
-    final angle = math.atan2(ddy, ddx);
-    final hl = 3.5 * s;
-    const spread = 0.42;
-    canvas.drawLine(
-      Offset(ex, ey),
-      Offset(ex - hl * math.cos(angle - spread), ey - hl * math.sin(angle - spread)),
-      stroke,
-    );
-    canvas.drawLine(
-      Offset(ex, ey),
-      Offset(ex - hl * math.cos(angle + spread), ey - hl * math.sin(angle + spread)),
-      stroke,
-    );
-  }
-
-  @override
-  bool shouldRepaint(_BudgetBarPainter old) => old.color != color;
 }

@@ -9,6 +9,7 @@ class AppTheme {
     brightness: Brightness.light,
     cs: const ColorScheme(
       brightness: Brightness.light,
+      surfaceTint: Colors.transparent,
       // Fern — primary actions, FAB, selected states
       primary: Color(0xFF639922),
       onPrimary: Colors.white,
@@ -53,6 +54,7 @@ class AppTheme {
     brightness: Brightness.dark,
     cs: const ColorScheme(
       brightness: Brightness.dark,
+      surfaceTint: Colors.transparent,
       // Ice Glow — primary actions
       primary: Color(0xFF4D7FA8),
       onPrimary: Color(0xFF111922),
@@ -102,11 +104,20 @@ class AppTheme {
         useMaterial3: true,
         colorScheme: cs,
         scaffoldBackgroundColor: cs.surface,
+        canvasColor: cs.surface,
         appBarTheme: AppBarTheme(
           centerTitle: false,
           elevation: 0,
+          scrolledUnderElevation: 0,
           backgroundColor: cs.surface,
           foregroundColor: cs.onSurface,
+        ),
+        // Compact icon buttons — brings AppBar actions closer together
+        iconButtonTheme: IconButtonThemeData(
+          style: IconButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
         ),
         cardTheme: CardThemeData(
           elevation: 0,

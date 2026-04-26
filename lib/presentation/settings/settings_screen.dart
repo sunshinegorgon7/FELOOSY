@@ -535,12 +535,18 @@ class _AccountTileState extends ConsumerState<_AccountTile> {
   Future<void> _signIn() async {
     setState(() => _busy = true);
     try {
-      final user =
-          await ref.read(googleAuthActionsProvider).signIn();
+      final user = await ref.read(googleAuthActionsProvider).signIn();
       if (user != null && mounted) {
-        await ref
-            .read(syncOrchestratorProvider)
-            .onSignIn(user.uid);
+        await ref.read(syncOrchestratorProvider).onSignIn(user.uid);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Sign-in failed: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _busy = false);

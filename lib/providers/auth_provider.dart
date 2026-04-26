@@ -16,13 +16,25 @@ class GoogleAuthActions {
       '623272973124-mnu6801i3rlbls311al4490cntfn80q1.apps.googleusercontent.com';
 
   Future<User?> signIn() async {
-    final googleUser =
-        await GoogleSignIn(serverClientId: _webClientId).signIn();
-    if (googleUser == null) return null;
+    final googleUser = await GoogleSignIn(
+      serverClientId: _webClientId,
+      scopes: ['email', 'profile'],
+    ).signIn();
+    if (googleUser == null) return null; // user dismissed the picker
+
     final googleAuth = await googleUser.authentication;
+    final idToken = googleAuth.idToken;
+    if (idToken == null) {
+      throw Exception(
+        'Google sign-in returned no ID token. '
+        'Verify the web OAuth client ID in Firebase console matches the '
+        'type-3 client in google-services.json.',
+      );
+    }
+
     final credential = GoogleAuthProvider.credential(
       accessToken: googleAuth.accessToken,
-      idToken: googleAuth.idToken,
+      idToken: idToken,
     );
     final result =
         await FirebaseAuth.instance.signInWithCredential(credential);
