@@ -11,20 +11,19 @@ class FeloosyApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settingsAsync = ref.watch(settingsProvider);
-    final themeMode = settingsAsync.whenOrNull(
-          data: (s) => switch (s.themeMode) {
-            'light' => ThemeMode.light,
-            'dark' => ThemeMode.dark,
-            _ => ThemeMode.system,
-          },
-        ) ??
-        ThemeMode.system;
+    final settings = settingsAsync.valueOrNull;
+    final themeMode = switch (settings?.themeMode) {
+      'light' => ThemeMode.light,
+      'dark' => ThemeMode.dark,
+      _ => ThemeMode.system,
+    };
+    final colorTheme = settings?.colorTheme ?? 'green2';
 
     return MaterialApp.router(
       title: 'FELOOSY',
       debugShowCheckedModeBanner: !AppFlavor.isProd,
-      theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
+      theme: AppTheme.light(colorTheme),
+      darkTheme: AppTheme.dark(colorTheme),
       themeMode: themeMode,
       routerConfig: appRouter,
     );

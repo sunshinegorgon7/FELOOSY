@@ -26,7 +26,7 @@ class DatabaseHelper {
     final dbPath = p.join(docDir.path, AppFlavor.databaseName);
     return openDatabase(
       dbPath,
-      version: 3,
+      version: 4,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -91,6 +91,7 @@ class DatabaseHelper {
         currency_symbol_leading INTEGER NOT NULL DEFAULT 0,
         month_start_day INTEGER NOT NULL DEFAULT 1,
         theme_mode TEXT NOT NULL DEFAULT 'system',
+        color_theme TEXT NOT NULL DEFAULT 'green2',
         google_backup_enabled INTEGER NOT NULL DEFAULT 0,
         last_backup_at INTEGER,
         updated_at INTEGER NOT NULL
@@ -107,9 +108,13 @@ class DatabaseHelper {
       );
     }
     if (oldVersion < 3) {
-      // Deactivate the built-in "Other" catch-all category
       await db.execute(
         "UPDATE categories SET is_active = 0 WHERE name = 'Other' AND is_custom = 0",
+      );
+    }
+    if (oldVersion < 4) {
+      await db.execute(
+        "ALTER TABLE app_settings ADD COLUMN color_theme TEXT NOT NULL DEFAULT 'green2'",
       );
     }
   }

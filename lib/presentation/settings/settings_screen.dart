@@ -72,7 +72,49 @@ class _SettingsBody extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Theme', style: tt.bodyMedium),
+              Text('Color theme', style: tt.bodyMedium),
+              const Gap(10),
+              Row(
+                children: [
+                  _ColorThemeCard(
+                    label: 'Sage',
+                    themeKey: 'green2',
+                    lightSwatches: const [
+                      Color(0xFFF7F5F0),
+                      Color(0xFFC4D4C4),
+                      Color(0xFF4E7A58),
+                    ],
+                    darkSwatches: const [
+                      Color(0xFF1A2E1A),
+                      Color(0xFF3B5C3B),
+                      Color(0xFFC4D4C4),
+                    ],
+                    isSelected: settings.colorTheme == 'green2',
+                    onTap: () =>
+                        _save(ref, settings.copyWith(colorTheme: 'green2')),
+                  ),
+                  const Gap(12),
+                  _ColorThemeCard(
+                    label: 'Grove',
+                    themeKey: 'green3',
+                    lightSwatches: const [
+                      Color(0xFFF4F7F1),
+                      Color(0xFFC4D4C4),
+                      Color(0xFF639922),
+                    ],
+                    darkSwatches: const [
+                      Color(0xFF111C11),
+                      Color(0xFF1F3320),
+                      Color(0xFF97C459),
+                    ],
+                    isSelected: settings.colorTheme == 'green3',
+                    onTap: () =>
+                        _save(ref, settings.copyWith(colorTheme: 'green3')),
+                  ),
+                ],
+              ),
+              const Gap(16),
+              Text('Brightness', style: tt.bodyMedium),
               const Gap(10),
               SegmentedButton<String>(
                 segments: const [
@@ -556,6 +598,102 @@ class _AccountTileState extends ConsumerState<_AccountTile> {
     }
   }
 }
+
+// ── Color theme card ──────────────────────────────────────────────────────────
+
+class _ColorThemeCard extends StatelessWidget {
+  final String label;
+  final String themeKey;
+  final List<Color> lightSwatches;
+  final List<Color> darkSwatches;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _ColorThemeCard({
+    required this.label,
+    required this.themeKey,
+    required this.lightSwatches,
+    required this.darkSwatches,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final swatches = isDark ? darkSwatches : lightSwatches;
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: isSelected ? cs.primary : cs.outlineVariant,
+              width: isSelected ? 2 : 1,
+            ),
+            color: isSelected
+                ? cs.primary.withValues(alpha: 0.08)
+                : cs.surfaceContainerLow,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  for (int i = 0; i < swatches.length; i++) ...[
+                    if (i > 0) const Gap(4),
+                    _Swatch(color: swatches[i]),
+                  ],
+                  const Spacer(),
+                  if (isSelected)
+                    Icon(Icons.check_circle_rounded,
+                        size: 16, color: cs.primary),
+                ],
+              ),
+              const Gap(8),
+              Text(
+                label,
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      fontWeight:
+                          isSelected ? FontWeight.w700 : FontWeight.w500,
+                      color: isSelected ? cs.primary : cs.onSurface,
+                    ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Swatch extends StatelessWidget {
+  final Color color;
+  const _Swatch({required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 22,
+      height: 22,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: Colors.black.withValues(alpha: 0.08),
+          width: 0.5,
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _SectionHeader extends StatelessWidget {
   final String title;
