@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +8,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import '../../core/constants/currencies.dart';
 import '../../data/database/database_helper.dart';
 import '../../data/models/app_settings.dart';
+import '../../domain/services/local_export_service.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/budget_provider.dart';
 import '../../providers/categories_provider.dart';
@@ -151,6 +153,10 @@ class _SettingsBody extends ConsumerWidget {
         // ── Account (Firebase) ───────────────────────────────────────────
         const _SectionHeader('Account'),
         _AccountTile(isModal: isModal),
+
+        // ── Data ─────────────────────────────────────────────────────────
+        const _SectionHeader('Data'),
+        _LocalBackupTile(isModal: isModal),
 
         // ── About ────────────────────────────────────────────────────────
         const _SectionHeader('About'),
@@ -561,6 +567,162 @@ class _AccountTileState extends ConsumerState<_AccountTile> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+}
+
+// ── Local export / import tile ────────────────────────────────────────────────
+
+class _LocalBackupTile extends ConsumerStatefulWidget {
+  final bool isModal;
+  const _LocalBackupTile({this.isModal = false});
+
+  @override
+  ConsumerState<_LocalBackupTile> createState() => _LocalBackupTileState();
+}
+
+class _LocalBackupTileState extends ConsumerState<_LocalBackupTile> {
+  bool _exporting = false;
+  bool _importing = false;
+
+  final _svc = LocalExportService(DatabaseHelper.instance);
+
+  Future<void> _export() async {
+    setState(() => _exporting = true);
+    try {
+      await _svc.export();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Export failed: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _exporting = false);
+    }
+  }
+
+  Future<void> _pickAndImport() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['json'],
+      allowMultiple: false,
+    );
+    if (result == null || result.files.single.path == null) return;
+    final path = result.files.single.path!;
+
+    // Parse to get preview counts before asking confirmation
+    final ImportSummary summary;
+    try {
+      summary = await _svc.preview(path);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Cannot read file: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+      return;
+    }
+
+    // Confirmation dialog
+    if (!mounted) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        icon: Icon(Icons.upload_file_outlined,
+            color: Theme.of(ctx).colorScheme.primary, size: 32),
+        title: const Text('Import backup?'),
+        content: Text(
+          'Found:\n'
+          '  • ${summary.transactions} transaction${summary.transactions == 1 ? '' : 's'}\n'
+          '  • ${summary.budgets} budget${summary.budgets == 1 ? '' : 's'}\n'
+          '  • ${summary.categories} categor${summary.categories == 1 ? 'y' : 'ies'}\n\n'
+          'This will replace all local data. This cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Import'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() => _importing = true);
+    try {
+      final done = await _svc.commit(path);
+      ref.invalidate(transactionsProvider);
+      ref.invalidate(currentBudgetProvider);
+      ref.invalidate(settingsProvider);
+      ref.invalidate(categoriesProvider);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Imported ${done.transactions} transaction${done.transactions == 1 ? '' : 's'} successfully.',
+            ),
+          ),
+        );
+        if (widget.isModal) Navigator.of(context).pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Import failed: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _importing = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final busy = _exporting || _importing;
+    return Column(
+      children: [
+        ListTile(
+          leading: const Icon(Icons.download_outlined),
+          title: const Text('Export backup'),
+          subtitle: const Text('Save all data as a JSON file'),
+          trailing: _exporting
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.chevron_right),
+          onTap: busy ? null : _export,
+        ),
+        ListTile(
+          leading: const Icon(Icons.upload_outlined),
+          title: const Text('Import backup'),
+          subtitle: const Text('Restore from a previously exported file'),
+          trailing: _importing
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.chevron_right),
+          onTap: busy ? null : _pickAndImport,
+        ),
+      ],
+    );
   }
 }
 
