@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import '../../core/constants/currencies.dart';
 import '../../data/database/database_helper.dart';
 import '../../data/models/app_settings.dart';
@@ -15,6 +14,8 @@ import '../../providers/categories_provider.dart';
 import '../../providers/firebase_sync_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/transactions_provider.dart';
+
+const _appVersionLabel = '1.0.0 (1)';
 
 class SettingsScreen extends ConsumerWidget {
   final bool isModal;
@@ -160,20 +161,13 @@ class _SettingsBody extends ConsumerWidget {
 
         // ── About ────────────────────────────────────────────────────────
         const _SectionHeader('About'),
-        FutureBuilder<PackageInfo>(
-          future: PackageInfo.fromPlatform(),
-          builder: (context, snap) {
-            final version = snap.hasData
-                ? '${snap.data!.version} (${snap.data!.buildNumber})'
-                : '—';
-            return ListTile(
-              leading: const Icon(Icons.info_outline),
-              title: const Text('App version'),
-              trailing: Text(version,
-                  style: tt.bodySmall
-                      ?.copyWith(color: cs.onSurfaceVariant)),
-            );
-          },
+        ListTile(
+          leading: const Icon(Icons.info_outline),
+          title: const Text('App version'),
+          trailing: Text(
+            _appVersionLabel,
+            style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+          ),
         ),
 
         // ── Danger zone ──────────────────────────────────────────────────
@@ -745,3 +739,4 @@ class _SectionHeader extends StatelessWidget {
     );
   }
 }
+
