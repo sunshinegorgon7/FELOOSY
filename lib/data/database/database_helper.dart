@@ -93,6 +93,7 @@ class DatabaseHelper {
         theme_mode TEXT NOT NULL DEFAULT 'system',
         color_theme TEXT NOT NULL DEFAULT 'green2',
         google_backup_enabled INTEGER NOT NULL DEFAULT 0,
+        default_monthly_budget REAL NOT NULL DEFAULT 0,
         last_backup_at INTEGER,
         updated_at INTEGER NOT NULL
       )
