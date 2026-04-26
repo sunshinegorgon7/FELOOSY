@@ -258,26 +258,9 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                       _tryAutoSave();
                     },
                   ),
-                  const SizedBox(height: 4),
-                ],
-              ),
-            ),
+                  const SizedBox(height: 16),
 
-            Divider(
-              height: 1,
-              indent: 20,
-              endIndent: 20,
-              color: cs.outlineVariant,
-            ),
-
-            // ── Scrollable bottom: description + categories ──────────
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
-                keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.onDrag,
-                children: [
-                  // Description
+                  // Description — fixed so it's always visible
                   _DescriptionAutocomplete(
                     initialDescription:
                         widget.initialTransaction?.description,
@@ -299,8 +282,25 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                     },
                     onSubmitted: _tryAutoSave,
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 12),
+                ],
+              ),
+            ),
 
+            Divider(
+              height: 1,
+              indent: 20,
+              endIndent: 20,
+              color: cs.outlineVariant,
+            ),
+
+            // ── Scrollable: categories ───────────────────────────────
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                children: [
                   // Category header
                   Row(
                     children: [
