@@ -143,6 +143,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
         isExpense ? Colors.red.shade400 : Colors.green.shade500;
 
     return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.close),

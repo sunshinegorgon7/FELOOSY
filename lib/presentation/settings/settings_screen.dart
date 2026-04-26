@@ -32,6 +32,7 @@ class SettingsScreen extends ConsumerWidget {
     if (isModal) return body;
 
     return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(title: const Text('Settings')),
       body: body,
     );

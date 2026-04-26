@@ -40,6 +40,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
     final tt = Theme.of(context).textTheme;
 
     return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(title: const Text('Budget')),
       body: ListView(
         padding: const EdgeInsets.all(16),
