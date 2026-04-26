@@ -11,8 +11,13 @@ final currentUserProvider = Provider<User?>((ref) {
 });
 
 class GoogleAuthActions {
+  // Web client ID (type 3) from google-services.json — required for Firebase Auth
+  static const _webClientId =
+      '623272973124-mnu6801i3rlbls311al4490cntfn80q1.apps.googleusercontent.com';
+
   Future<User?> signIn() async {
-    final googleUser = await GoogleSignIn().signIn();
+    final googleUser =
+        await GoogleSignIn(serverClientId: _webClientId).signIn();
     if (googleUser == null) return null;
     final googleAuth = await googleUser.authentication;
     final credential = GoogleAuthProvider.credential(

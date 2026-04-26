@@ -12,7 +12,20 @@
           "package_name": "com.feloosy.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "623272973124-9kh82qst3lsqn2l5a10m7tvpr8flhhs7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.feloosy.app",
+            "certificate_hash": "01b882dbd56635481206d2ad8f1b7973a191f8bb"
+          }
+        },
+        {
+          "client_id": "623272973124-mnu6801i3rlbls311al4490cntfn80q1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAAqxUDxqX_-nBgZ168DkgsyAd7nL3GLSU"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "623272973124-mnu6801i3rlbls311al4490cntfn80q1.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

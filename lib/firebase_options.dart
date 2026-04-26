@@ -22,5 +22,6 @@ class DefaultFirebaseOptions {
     messagingSenderId: '623272973124',
     projectId: 'feloosy-e13c3',
     storageBucket: 'feloosy-e13c3.firebasestorage.app',
+    androidClientId: '623272973124-9kh82qst3lsqn2l5a10m7tvpr8flhhs7.apps.googleusercontent.com',
   );
 }
