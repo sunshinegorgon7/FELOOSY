@@ -126,6 +126,20 @@ class DatabaseHelper {
     await batch.commit(noResult: true);
   }
 
+  Future<void> resetAll() async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.delete('transactions');
+      await txn.delete('budgets');
+      await txn.delete('categories');
+      await txn.delete('app_settings');
+      await txn.insert('app_settings', AppSettings.defaults.toMap());
+      for (final cat in buildDefaultCategories()) {
+        await txn.insert('categories', cat.toMap());
+      }
+    });
+  }
+
   Future<void> close() async {
     await _db?.close();
     _db = null;

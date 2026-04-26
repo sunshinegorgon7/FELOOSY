@@ -5,8 +5,12 @@ import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../../core/constants/currencies.dart';
+import '../../data/database/database_helper.dart';
 import '../../data/models/app_settings.dart';
+import '../../providers/budget_provider.dart';
+import '../../providers/categories_provider.dart';
 import '../../providers/settings_provider.dart';
+import '../../providers/transactions_provider.dart';
 
 class SettingsScreen extends ConsumerWidget {
   final bool isModal;
@@ -157,6 +161,17 @@ class _SettingsBody extends ConsumerWidget {
                       ?.copyWith(color: cs.onSurfaceVariant)),
             );
           },
+        ),
+
+        // ── Danger zone ──────────────────────────────────────────────────
+        const _SectionHeader('Danger Zone'),
+        ListTile(
+          leading: Icon(Icons.delete_forever_outlined, color: cs.error),
+          title: Text('Reset app',
+              style: TextStyle(color: cs.error, fontWeight: FontWeight.w500)),
+          subtitle: const Text(
+              'Erase all transactions & budgets, restore default settings'),
+          onTap: () => _showResetConfirmation(context, ref),
         ),
         const Gap(32),
       ],
@@ -374,6 +389,50 @@ class _SettingsBody extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  void _showResetConfirmation(BuildContext context, WidgetRef ref) {
+    final cs = Theme.of(context).colorScheme;
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        icon: Icon(Icons.warning_amber_rounded, color: cs.error, size: 32),
+        title: const Text('Reset app?'),
+        content: const Text(
+          'This will permanently delete:\n'
+          '  • All transactions\n'
+          '  • All budgets\n'
+          '  • All custom categories\n\n'
+          'Settings will be restored to defaults.\n\n'
+          'This cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: cs.error),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await _resetApp(context, ref);
+            },
+            child: const Text('Reset Everything'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _resetApp(BuildContext context, WidgetRef ref) async {
+    await DatabaseHelper.instance.resetAll();
+    ref.invalidate(transactionsProvider);
+    ref.invalidate(categoriesProvider);
+    ref.invalidate(currentBudgetProvider);
+    ref.invalidate(settingsProvider);
+    if (context.mounted && isModal) {
+      Navigator.of(context).pop();
+    }
   }
 
   void _showDayChangeWarning(BuildContext ctx, WidgetRef ref,
