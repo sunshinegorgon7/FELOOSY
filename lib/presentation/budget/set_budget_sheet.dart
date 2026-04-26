@@ -22,7 +22,7 @@ class _SetBudgetSheetState extends ConsumerState<SetBudgetSheet> {
   void initState() {
     super.initState();
     // Pre-fill with existing budget amount if set
-    final existing = ref.read(currentBudgetProvider).valueOrNull;
+    final existing = ref.read(currentBudgetProvider).value;
     if (existing != null) {
       _controller.text = existing.amount.toStringAsFixed(2);
     }

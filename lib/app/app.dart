@@ -11,7 +11,7 @@ class FeloosyApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settingsAsync = ref.watch(settingsProvider);
-    final themeMode = switch (settingsAsync.valueOrNull?.themeMode) {
+    final themeMode = switch (settingsAsync.value?.themeMode) {
       'light' => ThemeMode.light,
       'dark' => ThemeMode.dark,
       _ => ThemeMode.system,

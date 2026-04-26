@@ -68,8 +68,7 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
       );
       await ref.read(categoriesProvider.notifier).saveCategory(updated);
     } else {
-      final allCats =
-          ref.read(categoriesProvider).valueOrNull ?? [];
+      final allCats = ref.read(categoriesProvider).value ?? [];
       final maxSort = allCats.isEmpty
           ? 0
           : allCats.map((c) => c.sortOrder).reduce(math.max);

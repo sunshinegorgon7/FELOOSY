@@ -137,7 +137,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     final symbol =
         settingsAsync.whenOrNull(data: (s) => s.currencySymbol) ?? 'AED';
     final mostUsedUuids =
-        ref.watch(mostUsedCategoryUuidsProvider).valueOrNull ?? [];
+        ref.watch(mostUsedCategoryUuidsProvider).value ?? [];
 
     final amountColor =
         isExpense ? Colors.red.shade400 : Colors.green.shade500;
@@ -480,7 +480,7 @@ class _DescriptionAutocomplete extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final repo = ref.read(transactionRepositoryProvider);
-    final cats = (ref.watch(categoriesProvider).valueOrNull ?? [])
+    final cats = (ref.watch(categoriesProvider).value ?? [])
         .where((c) => c.isActive)
         .toList();
     final cs = Theme.of(context).colorScheme;

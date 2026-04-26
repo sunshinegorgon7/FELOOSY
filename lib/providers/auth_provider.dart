@@ -2,36 +2,36 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import '../firebase_options.dart';
+
 final authStateProvider = StreamProvider<User?>((ref) {
   return FirebaseAuth.instance.authStateChanges();
 });
 
 final currentUserProvider = Provider<User?>((ref) {
-  return ref.watch(authStateProvider).valueOrNull;
+  return ref.watch(authStateProvider).value;
 });
 
 class GoogleAuthActions {
-  // Keep the Android Google sign-in request minimal here. The usual cause of
-  // ApiException: 10 is Firebase/Google OAuth misconfiguration such as a
-  // package-name or SHA mismatch.
-  static final _googleSignIn = GoogleSignIn(
-    scopes: ['email', 'profile'],
+  static final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
+  static final Future<void> _initialization = _googleSignIn.initialize(
+    serverClientId: DefaultFirebaseOptions.androidServerClientId,
   );
 
   Future<User?> signIn() async {
-    final googleUser = await _googleSignIn.signIn();
-    if (googleUser == null) return null; // user dismissed picker
+    await _initialization;
 
-    final googleAuth = await googleUser.authentication;
-    final accessToken = googleAuth.accessToken;
-    if (accessToken == null) {
-      throw Exception('Google sign-in failed: no access token returned.');
+    final googleUser = await _googleSignIn.authenticate(
+      scopeHint: const ['email', 'profile'],
+    );
+
+    final idToken = googleUser.authentication.idToken;
+    if (idToken == null) {
+      throw Exception('Google sign-in failed: no ID token returned.');
     }
 
     final credential = GoogleAuthProvider.credential(
-      accessToken: accessToken,
-      // idToken intentionally omitted until a matching server client ID is
-      // wired for the app's Firebase/Google OAuth setup.
+      idToken: idToken,
     );
     final result =
         await FirebaseAuth.instance.signInWithCredential(credential);

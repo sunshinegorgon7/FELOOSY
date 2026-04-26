@@ -5,6 +5,9 @@ import 'package:flutter/foundation.dart'
 import 'app/app_flavor.dart';
 
 class DefaultFirebaseOptions {
+  static String get androidServerClientId =>
+      '623272973124-mnu6801i3rlbls311al4490cntfn80q1.apps.googleusercontent.com';
+
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) throw UnsupportedError('Web not supported.');
 

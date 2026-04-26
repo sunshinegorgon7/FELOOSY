@@ -22,7 +22,7 @@ class TransactionTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settingsAsync = ref.watch(settingsProvider);
-    final settings = settingsAsync.valueOrNull;
+    final settings = settingsAsync.value;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final isExpense = transaction.type == TransactionType.expense;

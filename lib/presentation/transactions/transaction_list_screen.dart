@@ -50,7 +50,7 @@ class TransactionListScreen extends ConsumerWidget {
             );
           }
 
-          final cats = catAsync.valueOrNull ?? [];
+          final cats = catAsync.value ?? [];
           final grouped = _groupByDate(txs);
 
           return ListView.builder(
