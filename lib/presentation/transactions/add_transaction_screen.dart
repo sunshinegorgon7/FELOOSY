@@ -34,7 +34,6 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   bool _descInitialized = false;
 
   final _amountController = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
   DateTime _date = DateTime.now();
   String? _selectedCategoryUuid;
   bool _saving = false;
@@ -63,54 +62,58 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     super.dispose();
   }
 
-  Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) return;
-    final desc = _descFieldController?.text.trim() ?? '';
-    if (desc.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Add a description')),
-      );
-      return;
-    }
-    if (_selectedCategoryUuid == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a category')),
-      );
-      return;
-    }
+  // ── Auto-save logic ─────────────────────────────────────────────────────
 
+  /// Called whenever a field changes. Saves silently when all three
+  /// required fields (amount, description, category) are complete.
+  void _tryAutoSave() {
+    if (_saving) return;
+    final amount =
+        double.tryParse(_amountController.text.replaceAll(',', ''));
+    if (amount == null || amount <= 0) return;
+    final desc = _descFieldController?.text.trim() ?? '';
+    if (desc.isEmpty) return;
+    if (_selectedCategoryUuid == null) return;
+    _commit(amount: amount, description: desc);
+  }
+
+  Future<void> _commit({
+    required double amount,
+    required String description,
+  }) async {
+    if (_saving) return;
     setState(() => _saving = true);
     try {
-      final amount =
-          double.parse(_amountController.text.replaceAll(',', ''));
       final now = DateTime.now();
       final initial = widget.initialTransaction;
 
       if (initial != null) {
-        final updated = Transaction(
-          id: initial.id,
-          uuid: initial.uuid,
-          amount: amount,
-          type: _type,
-          description: desc,
-          categoryUuid: _selectedCategoryUuid!,
-          transactionDate: _date,
-          createdAt: initial.createdAt,
-          updatedAt: now,
-        );
-        await ref.read(transactionsProvider.notifier).edit(updated);
+        await ref.read(transactionsProvider.notifier).edit(
+              Transaction(
+                id: initial.id,
+                uuid: initial.uuid,
+                amount: amount,
+                type: _type,
+                description: description,
+                categoryUuid: _selectedCategoryUuid!,
+                transactionDate: _date,
+                createdAt: initial.createdAt,
+                updatedAt: now,
+              ),
+            );
       } else {
-        final tx = Transaction(
-          uuid: const Uuid().v4(),
-          amount: amount,
-          type: _type,
-          description: desc,
-          categoryUuid: _selectedCategoryUuid!,
-          transactionDate: _date,
-          createdAt: now,
-          updatedAt: now,
-        );
-        await ref.read(transactionsProvider.notifier).add(tx);
+        await ref.read(transactionsProvider.notifier).add(
+              Transaction(
+                uuid: const Uuid().v4(),
+                amount: amount,
+                type: _type,
+                description: description,
+                categoryUuid: _selectedCategoryUuid!,
+                transactionDate: _date,
+                createdAt: now,
+                updatedAt: now,
+              ),
+            );
       }
       if (mounted) context.pop();
     } finally {
@@ -151,216 +154,208 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
         ),
         title: Text(_isEditing ? 'Edit Transaction' : 'New Transaction'),
         actions: [
-          _saving
-              ? const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                )
-              : Padding(
-                  padding: const EdgeInsets.only(right: 12),
-                  child: FilledButton(
-                    onPressed: _save,
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      minimumSize: const Size(0, 36),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                    child: const Text('Save',
-                        style: TextStyle(fontWeight: FontWeight.w700)),
-                  ),
-                ),
+          if (_saving)
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
         ],
       ),
       body: SafeArea(
         top: false,
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              // ── Fixed top: type toggle + date + amount hero ──────────
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-                child: Column(
-                  children: [
-                    // Type toggle + date chip row
-                    Row(
-                      children: [
-                        _TypeToggle(
-                          isExpense: isExpense,
-                          onExpense: () => setState(
-                              () => _type = TransactionType.expense),
-                          onIncome: () => setState(
-                              () => _type = TransactionType.income),
-                        ),
-                        const Spacer(),
-                        GestureDetector(
-                          onTap: _pickDate,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 7),
-                            decoration: BoxDecoration(
-                              color: cs.surfaceContainerLow,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.calendar_today_outlined,
-                                    size: 13,
+        child: Column(
+          children: [
+            // ── Fixed top: type toggle + date + amount hero ──────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+              child: Column(
+                children: [
+                  // Type toggle + date chip row
+                  Row(
+                    children: [
+                      _TypeToggle(
+                        isExpense: isExpense,
+                        onExpense: () => setState(
+                            () => _type = TransactionType.expense),
+                        onIncome: () => setState(
+                            () => _type = TransactionType.income),
+                      ),
+                      const Spacer(),
+                      GestureDetector(
+                        onTap: _pickDate,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 7),
+                          decoration: BoxDecoration(
+                            color: cs.surfaceContainerLow,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.calendar_today_outlined,
+                                  size: 13,
+                                  color: cs.onSurfaceVariant),
+                              const SizedBox(width: 6),
+                              Text(
+                                _formatDateShort(_date),
+                                style: tt.labelMedium?.copyWith(
                                     color: cs.onSurfaceVariant),
-                                const SizedBox(width: 6),
-                                Text(
-                                  _formatDateShort(_date),
-                                  style: tt.labelMedium?.copyWith(
-                                      color: cs.onSurfaceVariant),
-                                ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
 
-                    // Amount hero input
-                    TextFormField(
-                      controller: _amountController,
-                      keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true),
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(
-                            RegExp(r'[\d.]')),
-                      ],
-                      autofocus: !_isEditing,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
+                  // Amount hero input
+                  TextField(
+                    controller: _amountController,
+                    keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(
+                          RegExp(r'[\d.]')),
+                    ],
+                    autofocus: !_isEditing,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 52,
+                      fontWeight: FontWeight.w300,
+                      color: amountColor,
+                      letterSpacing: -1,
+                      height: 1.1,
+                    ),
+                    decoration: InputDecoration(
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      hintText: '0.00',
+                      hintStyle: TextStyle(
                         fontSize: 52,
                         fontWeight: FontWeight.w300,
-                        color: amountColor,
+                        color: cs.onSurface.withValues(alpha: 0.18),
                         letterSpacing: -1,
                         height: 1.1,
                       ),
-                      decoration: InputDecoration(
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        errorBorder: InputBorder.none,
-                        focusedErrorBorder: InputBorder.none,
-                        hintText: '0.00',
-                        hintStyle: TextStyle(
-                          fontSize: 52,
-                          fontWeight: FontWeight.w300,
-                          color: cs.onSurface.withValues(alpha: 0.18),
-                          letterSpacing: -1,
-                          height: 1.1,
-                        ),
-                        prefixText: '$symbol  ',
-                        prefixStyle: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w300,
-                          color: amountColor.withValues(alpha: 0.7),
-                        ),
-                        isDense: true,
-                        contentPadding: EdgeInsets.zero,
-                        errorStyle: const TextStyle(height: 0),
+                      prefixText: '$symbol  ',
+                      prefixStyle: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w300,
+                        color: amountColor.withValues(alpha: 0.7),
                       ),
-                      validator: (v) {
-                        if (v == null || v.isEmpty) return '';
-                        final n =
-                            double.tryParse(v.replaceAll(',', ''));
-                        if (n == null || n <= 0) return '';
-                        return null;
-                      },
+                      isDense: true,
+                      contentPadding: EdgeInsets.zero,
                     ),
-                    const SizedBox(height: 4),
-                  ],
-                ),
+                    onEditingComplete: () {
+                      FocusScope.of(context).nextFocus();
+                      _tryAutoSave();
+                    },
+                  ),
+                  const SizedBox(height: 4),
+                ],
               ),
+            ),
 
-              Divider(
-                height: 1,
-                indent: 20,
-                endIndent: 20,
-                color: cs.outlineVariant,
-              ),
+            Divider(
+              height: 1,
+              indent: 20,
+              endIndent: 20,
+              color: cs.outlineVariant,
+            ),
 
-              // ── Scrollable bottom: description + categories ──────────
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
-                  keyboardDismissBehavior:
-                      ScrollViewKeyboardDismissBehavior.onDrag,
-                  children: [
-                    // Description
-                    _DescriptionAutocomplete(
-                      initialDescription:
-                          widget.initialTransaction?.description,
-                      onControllerReady: (c) {
-                        _descFieldController = c;
-                        if (!_descInitialized &&
-                            widget.initialTransaction != null) {
-                          _descInitialized = true;
-                          c.text =
-                              widget.initialTransaction!.description;
-                          c.selection = TextSelection.collapsed(
-                              offset: c.text.length);
-                        }
-                      },
-                      onSuggestionSelected: (suggestion) {
-                        setState(() => _selectedCategoryUuid =
-                            suggestion.categoryUuid);
-                      },
-                    ),
-                    const SizedBox(height: 24),
+            // ── Scrollable bottom: description + categories ──────────
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                children: [
+                  // Description
+                  _DescriptionAutocomplete(
+                    initialDescription:
+                        widget.initialTransaction?.description,
+                    onControllerReady: (c) {
+                      _descFieldController = c;
+                      if (!_descInitialized &&
+                          widget.initialTransaction != null) {
+                        _descInitialized = true;
+                        c.text =
+                            widget.initialTransaction!.description;
+                        c.selection = TextSelection.collapsed(
+                            offset: c.text.length);
+                      }
+                    },
+                    onSuggestionSelected: (suggestion) {
+                      setState(() => _selectedCategoryUuid =
+                          suggestion.categoryUuid);
+                      _tryAutoSave();
+                    },
+                    onSubmitted: _tryAutoSave,
+                  ),
+                  const SizedBox(height: 24),
 
-                    // Category header
-                    Row(
-                      children: [
-                        Text('Category',
-                            style: tt.titleSmall),
-                        const Spacer(),
-                        TextButton.icon(
-                          icon: const Icon(Icons.add, size: 14),
-                          label: const Text('New'),
-                          onPressed: () =>
-                              context.push('/categories/edit'),
-                          style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8),
-                            visualDensity: VisualDensity.compact,
-                          ),
+                  // Category header
+                  Row(
+                    children: [
+                      Text('Category', style: tt.titleSmall),
+                      const Spacer(),
+                      TextButton.icon(
+                        icon: const Icon(Icons.add, size: 14),
+                        label: const Text('New'),
+                        onPressed: () =>
+                            context.push('/categories/edit'),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8),
+                          visualDensity: VisualDensity.compact,
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    ref.watch(categoriesProvider).when(
-                          loading: () => const Center(
-                              child: CircularProgressIndicator()),
-                          error: (e, _) => Text('$e'),
-                          data: (cats) {
-                            final active =
-                                (cats.where((c) => c.isActive).toList()
-                                      ..sort((a, b) => a.sortOrder
-                                          .compareTo(b.sortOrder)))
-                                    .toList();
-                            return _CategoryGrid(
-                              categories: active,
-                              selected: _selectedCategoryUuid,
-                              onSelect: (uuid) => setState(
-                                  () => _selectedCategoryUuid = uuid),
-                              mostUsedUuids: mostUsedUuids,
-                            );
-                          },
-                        ),
-                  ],
-                ),
+                      ),
+                    ],
+                  ),
+
+                  // Hint when nothing selected yet
+                  _SelectionHint(
+                    amountMissing: double.tryParse(
+                            _amountController.text
+                                .replaceAll(',', '')) ==
+                        null,
+                    categoryMissing: _selectedCategoryUuid == null,
+                  ),
+
+                  const SizedBox(height: 8),
+                  ref.watch(categoriesProvider).when(
+                        loading: () => const Center(
+                            child: CircularProgressIndicator()),
+                        error: (e, _) => Text('$e'),
+                        data: (cats) {
+                          final active =
+                              (cats.where((c) => c.isActive).toList()
+                                    ..sort((a, b) => a.sortOrder
+                                        .compareTo(b.sortOrder)))
+                                  .toList();
+                          return _CategoryGrid(
+                            categories: active,
+                            selected: _selectedCategoryUuid,
+                            onSelect: (uuid) {
+                              setState(
+                                  () => _selectedCategoryUuid = uuid);
+                              _tryAutoSave();
+                            },
+                            mostUsedUuids: mostUsedUuids,
+                          );
+                        },
+                      ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -373,6 +368,40 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     if (d == today) return 'Today';
     if (d == today.subtract(const Duration(days: 1))) return 'Yesterday';
     return DateFormat('MMM d').format(date);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Hint row shown below the category label
+// ---------------------------------------------------------------------------
+
+class _SelectionHint extends StatelessWidget {
+  final bool amountMissing;
+  final bool categoryMissing;
+
+  const _SelectionHint({
+    required this.amountMissing,
+    required this.categoryMissing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (!amountMissing && !categoryMissing) return const SizedBox.shrink();
+    final cs = Theme.of(context).colorScheme;
+    final parts = <String>[
+      if (amountMissing) 'amount',
+      if (categoryMissing) 'category',
+    ];
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Text(
+        'Add ${parts.join(' & ')} to save',
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: cs.onSurfaceVariant,
+              fontStyle: FontStyle.italic,
+            ),
+      ),
+    );
   }
 }
 
@@ -470,11 +499,13 @@ class _DescriptionAutocomplete extends ConsumerWidget {
   final String? initialDescription;
   final ValueChanged<TextEditingController> onControllerReady;
   final ValueChanged<DescriptionSuggestion> onSuggestionSelected;
+  final VoidCallback? onSubmitted;
 
   const _DescriptionAutocomplete({
     required this.onControllerReady,
     required this.onSuggestionSelected,
     this.initialDescription,
+    this.onSubmitted,
   });
 
   @override
@@ -569,6 +600,10 @@ class _DescriptionAutocomplete extends ConsumerWidget {
           controller: controller,
           focusNode: focusNode,
           textCapitalization: TextCapitalization.sentences,
+          onEditingComplete: () {
+            focusNode.unfocus();
+            onSubmitted?.call();
+          },
           decoration: InputDecoration(
             hintText: 'Description',
             filled: true,
