@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../data/models/category.dart';
 import '../../data/models/transaction.dart';
@@ -25,6 +26,25 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   String? _selectedCategoryUuid;
   final Set<String> _expandedDates = {};
+  bool _isSearching = false;
+  String _searchQuery = '';
+  final _searchCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  void _startSearch() => setState(() => _isSearching = true);
+
+  void _stopSearch() {
+    setState(() {
+      _isSearching = false;
+      _searchQuery = '';
+      _searchCtrl.clear();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,21 +54,73 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'FELOOSY',
-          style: TextStyle(fontWeight: FontWeight.w700, letterSpacing: 1.5),
+        titleSpacing: 16,
+        title: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 220),
+          switchInCurve: Curves.easeOut,
+          switchOutCurve: Curves.easeIn,
+          transitionBuilder: (child, anim) => FadeTransition(
+            opacity: anim,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0.06, 0),
+                end: Offset.zero,
+              ).animate(anim),
+              child: child,
+            ),
+          ),
+          child: _isSearching
+              ? TextField(
+                  key: const ValueKey('search'),
+                  controller: _searchCtrl,
+                  autofocus: true,
+                  onChanged: (v) => setState(() => _searchQuery = v),
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface),
+                  decoration: InputDecoration(
+                    hintText: 'Search transactions…',
+                    hintStyle: TextStyle(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurfaceVariant),
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                )
+              : Text(
+                  'FELOOSY',
+                  key: const ValueKey('title'),
+                  style: GoogleFonts.rajdhani(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 26,
+                    letterSpacing: 3,
+                  ),
+                ),
         ),
-        actions: [
-          IconButton(
-            tooltip: 'Budget',
-            icon: const _BudgetBarIcon(),
-            onPressed: () => context.push('/budget'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () => _openSettings(context),
-          ),
-        ],
+        actions: _isSearching
+            ? [
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: _stopSearch,
+                ),
+              ]
+            : [
+                IconButton(
+                  icon: const Icon(Icons.search),
+                  tooltip: 'Search',
+                  onPressed: _startSearch,
+                ),
+                IconButton(
+                  tooltip: 'Budget',
+                  icon: const _BudgetBarIcon(),
+                  onPressed: () => context.push('/budget'),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.settings_outlined),
+                  onPressed: () => _openSettings(context),
+                ),
+              ],
       ),
       body: Stack(
         children: [
@@ -117,10 +189,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     final activeCats = cats.where((c) => c.isActive).toList();
 
-    final filteredTxs = _selectedCategoryUuid == null
+    // Category filter then description search
+    final categoryFiltered = _selectedCategoryUuid == null
         ? txs
         : txs
             .where((tx) => tx.categoryUuid == _selectedCategoryUuid)
+            .toList();
+
+    final filteredTxs = _searchQuery.isEmpty
+        ? categoryFiltered
+        : categoryFiltered
+            .where((tx) => tx.description
+                .toLowerCase()
+                .contains(_searchQuery.toLowerCase()))
             .toList();
 
     final selectedCat = _selectedCategoryUuid != null

@@ -39,6 +39,7 @@ dependencies:
   fl_chart: ^0.70.2
   flutter_slidable: ^3.1.1
   gap: ^3.0.1
+  google_fonts: ^6.2.1
   package_info_plus: ^8.3.0
 
   # Firebase + auth

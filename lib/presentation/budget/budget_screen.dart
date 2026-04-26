@@ -17,11 +17,18 @@ import '../../providers/transactions_provider.dart';
 import '../transactions/widgets/transaction_tile.dart';
 import 'set_budget_sheet.dart';
 
-class BudgetScreen extends ConsumerWidget {
+class BudgetScreen extends ConsumerStatefulWidget {
   const BudgetScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<BudgetScreen> createState() => _BudgetScreenState();
+}
+
+class _BudgetScreenState extends ConsumerState<BudgetScreen> {
+  bool _cardExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
     final period = ref.watch(currentBudgetPeriodProvider);
     final budgetAsync = ref.watch(currentBudgetProvider);
     final summaryAsync = ref.watch(budgetSummaryProvider);
@@ -82,20 +89,60 @@ class BudgetScreen extends ConsumerWidget {
                   ),
                 ),
 
-                // ── Transactions + top spending (always visible) ────────
+                // ── Collapsible transactions + chart ────────────────────
                 txAsync.maybeWhen(
                   data: (txs) {
                     if (txs.isEmpty) return const SizedBox.shrink();
-                    return catAsync.maybeWhen(
-                      data: (cats) => summaryAsync.maybeWhen(
-                        data: (summary) => _ExpandedContent(
-                          txs: txs,
-                          cats: cats,
-                          summary: summary,
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Divider(height: 1),
+                        InkWell(
+                          onTap: () => setState(
+                              () => _cardExpanded = !_cardExpanded),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 12),
+                            child: Row(
+                              children: [
+                                Text(
+                                  '${txs.length} transaction'
+                                  '${txs.length == 1 ? '' : 's'}'
+                                  ' this period',
+                                  style: tt.labelMedium
+                                      ?.copyWith(color: cs.primary),
+                                ),
+                                const Spacer(),
+                                AnimatedRotation(
+                                  turns: _cardExpanded ? 0.5 : 0,
+                                  duration:
+                                      const Duration(milliseconds: 200),
+                                  child: Icon(Icons.expand_more,
+                                      color: cs.primary, size: 20),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-                        orElse: () => const SizedBox.shrink(),
-                      ),
-                      orElse: () => const SizedBox.shrink(),
+                        AnimatedCrossFade(
+                          firstChild: const SizedBox.shrink(),
+                          secondChild: catAsync.maybeWhen(
+                            data: (cats) => summaryAsync.maybeWhen(
+                              data: (summary) => _ExpandedContent(
+                                txs: txs,
+                                cats: cats,
+                                summary: summary,
+                              ),
+                              orElse: () => const SizedBox.shrink(),
+                            ),
+                            orElse: () => const SizedBox.shrink(),
+                          ),
+                          crossFadeState: _cardExpanded
+                              ? CrossFadeState.showSecond
+                              : CrossFadeState.showFirst,
+                          duration: const Duration(milliseconds: 220),
+                        ),
+                      ],
                     );
                   },
                   orElse: () => const SizedBox.shrink(),
