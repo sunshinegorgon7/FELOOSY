@@ -171,7 +171,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 left: 72,
                 right: 72,
                 height: 56,
-                child: Center(child: _BalancePill(summary: value)),
+                child: _BalancePill(summary: value),
               ),
         ],
       ),
@@ -599,6 +599,7 @@ class _BalancePill extends StatelessWidget {
     final isOver = summary.isOverBudget;
     final color = isOver ? Colors.red.shade600 : Colors.green.shade600;
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
@@ -606,12 +607,12 @@ class _BalancePill extends StatelessWidget {
         border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
             summary.formatAmount(summary.remaining.abs()),
             style: TextStyle(
-              fontSize: 13,
+              fontSize: 16,
               fontWeight: FontWeight.w700,
               color: color,
               height: 1.2,
@@ -620,7 +621,7 @@ class _BalancePill extends StatelessWidget {
           Text(
             isOver ? 'over budget' : 'available',
             style: TextStyle(
-              fontSize: 10,
+              fontSize: 11,
               color: color.withValues(alpha: 0.8),
               height: 1.2,
             ),

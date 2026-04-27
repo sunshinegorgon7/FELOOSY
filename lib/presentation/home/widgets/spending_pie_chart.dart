@@ -112,11 +112,7 @@ class SpendingPieChart extends StatelessWidget {
         angle += sweep;
       }
 
-      final spentColor = summary.isOverBudget
-          ? Colors.red
-          : summary.spentPercentage > 0.8
-              ? Colors.orange
-              : cs.primary;
+      const spentColor = Color(0xFFE64A19); // deep orange-red
 
       final half = size / 2;
 
