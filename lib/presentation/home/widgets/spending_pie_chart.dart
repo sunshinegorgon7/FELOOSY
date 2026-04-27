@@ -72,7 +72,7 @@ class SpendingPieChart extends StatelessWidget {
     final total = data.fold(0.0, (s, d) => s + d.amount);
 
     return LayoutBuilder(builder: (context, constraints) {
-      final size = math.min(constraints.maxWidth, 300.0);
+      final size = constraints.maxWidth;
       final centerR = size * 0.24;
       final sectionR = size * 0.175;
       final iconR = centerR + sectionR * 0.5;

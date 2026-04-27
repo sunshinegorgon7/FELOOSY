@@ -14,6 +14,15 @@ import '../settings/settings_screen.dart';
 import '../transactions/widgets/transaction_tile.dart';
 import 'widgets/spending_pie_chart.dart';
 
+String _dayLabel(DateTime date) {
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  final d = DateTime(date.year, date.month, date.day);
+  if (d == today) return 'Today';
+  if (d == today.subtract(const Duration(days: 1))) return 'Yesterday';
+  return DateFormat('EEEE, MMMM d').format(date);
+}
+
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -23,7 +32,6 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   String? _selectedCategoryUuid;
-  final Set<String> _expandedDates = {};
   bool _isSearching = false;
   String _searchQuery = '';
   final _searchCtrl = TextEditingController();
@@ -155,6 +163,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: const Icon(Icons.remove),
             ),
           ),
+          // Available balance centered between the two FABs
+          if (summaryAsync case AsyncData(:final value))
+            if (value.budgetAmount > 0)
+              Positioned(
+                bottom: 16 + MediaQuery.paddingOf(context).bottom,
+                left: 72,
+                right: 72,
+                height: 56,
+                child: Center(child: _BalancePill(summary: value)),
+              ),
         ],
       ),
     );
@@ -191,15 +209,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         : null;
 
     final groups = _groupByDate(filteredTxs);
-
-    // Flatten groups based on expanded state (collapsed by default)
-    final flatItems = <Object>[];
-    for (final g in groups) {
-      flatItems.add(g);
-      if (_expandedDates.contains(g.label)) {
-        flatItems.addAll(g.txs);
-      }
-    }
 
     return CustomScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
@@ -285,89 +294,60 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           SliverList(
             delegate: SliverChildBuilderDelegate(
               (context, index) {
-                final item = flatItems[index];
-
-                if (item is _DayGroup) {
-                  final isExpanded =
-                      _expandedDates.contains(item.label);
-                  final sign = item.dayNet >= 0 ? '+' : '−';
-                  return InkWell(
-                    onTap: () => setState(() {
-                      if (isExpanded) {
-                        _expandedDates.remove(item.label);
-                      } else {
-                        _expandedDates.add(item.label);
-                      }
-                    }),
-                    child: Padding(
-                      padding:
-                          const EdgeInsets.fromLTRB(16, 10, 16, 4),
-                      child: Row(
-                        children: [
-                          Icon(
-                            isExpanded
-                                ? Icons.expand_more
-                                : Icons.chevron_right,
-                            size: 16,
-                            color: cs.onSurfaceVariant,
+                final group = groups[index];
+                final sign = group.dayNet >= 0 ? '+' : '−';
+                return InkWell(
+                  onTap: () =>
+                      _showDayOverlay(context, group, cats, summary),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
+                    child: Row(
+                      children: [
+                        Icon(Icons.chevron_right,
+                            size: 16, color: cs.onSurfaceVariant),
+                        const SizedBox(width: 4),
+                        Text(
+                          group.label,
+                          style: tt.labelMedium
+                              ?.copyWith(color: cs.onSurfaceVariant),
+                        ),
+                        const Spacer(),
+                        Text(
+                          '$sign${summary.formatAmount(group.dayNet.abs())}',
+                          style: tt.labelMedium?.copyWith(
+                            color: cs.onSurface,
+                            fontWeight: FontWeight.w600,
                           ),
-                          const SizedBox(width: 4),
-                          Text(
-                            item.label,
-                            style: tt.labelMedium
-                                ?.copyWith(color: cs.onSurfaceVariant),
-                          ),
-                          const Spacer(),
-                          Text(
-                            '$sign${summary.formatAmount(item.dayNet.abs())}',
-                            style: tt.labelMedium?.copyWith(
-                              color: cs.onSurface,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  );
-                }
-
-                final tx = item as Transaction;
-                final cat = cats
-                    .where((c) => c.uuid == tx.categoryUuid)
-                    .firstOrNull;
-                return Slidable(
-                  key: ValueKey(tx.uuid),
-                  endActionPane: ActionPane(
-                    motion: const DrawerMotion(),
-                    extentRatio: 0.25,
-                    children: [
-                      SlidableAction(
-                        onPressed: (_) =>
-                            _confirmDelete(context, tx),
-                        backgroundColor: Colors.red,
-                        foregroundColor: Colors.white,
-                        icon: Icons.delete_outline,
-                        label: 'Delete',
-                        borderRadius: const BorderRadius.horizontal(
-                            right: Radius.circular(12)),
-                      ),
-                    ],
-                  ),
-                  child: TransactionTile(
-                    transaction: tx,
-                    category: cat,
-                    compact: true,
-                    onTap: () =>
-                        context.push('/transactions/edit', extra: tx),
                   ),
                 );
               },
-              childCount: flatItems.length,
+              childCount: groups.length,
             ),
           ),
 
         const SliverToBoxAdapter(child: SizedBox(height: 96)),
       ],
+    );
+  }
+
+  void _showDayOverlay(
+    BuildContext context,
+    _DayGroup group,
+    List<Category> cats,
+    BudgetSummary summary,
+  ) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _DayOverlay(
+        dayLabel: group.label,
+        cats: cats,
+        summary: summary,
+      ),
     );
   }
 
@@ -423,7 +403,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final groupOrder = <String>[];
 
     for (final tx in txs) {
-      final label = _dateLabel(tx.transactionDate);
+      final label = _dayLabel(tx.transactionDate);
       if (!groupTxs.containsKey(label)) {
         groupTxs[label] = [];
         groupOrder.add(label);
@@ -442,16 +422,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }).toList();
   }
 
-  String _dateLabel(DateTime date) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final d = DateTime(date.year, date.month, date.day);
-    if (d == today) return 'Today';
-    if (d == today.subtract(const Duration(days: 1))) return 'Yesterday';
-    return DateFormat('EEEE, MMMM d').format(date);
-  }
+}
 
-  Future<void> _confirmDelete(BuildContext context, Transaction tx) async {
+class _DayGroup {
+  final String label;
+  final double dayNet;
+  final List<Transaction> txs;
+  _DayGroup(this.label, this.dayNet, this.txs);
+}
+
+// ---------------------------------------------------------------------------
+// Full-page overlay shown when tapping a day group
+// ---------------------------------------------------------------------------
+
+class _DayOverlay extends ConsumerStatefulWidget {
+  final String dayLabel;
+  final List<Category> cats;
+  final BudgetSummary summary;
+
+  const _DayOverlay({
+    required this.dayLabel,
+    required this.cats,
+    required this.summary,
+  });
+
+  @override
+  ConsumerState<_DayOverlay> createState() => _DayOverlayState();
+}
+
+class _DayOverlayState extends ConsumerState<_DayOverlay> {
+  Future<void> _delete(Transaction tx) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -475,11 +475,158 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       await ref.read(transactionsProvider.notifier).remove(tx.uuid);
     }
   }
+
+  @override
+  Widget build(BuildContext context) {
+    final allTxs = ref.watch(transactionsProvider).asData?.value ?? const <Transaction>[];
+    final dayTxs = allTxs
+        .where((tx) => _dayLabel(tx.transactionDate) == widget.dayLabel)
+        .toList()
+      ..sort((a, b) => b.transactionDate.compareTo(a.transactionDate));
+
+    // Auto-close when all transactions in this day are deleted
+    if (dayTxs.isEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) Navigator.pop(context);
+      });
+    }
+
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.75,
+      minChildSize: 0.4,
+      maxChildSize: 1.0,
+      expand: false,
+      builder: (ctx, scrollController) => Container(
+        decoration: BoxDecoration(
+          color: cs.surface,
+          borderRadius:
+              const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          children: [
+            // Drag handle
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(0, 12, 0, 4),
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: cs.onSurfaceVariant.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+            ),
+            // Header row
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 4, 8, 8),
+              child: Row(
+                children: [
+                  Text(
+                    widget.dayLabel,
+                    style: tt.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+            Divider(height: 1, color: cs.outlineVariant),
+            // Transaction list (reactive)
+            Expanded(
+              child: ListView.builder(
+                controller: scrollController,
+                itemCount: dayTxs.length,
+                itemBuilder: (ctx, index) {
+                  final tx = dayTxs[index];
+                  final cat = widget.cats
+                      .where((c) => c.uuid == tx.categoryUuid)
+                      .firstOrNull;
+                  return Slidable(
+                    key: ValueKey(tx.uuid),
+                    endActionPane: ActionPane(
+                      motion: const DrawerMotion(),
+                      extentRatio: 0.25,
+                      children: [
+                        SlidableAction(
+                          onPressed: (_) => _delete(tx),
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                          icon: Icons.delete_outline,
+                          label: 'Delete',
+                          borderRadius: const BorderRadius.horizontal(
+                              right: Radius.circular(12)),
+                        ),
+                      ],
+                    ),
+                    child: TransactionTile(
+                      transaction: tx,
+                      category: cat,
+                      compact: true,
+                      onTap: () =>
+                          context.push('/transactions/edit', extra: tx),
+                    ),
+                  );
+                },
+              ),
+            ),
+            SizedBox(height: MediaQuery.paddingOf(context).bottom),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
-class _DayGroup {
-  final String label;
-  final double dayNet;
-  final List<Transaction> txs;
-  _DayGroup(this.label, this.dayNet, this.txs);
+// ---------------------------------------------------------------------------
+// Balance pill shown between the two FABs
+// ---------------------------------------------------------------------------
+
+class _BalancePill extends StatelessWidget {
+  final BudgetSummary summary;
+  const _BalancePill({required this.summary});
+
+  @override
+  Widget build(BuildContext context) {
+    final isOver = summary.isOverBudget;
+    final color = isOver ? Colors.red.shade600 : Colors.green.shade600;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            summary.formatAmount(summary.remaining.abs()),
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: color,
+              height: 1.2,
+            ),
+          ),
+          Text(
+            isOver ? 'over budget' : 'available',
+            style: TextStyle(
+              fontSize: 10,
+              color: color.withValues(alpha: 0.8),
+              height: 1.2,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

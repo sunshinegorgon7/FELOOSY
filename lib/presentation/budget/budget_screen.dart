@@ -308,7 +308,7 @@ class _ExpandedContent extends StatelessWidget {
     }
     final sorted = totals.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
-    final topCategories = sorted
+    final top5 = sorted
         .take(5)
         .map((e) {
           final cat =
@@ -321,8 +321,8 @@ class _ExpandedContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // ── Top 3 bar chart ─────────────────────────────────────────
-        if (topCategories.isNotEmpty) ...[
+        // ── Top 5 bar chart ─────────────────────────────────────────
+        if (top5.isNotEmpty) ...[
           const Divider(height: 1),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 14, 20, 4),
@@ -337,10 +337,7 @@ class _ExpandedContent extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-            child: _TopCategoriesChart(
-              stats: topCategories,
-              summary: summary,
-            ),
+            child: _TopCategoriesChart(stats: top5, summary: summary),
           ),
         ],
 
