@@ -145,14 +145,38 @@ class SpendingPieChart extends StatelessWidget {
                 ),
               ),
 
-              // Total spent in center
-              Text(
-                summary.formatAmount(total),
-                style: tt.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: spentColor,
+              // Total spent in center — pill style matching the balance pill
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: spentColor.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                      color: spentColor.withValues(alpha: 0.3)),
                 ),
-                textAlign: TextAlign.center,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      summary.formatAmount(total),
+                      style: tt.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: spentColor,
+                        height: 1.2,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    Text(
+                      'spent',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: spentColor.withValues(alpha: 0.8),
+                        height: 1.2,
+                      ),
+                    ),
+                  ],
+                ),
               ),
 
               // Category icons on slices

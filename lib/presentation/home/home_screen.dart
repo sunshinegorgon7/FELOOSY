@@ -600,6 +600,7 @@ class _BalancePill extends StatelessWidget {
     final color = isOver ? Colors.red.shade600 : Colors.green.shade600;
     return Container(
       width: double.infinity,
+      margin: const EdgeInsets.symmetric(horizontal: 10),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
