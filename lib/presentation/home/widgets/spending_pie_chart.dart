@@ -41,9 +41,21 @@ class SpendingPieChart extends StatelessWidget {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 24),
         child: Center(
-          child: Text(
-            'No expenses this period.',
-            style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                summary.period.label,
+                style: tt.labelMedium
+                    ?.copyWith(color: cs.onSurfaceVariant),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'No expenses this period.',
+                style:
+                    tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+              ),
+            ],
           ),
         ),
       );
@@ -61,9 +73,21 @@ class SpendingPieChart extends StatelessWidget {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 24),
         child: Center(
-          child: Text(
-            'No expenses this period.',
-            style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                summary.period.label,
+                style: tt.labelMedium
+                    ?.copyWith(color: cs.onSurfaceVariant),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'No expenses this period.',
+                style:
+                    tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+              ),
+            ],
           ),
         ),
       );
@@ -73,8 +97,8 @@ class SpendingPieChart extends StatelessWidget {
 
     return LayoutBuilder(builder: (context, constraints) {
       final size = constraints.maxWidth;
-      final centerR = size * 0.24;
-      final sectionR = size * 0.175;
+      final centerR = size * 0.27;
+      final sectionR = size * 0.16;
       final iconR = centerR + sectionR * 0.5;
 
       final sections = <PieChartSectionData>[];
@@ -145,10 +169,10 @@ class SpendingPieChart extends StatelessWidget {
                 ),
               ),
 
-              // Total spent in center — pill style matching the balance pill
+              // Center pill: period label + total spent
               Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 10, vertical: 4),
+                    horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
                   color: spentColor.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(20),
@@ -158,6 +182,16 @@ class SpendingPieChart extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    Text(
+                      summary.period.label,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                        color: spentColor.withValues(alpha: 0.75),
+                        height: 1.2,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
                     Text(
                       summary.formatAmount(total),
                       style: tt.titleMedium?.copyWith(
@@ -171,7 +205,7 @@ class SpendingPieChart extends StatelessWidget {
                       'spent',
                       style: TextStyle(
                         fontSize: 10,
-                        color: spentColor.withValues(alpha: 0.8),
+                        color: spentColor.withValues(alpha: 0.7),
                         height: 1.2,
                       ),
                     ),

@@ -216,14 +216,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         // Period header
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
             child: Row(
               children: [
-                Text(
-                  summary.period.label,
-                  style: tt.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w600),
-                ),
                 const Spacer(),
                 if (summary.budgetAmount == 0)
                   TextButton.icon(
@@ -239,7 +234,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         // Pie chart
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
             child: SpendingPieChart(
               transactions: txs,
               categories: activeCats,
