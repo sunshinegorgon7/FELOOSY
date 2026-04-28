@@ -358,7 +358,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 final group = groups[index];
                 return InkWell(
                   onTap: () =>
-                      _showDayOverlay(context, groups, index, cats, summary),
+                      _showDayOverlay(
+                        context,
+                        groups,
+                        index,
+                        cats,
+                        summary,
+                        scopedTxs: _searchQuery.isNotEmpty ? filteredTxs : null,
+                      ),
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
                     child: Row(
@@ -392,8 +399,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     List<_DayGroup> groups,
     int initialIndex,
     List<Category> cats,
-    BudgetSummary summary,
-  ) {
+    BudgetSummary summary, {
+    List<Transaction>? scopedTxs,
+  }) {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -404,6 +412,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         cats: cats,
         selectedCategoryUuid: _selectedCategoryUuid,
         summary: summary,
+        scopedTxs: scopedTxs,
       ),
     );
   }
@@ -499,6 +508,7 @@ class _DayOverlay extends ConsumerStatefulWidget {
   final List<Category> cats;
   final String? selectedCategoryUuid;
   final BudgetSummary summary;
+  final List<Transaction>? scopedTxs;
 
   const _DayOverlay({
     required this.dayKeys,
@@ -506,6 +516,7 @@ class _DayOverlay extends ConsumerStatefulWidget {
     required this.cats,
     required this.selectedCategoryUuid,
     required this.summary,
+    this.scopedTxs,
   });
 
   @override
@@ -548,7 +559,9 @@ class _DayOverlayState extends ConsumerState<_DayOverlay> {
 
   @override
   Widget build(BuildContext context) {
-    final allTxs = ref.watch(transactionsProvider).asData?.value ?? const <Transaction>[];
+    final allTxs = widget.scopedTxs ??
+        ref.watch(transactionsProvider).asData?.value ??
+        const <Transaction>[];
     final visibleDays = widget.dayKeys.where((day) {
       return allTxs.any((tx) {
         final txDay = DateUtils.dateOnly(tx.transactionDate);
