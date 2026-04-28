@@ -22,7 +22,7 @@ const kDefaultCategoryUuids = [
   '00000000-0000-0000-0000-000000000016', // Refund
 ];
 
-// Parallel list of (name, icon, color) — index must match _kUuids above.
+// Parallel list of (name, icon, color) — index must match kDefaultCategoryUuids.
 const kDefaultCategoryData = [
   ('Groceries',     Icons.shopping_cart,          Color(0xFF4CAF50)),
   ('Dining Out',    Icons.restaurant,              Color(0xFFFF7043)),
