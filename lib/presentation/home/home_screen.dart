@@ -62,6 +62,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final catAsync = ref.watch(categoriesProvider);
     final accounts = ref.watch(accountsProvider).valueOrNull ?? const [];
     final selectedAccountId = ref.watch(selectedHomeAccountIdProvider);
+    final isKeyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
+    final shouldHideBottomActions = _isSearching || isKeyboardOpen;
     if (!_accountInitialized && accounts.isNotEmpty && selectedAccountId == null) {
       final initial = accounts.where((a) => a.isFavorite).firstOrNull ?? accounts.first;
       if (initial.id != null) {
@@ -164,30 +166,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
           ),
-          Positioned(
-            bottom: 16 + MediaQuery.paddingOf(context).bottom,
-            left: 16,
-            child: FloatingActionButton(
-              heroTag: 'income_fab',
-              backgroundColor: Colors.green.shade600,
-              foregroundColor: Colors.white,
-              onPressed: () => context.push('/transactions/add?type=income'),
-              child: const Icon(Icons.add),
+          if (!shouldHideBottomActions)
+            Positioned(
+              bottom: 16 + MediaQuery.paddingOf(context).bottom,
+              left: 16,
+              child: FloatingActionButton(
+                heroTag: 'income_fab',
+                backgroundColor: Colors.green.shade600,
+                foregroundColor: Colors.white,
+                onPressed: () => context.push('/transactions/add?type=income'),
+                child: const Icon(Icons.add),
+              ),
             ),
-          ),
-          Positioned(
-            bottom: 16 + MediaQuery.paddingOf(context).bottom,
-            right: 16,
-            child: FloatingActionButton(
-              heroTag: 'expense_fab',
-              backgroundColor: Colors.red.shade600,
-              foregroundColor: Colors.white,
-              onPressed: () => context.push('/transactions/add?type=expense'),
-              child: const Icon(Icons.remove),
+          if (!shouldHideBottomActions)
+            Positioned(
+              bottom: 16 + MediaQuery.paddingOf(context).bottom,
+              right: 16,
+              child: FloatingActionButton(
+                heroTag: 'expense_fab',
+                backgroundColor: Colors.red.shade600,
+                foregroundColor: Colors.white,
+                onPressed: () => context.push('/transactions/add?type=expense'),
+                child: const Icon(Icons.remove),
+              ),
             ),
-          ),
           // Available balance centered between the two FABs
-          if (summaryAsync case AsyncData(:final value))
+          if (!shouldHideBottomActions)
+            if (summaryAsync case AsyncData(:final value))
             if (value.budgetAmount > 0 && !isAllAccounts)
               Positioned(
                 bottom: 16 + MediaQuery.paddingOf(context).bottom,
