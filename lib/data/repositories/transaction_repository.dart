@@ -13,15 +13,23 @@ class TransactionRepository {
   TransactionRepository(this._db);
 
   Future<List<model.Transaction>> getForPeriod(
-      DateTime start, DateTime end) async {
+      DateTime start, DateTime end, {int? accountId}) async {
     final db = await _db.database;
     final rows = await db.query(
       'transactions',
-      where: 'transaction_date >= ? AND transaction_date <= ?',
-      whereArgs: [
-        start.millisecondsSinceEpoch,
-        end.millisecondsSinceEpoch,
-      ],
+      where: accountId == null
+          ? 'transaction_date >= ? AND transaction_date <= ?'
+          : 'transaction_date >= ? AND transaction_date <= ? AND account_id = ?',
+      whereArgs: accountId == null
+          ? [
+              start.millisecondsSinceEpoch,
+              end.millisecondsSinceEpoch,
+            ]
+          : [
+              start.millisecondsSinceEpoch,
+              end.millisecondsSinceEpoch,
+              accountId,
+            ],
       orderBy: 'transaction_date DESC',
     );
     return rows.map(model.Transaction.fromMap).toList();
@@ -40,6 +48,7 @@ class TransactionRepository {
     return model.Transaction(
       id: id,
       uuid: tx.uuid,
+      accountId: tx.accountId,
       amount: tx.amount,
       type: tx.type,
       description: tx.description,
@@ -65,10 +74,14 @@ class TransactionRepository {
     await db.delete('transactions', where: 'uuid = ?', whereArgs: [uuid]);
   }
 
-  Future<List<model.Transaction>> getAll() async {
+  Future<List<model.Transaction>> getAll({int? accountId}) async {
     final db = await _db.database;
-    final rows =
-        await db.query('transactions', orderBy: 'transaction_date DESC');
+    final rows = await db.query(
+      'transactions',
+      where: accountId == null ? null : 'account_id = ?',
+      whereArgs: accountId == null ? null : [accountId],
+      orderBy: 'transaction_date DESC',
+    );
     return rows.map(model.Transaction.fromMap).toList();
   }
 
@@ -113,17 +126,18 @@ class TransactionRepository {
   }
 
   /// Returns category UUIDs ordered by transaction frequency (most used first).
-  Future<List<String>> getMostUsedCategoryUuids({int limit = 4}) async {
+  Future<List<String>> getMostUsedCategoryUuids({int limit = 4, int? accountId}) async {
     final db = await _db.database;
     final rows = await db.rawQuery(
       '''
       SELECT category_uuid, COUNT(*) as cnt
       FROM transactions
+      ${accountId == null ? '' : 'WHERE account_id = ?'}
       GROUP BY category_uuid
       ORDER BY cnt DESC
       LIMIT ?
       ''',
-      [limit],
+      accountId == null ? [limit] : [accountId, limit],
     );
     return rows.map((r) => r['category_uuid'] as String).toList();
   }

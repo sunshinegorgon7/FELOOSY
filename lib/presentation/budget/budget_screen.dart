@@ -11,8 +11,8 @@ import '../../domain/entities/budget_summary.dart';
 import '../../providers/budget_period_provider.dart';
 import '../../providers/budget_provider.dart';
 import '../../providers/budget_summary_provider.dart';
+import '../../providers/accounts_provider.dart';
 import '../../providers/categories_provider.dart';
-import '../../providers/settings_provider.dart';
 import '../../providers/transactions_provider.dart';
 import '../transactions/widgets/transaction_tile.dart';
 import 'set_budget_sheet.dart';
@@ -32,7 +32,6 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
     final period = ref.watch(currentBudgetPeriodProvider);
     final budgetAsync = ref.watch(currentBudgetProvider);
     final summaryAsync = ref.watch(budgetSummaryProvider);
-    final settingsAsync = ref.watch(settingsProvider);
     final txAsync = ref.watch(transactionsProvider);
     final catAsync = ref.watch(categoriesProvider);
 
@@ -82,7 +81,6 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
                             : _BudgetInfo(
                                 budget: budget,
                                 summaryAsync: summaryAsync,
-                                settingsAsync: settingsAsync,
                                 onEdit: () => _showSetBudget(context),
                               ),
                       ),
@@ -201,13 +199,11 @@ class _NoBudget extends StatelessWidget {
 class _BudgetInfo extends ConsumerWidget {
   final Budget budget;
   final AsyncValue summaryAsync;
-  final AsyncValue settingsAsync;
   final VoidCallback onEdit;
 
   const _BudgetInfo({
     required this.budget,
     required this.summaryAsync,
-    required this.settingsAsync,
     required this.onEdit,
   });
 
@@ -215,6 +211,7 @@ class _BudgetInfo extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final tt = Theme.of(context).textTheme;
     final cs = Theme.of(context).colorScheme;
+    final account = ref.watch(activeAccountProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -229,10 +226,13 @@ class _BudgetInfo extends ConsumerWidget {
                       style: tt.labelSmall
                           ?.copyWith(color: cs.onSurfaceVariant)),
                   Text(
-                    settingsAsync.whenOrNull(
-                            data: (s) => CurrencyFormatter.format(
-                                budget.amount, s)) ??
-                        budget.amount.toStringAsFixed(2),
+                    account == null
+                        ? budget.amount.toStringAsFixed(2)
+                        : CurrencyFormatter.formatWith(
+                            amount: budget.amount,
+                            symbol: account.currencySymbol,
+                            symbolLeading: account.currencySymbolLeading,
+                          ),
                     style: tt.headlineSmall
                         ?.copyWith(fontWeight: FontWeight.w700),
                   ),

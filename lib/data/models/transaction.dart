@@ -3,6 +3,7 @@ enum TransactionType { expense, income }
 class Transaction {
   final int? id;
   final String uuid;
+  final int accountId;
   final double amount;
   final TransactionType type;
   final String description;
@@ -14,6 +15,7 @@ class Transaction {
   const Transaction({
     this.id,
     required this.uuid,
+    required this.accountId,
     required this.amount,
     required this.type,
     required this.description,
@@ -33,6 +35,7 @@ class Transaction {
     return Transaction(
       id: id,
       uuid: uuid,
+      accountId: accountId,
       amount: amount ?? this.amount,
       type: type ?? this.type,
       description: description ?? this.description,
@@ -47,6 +50,7 @@ class Transaction {
     return Transaction(
       id: map['id'] as int?,
       uuid: map['uuid'] as String,
+      accountId: map['account_id'] as int? ?? 1,
       amount: (map['amount'] as num).toDouble(),
       type: map['type'] == 'income'
           ? TransactionType.income
@@ -65,6 +69,7 @@ class Transaction {
   Map<String, dynamic> toMap() {
     final m = <String, dynamic>{
       'uuid': uuid,
+      'account_id': accountId,
       'amount': amount,
       'type': type.name,
       'description': description,

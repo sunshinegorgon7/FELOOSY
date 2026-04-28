@@ -26,7 +26,7 @@ class DatabaseHelper {
     final dbPath = p.join(docDir.path, AppFlavor.databaseName);
     return openDatabase(
       dbPath,
-      version: 5,
+      version: 6,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -34,15 +34,30 @@ class DatabaseHelper {
 
   Future<void> _onCreate(Database db, int version) async {
     await db.execute('''
+      CREATE TABLE accounts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        currency_code TEXT NOT NULL,
+        currency_symbol TEXT NOT NULL,
+        currency_symbol_leading INTEGER NOT NULL DEFAULT 0,
+        default_monthly_budget REAL,
+        is_favorite INTEGER NOT NULL DEFAULT 0,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      )
+    ''');
+
+    await db.execute('''
       CREATE TABLE budgets (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        account_id INTEGER NOT NULL,
         year INTEGER NOT NULL,
         month INTEGER NOT NULL,
         amount REAL NOT NULL,
         currency_code TEXT NOT NULL,
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL,
-        UNIQUE(year, month)
+        UNIQUE(account_id, year, month)
       )
     ''');
 
@@ -50,6 +65,7 @@ class DatabaseHelper {
       CREATE TABLE transactions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         uuid TEXT NOT NULL UNIQUE,
+        account_id INTEGER NOT NULL,
         amount REAL NOT NULL,
         type TEXT NOT NULL,
         description TEXT NOT NULL,
@@ -92,6 +108,7 @@ class DatabaseHelper {
         month_start_day INTEGER NOT NULL DEFAULT 1,
         theme_mode TEXT NOT NULL DEFAULT 'system',
         color_theme TEXT NOT NULL DEFAULT 'green2',
+        favorite_account_id INTEGER,
         google_backup_enabled INTEGER NOT NULL DEFAULT 0,
         default_monthly_budget REAL NOT NULL DEFAULT 0,
         last_backup_at INTEGER,
@@ -119,9 +136,6 @@ class DatabaseHelper {
       );
     }
     if (oldVersion < 5) {
-      // Migrate default categories to stable hardcoded UUIDs.
-      // Also repairs any transaction references so autocomplete category
-      // auto-selection continues to work after reinstalls.
       for (final (index, (name, _, _)) in kDefaultCategoryData.indexed) {
         final stableUuid = kDefaultCategoryUuids[index];
         final rows = await db.query(
@@ -145,13 +159,64 @@ class DatabaseHelper {
         }
       }
     }
+    if (oldVersion < 6) {
+      await db.execute('''
+        CREATE TABLE accounts (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          currency_code TEXT NOT NULL,
+          currency_symbol TEXT NOT NULL,
+          currency_symbol_leading INTEGER NOT NULL DEFAULT 0,
+          default_monthly_budget REAL,
+          is_favorite INTEGER NOT NULL DEFAULT 0,
+          created_at INTEGER NOT NULL,
+          updated_at INTEGER NOT NULL
+        )
+      ''');
+      final settingsRows = await db.query('app_settings', where: 'id = 1');
+      final settings = settingsRows.first;
+      final now = DateTime.now().millisecondsSinceEpoch;
+      await db.insert('accounts', {
+        'name': 'Main Account',
+        'currency_code': settings['currency_code'] as String,
+        'currency_symbol': settings['currency_symbol'] as String,
+        'currency_symbol_leading': settings['currency_symbol_leading'] as int,
+        'default_monthly_budget': settings['default_monthly_budget'] as num?,
+        'is_favorite': 1,
+        'created_at': now,
+        'updated_at': now,
+      });
+      await db.execute(
+        'ALTER TABLE transactions ADD COLUMN account_id INTEGER NOT NULL DEFAULT 1',
+      );
+      await db.execute(
+        'ALTER TABLE budgets ADD COLUMN account_id INTEGER NOT NULL DEFAULT 1',
+      );
+      await db.execute(
+        'ALTER TABLE app_settings ADD COLUMN favorite_account_id INTEGER',
+      );
+      await db.execute(
+        'CREATE UNIQUE INDEX IF NOT EXISTS idx_budgets_account_period ON budgets(account_id, year, month)',
+      );
+    }
   }
 
   Future<void> _seed(Database db) async {
-    // Default settings
-    await db.insert('app_settings', AppSettings.defaults.toMap());
+    final defaults = AppSettings.defaults;
+    await db.insert('app_settings', defaults.toMap());
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await db.insert('accounts', {
+      'name': 'Main Account',
+      'currency_code': defaults.currencyCode,
+      'currency_symbol': defaults.currencySymbol,
+      'currency_symbol_leading': defaults.currencySymbolLeading ? 1 : 0,
+      'default_monthly_budget':
+          defaults.defaultMonthlyBudget > 0 ? defaults.defaultMonthlyBudget : null,
+      'is_favorite': 1,
+      'created_at': now,
+      'updated_at': now,
+    });
 
-    // Default categories
     final batch = db.batch();
     for (final cat in buildDefaultCategories()) {
       batch.insert('categories', cat.toMap());
@@ -166,7 +231,22 @@ class DatabaseHelper {
       await txn.delete('budgets');
       await txn.delete('categories');
       await txn.delete('app_settings');
-      await txn.insert('app_settings', AppSettings.defaults.toMap());
+      await txn.delete('accounts');
+      final defaults = AppSettings.defaults;
+      await txn.insert('app_settings', defaults.toMap());
+      final now = DateTime.now().millisecondsSinceEpoch;
+      await txn.insert('accounts', {
+        'name': 'Main Account',
+        'currency_code': defaults.currencyCode,
+        'currency_symbol': defaults.currencySymbol,
+        'currency_symbol_leading': defaults.currencySymbolLeading ? 1 : 0,
+        'default_monthly_budget': defaults.defaultMonthlyBudget > 0
+            ? defaults.defaultMonthlyBudget
+            : null,
+        'is_favorite': 1,
+        'created_at': now,
+        'updated_at': now,
+      });
       for (final cat in buildDefaultCategories()) {
         await txn.insert('categories', cat.toMap());
       }
