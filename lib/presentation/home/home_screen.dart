@@ -331,10 +331,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     BuildContext context,
     _DayGroup group,
     List<Category> cats,
-    BudgetSummary summary,
-  ) {
+    BudgetSummary summary, {
+    List<Transaction>? scopedTxs,
+  }) {
+    final overlayGroups =
+        scopedTxs == null ? _visibleGroups : _groupByDate(scopedTxs);
     final initialIndex =
-        _visibleGroups.indexWhere((visible) => visible.day == group.day);
+        overlayGroups.indexWhere((visible) => visible.day == group.day);
     if (initialIndex < 0) return;
 
     showModalBottomSheet<void>(
@@ -342,7 +345,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => _DayOverlay(
-        dayKeys: _visibleGroups.map((g) => g.day).toList(),
+        dayKeys: overlayGroups.map((g) => g.day).toList(),
         initialIndex: initialIndex,
         cats: cats,
         selectedCategoryUuid: _selectedCategoryUuid,
