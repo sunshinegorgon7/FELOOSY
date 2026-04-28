@@ -138,6 +138,16 @@ class SpendingPieChart extends StatelessWidget {
 
       const spentColor = Color(0xFFE64A19); // deep orange-red
 
+      // When a category is selected, show its amount; otherwise the grand total.
+      final selectedStat = selectedCategoryUuid != null
+          ? data
+              .where((d) => d.category.uuid == selectedCategoryUuid)
+              .firstOrNull
+          : null;
+      final displayTotal = selectedStat?.amount ?? total;
+      final centerLabel = selectedStat?.category.name ?? summary.period.label;
+      final bottomLabel = selectedStat != null ? 'spent' : 'spent';
+
       final half = size / 2;
 
       return Center(
@@ -169,7 +179,7 @@ class SpendingPieChart extends StatelessWidget {
                 ),
               ),
 
-              // Center pill: period label + total spent
+              // Center pill: period/category label + amount
               Container(
                 padding: const EdgeInsets.symmetric(
                     horizontal: 10, vertical: 5),
@@ -183,7 +193,7 @@ class SpendingPieChart extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      summary.period.label,
+                      centerLabel,
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w500,
@@ -193,16 +203,16 @@ class SpendingPieChart extends StatelessWidget {
                       textAlign: TextAlign.center,
                     ),
                     Text(
-                      summary.formatAmount(total),
-                      style: tt.titleMedium?.copyWith(
+                      summary.formatAmount(displayTotal),
+                      style: tt.titleLarge?.copyWith(
                         fontWeight: FontWeight.w700,
                         color: spentColor,
-                        height: 1.2,
+                        height: 1.15,
                       ),
                       textAlign: TextAlign.center,
                     ),
                     Text(
-                      'spent',
+                      bottomLabel,
                       style: TextStyle(
                         fontSize: 10,
                         color: spentColor.withValues(alpha: 0.7),

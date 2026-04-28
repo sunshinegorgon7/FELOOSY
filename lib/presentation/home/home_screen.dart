@@ -289,8 +289,68 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           SliverList(
             delegate: SliverChildBuilderDelegate(
               (context, index) {
+                // ── Search mode: flat list of matching transactions ──
+                if (_searchQuery.isNotEmpty) {
+                  final tx = filteredTxs[index];
+                  final cat = cats
+                      .where((c) => c.uuid == tx.categoryUuid)
+                      .firstOrNull;
+                  return Slidable(
+                    key: ValueKey(tx.uuid),
+                    endActionPane: ActionPane(
+                      motion: const DrawerMotion(),
+                      extentRatio: 0.25,
+                      children: [
+                        SlidableAction(
+                          onPressed: (_) async {
+                            final confirmed = await showDialog<bool>(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                title: const Text('Delete transaction?'),
+                                content: Text(
+                                    '"${tx.description}" will be permanently removed.'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(ctx, false),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  FilledButton(
+                                    onPressed: () =>
+                                        Navigator.pop(ctx, true),
+                                    style: FilledButton.styleFrom(
+                                        backgroundColor: Colors.red),
+                                    child: const Text('Delete'),
+                                  ),
+                                ],
+                              ),
+                            );
+                            if (confirmed == true && mounted) {
+                              await ref
+                                  .read(transactionsProvider.notifier)
+                                  .remove(tx.uuid);
+                            }
+                          },
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                          icon: Icons.delete_outline,
+                          label: 'Delete',
+                          borderRadius: const BorderRadius.horizontal(
+                              right: Radius.circular(12)),
+                        ),
+                      ],
+                    ),
+                    child: TransactionTile(
+                      transaction: tx,
+                      category: cat,
+                      onTap: () =>
+                          context.push('/transactions/edit', extra: tx),
+                    ),
+                  );
+                }
+
+                // ── Normal mode: day-group headers ──
                 final group = groups[index];
-                final sign = group.dayNet >= 0 ? '+' : '−';
                 return InkWell(
                   onTap: () =>
                       _showDayOverlay(context, group, cats, summary),
@@ -306,20 +366,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           style: tt.labelMedium
                               ?.copyWith(color: cs.onSurfaceVariant),
                         ),
-                        const Spacer(),
-                        Text(
-                          '$sign${summary.formatAmount(group.dayNet.abs())}',
-                          style: tt.labelMedium?.copyWith(
-                            color: cs.onSurface,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
                       ],
                     ),
                   ),
                 );
               },
-              childCount: groups.length,
+              childCount: _searchQuery.isNotEmpty
+                  ? filteredTxs.length
+                  : groups.length,
             ),
           ),
 
