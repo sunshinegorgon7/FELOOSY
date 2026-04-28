@@ -57,6 +57,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final summaryAsync = ref.watch(budgetSummaryProvider);
     final txAsync = ref.watch(transactionsProvider);
     final catAsync = ref.watch(categoriesProvider);
+    final isKeyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
+    final showAddTransactionBar = !_isSearching && !isKeyboardOpen;
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -141,30 +143,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
           ),
-          Positioned(
-            bottom: 16 + MediaQuery.paddingOf(context).bottom,
-            left: 16,
-            child: FloatingActionButton(
-              heroTag: 'income_fab',
-              backgroundColor: Colors.green.shade600,
-              foregroundColor: Colors.white,
-              onPressed: () => context.push('/transactions/add?type=income'),
-              child: const Icon(Icons.add),
+          if (showAddTransactionBar)
+            Positioned(
+              bottom: 16 + MediaQuery.paddingOf(context).bottom,
+              left: 16,
+              child: FloatingActionButton(
+                heroTag: 'income_fab',
+                backgroundColor: Colors.green.shade600,
+                foregroundColor: Colors.white,
+                onPressed: () => context.push('/transactions/add?type=income'),
+                child: const Icon(Icons.add),
+              ),
             ),
-          ),
-          Positioned(
-            bottom: 16 + MediaQuery.paddingOf(context).bottom,
-            right: 16,
-            child: FloatingActionButton(
-              heroTag: 'expense_fab',
-              backgroundColor: Colors.red.shade600,
-              foregroundColor: Colors.white,
-              onPressed: () => context.push('/transactions/add?type=expense'),
-              child: const Icon(Icons.remove),
+          if (showAddTransactionBar)
+            Positioned(
+              bottom: 16 + MediaQuery.paddingOf(context).bottom,
+              right: 16,
+              child: FloatingActionButton(
+                heroTag: 'expense_fab',
+                backgroundColor: Colors.red.shade600,
+                foregroundColor: Colors.white,
+                onPressed: () => context.push('/transactions/add?type=expense'),
+                child: const Icon(Icons.remove),
+              ),
             ),
-          ),
           // Available balance centered between the two FABs
-          if (summaryAsync case AsyncData(:final value))
+          if (showAddTransactionBar &&
+              summaryAsync case AsyncData(:final value))
             if (value.budgetAmount > 0)
               Positioned(
                 bottom: 16 + MediaQuery.paddingOf(context).bottom,
