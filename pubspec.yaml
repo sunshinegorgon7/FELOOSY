@@ -1,0 +1,66 @@
+name: feloosy
+description: Personal budget tracker — pocket money only.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # State management
+  flutter_riverpod: ^3.3.1
+  riverpod_annotation: ^4.0.2
+
+  # Database
+  sqflite: ^2.3.3
+  path: ^1.9.0
+  path_provider: ^2.1.5
+
+  # Navigation
+  go_router: ^17.2.2
+
+  # Immutable data classes
+  freezed_annotation: ^3.0.0
+  json_annotation: ^4.9.0
+
+  # Home screen widget bridge
+  home_widget: ^0.9.1
+
+  # Utilities
+  intl: ^0.20.1
+  uuid: ^4.5.1
+
+  # UI
+  fl_chart: ^1.2.0
+  flutter_slidable: ^4.0.3
+  gap: ^3.0.1
+  google_fonts: ^8.0.2
+
+  # Firebase + auth
+  firebase_core: ^4.7.0
+  firebase_auth: ^6.4.0
+  cloud_firestore: ^6.3.0
+  google_sign_in: ^7.2.0
+
+  # Local export / import
+  share_plus: ^12.0.0
+  file_picker: ^8.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+  # Code generation
+  build_runner: ^2.4.13
+  riverpod_generator: ^4.0.3
+  freezed: ^3.0.0
+  json_serializable: ^6.9.0
+
+flutter:
+  uses-material-design: true
