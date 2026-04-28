@@ -353,7 +353,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 final group = groups[index];
                 return InkWell(
                   onTap: () =>
-                      _showDayOverlay(context, group, cats, summary),
+                      _showDayOverlay(context, groups, index, cats, summary),
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
                     child: Row(
@@ -384,7 +384,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   void _showDayOverlay(
     BuildContext context,
-    _DayGroup group,
+    List<_DayGroup> groups,
+    int initialIndex,
     List<Category> cats,
     BudgetSummary summary,
   ) {
@@ -393,8 +394,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => _DayOverlay(
-        dayLabel: group.label,
+        dayKeys: groups.map((g) => g.day).toList(),
+        initialIndex: initialIndex,
         cats: cats,
+        selectedCategoryUuid: _selectedCategoryUuid,
         summary: summary,
       ),
     );
@@ -448,36 +451,37 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   List<_DayGroup> _groupByDate(List<Transaction> txs) {
     if (txs.isEmpty) return [];
 
-    final groupTxs = <String, List<Transaction>>{};
-    final groupOrder = <String>[];
+    final groupTxs = <DateTime, List<Transaction>>{};
+    final groupOrder = <DateTime>[];
 
     for (final tx in txs) {
-      final label = _dayLabel(tx.transactionDate);
-      if (!groupTxs.containsKey(label)) {
-        groupTxs[label] = [];
-        groupOrder.add(label);
+      final day = DateUtils.dateOnly(tx.transactionDate);
+      if (!groupTxs.containsKey(day)) {
+        groupTxs[day] = [];
+        groupOrder.add(day);
       }
-      groupTxs[label]!.add(tx);
+      groupTxs[day]!.add(tx);
     }
 
-    return groupOrder.map((label) {
-      final dayTxs = groupTxs[label]!;
+    return groupOrder.map((day) {
+      final dayTxs = groupTxs[day]!;
       final dayNet = dayTxs.fold(
           0.0,
           (sum, tx) => tx.type == TransactionType.income
               ? sum + tx.amount
               : sum - tx.amount);
-      return _DayGroup(label, dayNet, dayTxs);
+      return _DayGroup(day, _dayLabel(day), dayNet, dayTxs);
     }).toList();
   }
 
 }
 
 class _DayGroup {
+  final DateTime day;
   final String label;
   final double dayNet;
   final List<Transaction> txs;
-  _DayGroup(this.label, this.dayNet, this.txs);
+  _DayGroup(this.day, this.label, this.dayNet, this.txs);
 }
 
 // ---------------------------------------------------------------------------
@@ -485,13 +489,17 @@ class _DayGroup {
 // ---------------------------------------------------------------------------
 
 class _DayOverlay extends ConsumerStatefulWidget {
-  final String dayLabel;
+  final List<DateTime> dayKeys;
+  final int initialIndex;
   final List<Category> cats;
+  final String? selectedCategoryUuid;
   final BudgetSummary summary;
 
   const _DayOverlay({
-    required this.dayLabel,
+    required this.dayKeys,
+    required this.initialIndex,
     required this.cats,
+    required this.selectedCategoryUuid,
     required this.summary,
   });
 
@@ -500,6 +508,14 @@ class _DayOverlay extends ConsumerStatefulWidget {
 }
 
 class _DayOverlayState extends ConsumerState<_DayOverlay> {
+  late int _currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+  }
+
   Future<void> _delete(Transaction tx) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -528,17 +544,39 @@ class _DayOverlayState extends ConsumerState<_DayOverlay> {
   @override
   Widget build(BuildContext context) {
     final allTxs = ref.watch(transactionsProvider).asData?.value ?? const <Transaction>[];
-    final dayTxs = allTxs
-        .where((tx) => _dayLabel(tx.transactionDate) == widget.dayLabel)
-        .toList()
-      ..sort((a, b) => b.transactionDate.compareTo(a.transactionDate));
+    final visibleDays = widget.dayKeys.where((day) {
+      return allTxs.any((tx) {
+        final txDay = DateUtils.dateOnly(tx.transactionDate);
+        final sameDay = txDay == day;
+        final matchesCategory = widget.selectedCategoryUuid == null ||
+            tx.categoryUuid == widget.selectedCategoryUuid;
+        return sameDay && matchesCategory;
+      });
+    }).toList();
 
-    // Auto-close when all transactions in this day are deleted
-    if (dayTxs.isEmpty) {
+    if (visibleDays.isEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) Navigator.pop(context);
       });
     }
+
+    if (_currentIndex >= visibleDays.length && visibleDays.isNotEmpty) {
+      _currentIndex = visibleDays.length - 1;
+    }
+
+    final currentDay = visibleDays.isEmpty ? null : visibleDays[_currentIndex];
+    final dayTxs = currentDay == null
+        ? const <Transaction>[]
+        : allTxs
+            .where((tx) {
+              final txDay = DateUtils.dateOnly(tx.transactionDate);
+              final sameDay = txDay == currentDay;
+              final matchesCategory = widget.selectedCategoryUuid == null ||
+                  tx.categoryUuid == widget.selectedCategoryUuid;
+              return sameDay && matchesCategory;
+            })
+            .toList()
+          ..sort((a, b) => b.transactionDate.compareTo(a.transactionDate));
 
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
@@ -576,11 +614,27 @@ class _DayOverlayState extends ConsumerState<_DayOverlay> {
               child: Row(
                 children: [
                   Text(
-                    widget.dayLabel,
+                    currentDay == null ? '' : _dayLabel(currentDay),
                     style: tt.titleMedium
                         ?.copyWith(fontWeight: FontWeight.w600),
                   ),
                   const Spacer(),
+                  if (visibleDays.length > 1) ...[
+                    IconButton(
+                      onPressed: _currentIndex > 0
+                          ? () => setState(() => _currentIndex--)
+                          : null,
+                      icon: const Icon(Icons.chevron_left),
+                      tooltip: 'Previous day',
+                    ),
+                    IconButton(
+                      onPressed: _currentIndex < visibleDays.length - 1
+                          ? () => setState(() => _currentIndex++)
+                          : null,
+                      icon: const Icon(Icons.chevron_right),
+                      tooltip: 'Next day',
+                    ),
+                  ],
                   IconButton(
                     icon: const Icon(Icons.close),
                     onPressed: () => Navigator.pop(context),
@@ -591,40 +645,52 @@ class _DayOverlayState extends ConsumerState<_DayOverlay> {
             Divider(height: 1, color: cs.outlineVariant),
             // Transaction list (reactive)
             Expanded(
-              child: ListView.builder(
-                controller: scrollController,
-                itemCount: dayTxs.length,
-                itemBuilder: (ctx, index) {
-                  final tx = dayTxs[index];
-                  final cat = widget.cats
-                      .where((c) => c.uuid == tx.categoryUuid)
-                      .firstOrNull;
-                  return Slidable(
-                    key: ValueKey(tx.uuid),
-                    endActionPane: ActionPane(
-                      motion: const DrawerMotion(),
-                      extentRatio: 0.25,
-                      children: [
-                        SlidableAction(
-                          onPressed: (_) => _delete(tx),
-                          backgroundColor: Colors.red,
-                          foregroundColor: Colors.white,
-                          icon: Icons.delete_outline,
-                          label: 'Delete',
-                          borderRadius: const BorderRadius.horizontal(
-                              right: Radius.circular(12)),
-                        ),
-                      ],
-                    ),
-                    child: TransactionTile(
-                      transaction: tx,
-                      category: cat,
-                      compact: true,
-                      onTap: () =>
-                          context.push('/transactions/edit', extra: tx),
-                    ),
-                  );
+              child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onHorizontalDragEnd: (details) {
+                  final velocity = details.primaryVelocity ?? 0;
+                  if (velocity > 300 && _currentIndex > 0) {
+                    setState(() => _currentIndex--);
+                  } else if (velocity < -300 &&
+                      _currentIndex < visibleDays.length - 1) {
+                    setState(() => _currentIndex++);
+                  }
                 },
+                child: ListView.builder(
+                  controller: scrollController,
+                  itemCount: dayTxs.length,
+                  itemBuilder: (ctx, index) {
+                    final tx = dayTxs[index];
+                    final cat = widget.cats
+                        .where((c) => c.uuid == tx.categoryUuid)
+                        .firstOrNull;
+                    return Slidable(
+                      key: ValueKey(tx.uuid),
+                      endActionPane: ActionPane(
+                        motion: const DrawerMotion(),
+                        extentRatio: 0.25,
+                        children: [
+                          SlidableAction(
+                            onPressed: (_) => _delete(tx),
+                            backgroundColor: Colors.red,
+                            foregroundColor: Colors.white,
+                            icon: Icons.delete_outline,
+                            label: 'Delete',
+                            borderRadius: const BorderRadius.horizontal(
+                                right: Radius.circular(12)),
+                          ),
+                        ],
+                      ),
+                      child: TransactionTile(
+                        transaction: tx,
+                        category: cat,
+                        compact: true,
+                        onTap: () =>
+                            context.push('/transactions/edit', extra: tx),
+                      ),
+                    );
+                  },
+                ),
               ),
             ),
             SizedBox(height: MediaQuery.paddingOf(context).bottom),
