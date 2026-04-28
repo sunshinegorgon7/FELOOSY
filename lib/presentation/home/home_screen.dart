@@ -35,6 +35,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _isSearching = false;
   String _searchQuery = '';
   final _searchCtrl = TextEditingController();
+  List<_DayGroup> _visibleGroups = const [];
 
   @override
   void dispose() {
@@ -214,6 +215,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         : null;
 
     final groups = _groupByDate(filteredTxs);
+    _visibleGroups = groups;
 
     return CustomScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
@@ -294,71 +296,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           SliverList(
             delegate: SliverChildBuilderDelegate(
               (context, index) {
-                // ── Search mode: flat list of matching transactions ──
-                if (_searchQuery.isNotEmpty) {
-                  final tx = filteredTxs[index];
-                  final cat = cats
-                      .where((c) => c.uuid == tx.categoryUuid)
-                      .firstOrNull;
-                  return Slidable(
-                    key: ValueKey(tx.uuid),
-                    endActionPane: ActionPane(
-                      motion: const DrawerMotion(),
-                      extentRatio: 0.25,
-                      children: [
-                        SlidableAction(
-                          onPressed: (_) async {
-                            final confirmed = await showDialog<bool>(
-                              context: context,
-                              builder: (ctx) => AlertDialog(
-                                title: const Text('Delete transaction?'),
-                                content: Text(
-                                    '"${tx.description}" will be permanently removed.'),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.pop(ctx, false),
-                                    child: const Text('Cancel'),
-                                  ),
-                                  FilledButton(
-                                    onPressed: () =>
-                                        Navigator.pop(ctx, true),
-                                    style: FilledButton.styleFrom(
-                                        backgroundColor: Colors.red),
-                                    child: const Text('Delete'),
-                                  ),
-                                ],
-                              ),
-                            );
-                            if (confirmed == true && mounted) {
-                              await ref
-                                  .read(transactionsProvider.notifier)
-                                  .remove(tx.uuid);
-                            }
-                          },
-                          backgroundColor: Colors.red,
-                          foregroundColor: Colors.white,
-                          icon: Icons.delete_outline,
-                          label: 'Delete',
-                          borderRadius: const BorderRadius.horizontal(
-                              right: Radius.circular(12)),
-                        ),
-                      ],
-                    ),
-                    child: TransactionTile(
-                      transaction: tx,
-                      category: cat,
-                      onTap: () =>
-                          context.push('/transactions/edit', extra: tx),
-                    ),
-                  );
-                }
-
-                // ── Normal mode: day-group headers ──
                 final group = groups[index];
                 return InkWell(
-                  onTap: () =>
-                      _showDayOverlay(context, groups, index, cats, summary),
+                  onTap: () => _showDayOverlay(context, group, cats, summary),
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
                     child: Row(
@@ -367,7 +307,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             size: 16, color: cs.onSurfaceVariant),
                         const SizedBox(width: 4),
                         Text(
-                          group.label,
+                          _searchQuery.isNotEmpty
+                              ? '${group.label} (${group.txs.length})'
+                              : group.label,
                           style: tt.labelMedium
                               ?.copyWith(color: cs.onSurfaceVariant),
                         ),
@@ -376,9 +318,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 );
               },
-              childCount: _searchQuery.isNotEmpty
-                  ? filteredTxs.length
-                  : groups.length,
+              childCount: groups.length,
             ),
           ),
 
@@ -389,17 +329,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   void _showDayOverlay(
     BuildContext context,
-    List<_DayGroup> groups,
-    int initialIndex,
+    _DayGroup group,
     List<Category> cats,
     BudgetSummary summary,
   ) {
+    final initialIndex =
+        _visibleGroups.indexWhere((visible) => visible.day == group.day);
+    if (initialIndex < 0) return;
+
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => _DayOverlay(
-        dayKeys: groups.map((g) => g.day).toList(),
+        dayKeys: _visibleGroups.map((g) => g.day).toList(),
         initialIndex: initialIndex,
         cats: cats,
         selectedCategoryUuid: _selectedCategoryUuid,
