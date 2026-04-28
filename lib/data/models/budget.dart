@@ -2,6 +2,7 @@ class Budget {
   final int? id;
   final int year;
   final int month;
+  final int accountId;
   final double amount;
   final String currencyCode;
   final DateTime createdAt;
@@ -11,6 +12,7 @@ class Budget {
     this.id,
     required this.year,
     required this.month,
+    required this.accountId,
     required this.amount,
     required this.currencyCode,
     required this.createdAt,
@@ -22,6 +24,7 @@ class Budget {
       id: id,
       year: year,
       month: month,
+      accountId: accountId,
       amount: amount ?? this.amount,
       currencyCode: currencyCode ?? this.currencyCode,
       createdAt: createdAt,
@@ -34,6 +37,7 @@ class Budget {
       id: map['id'] as int?,
       year: map['year'] as int,
       month: map['month'] as int,
+      accountId: map['account_id'] as int? ?? 1,
       amount: (map['amount'] as num).toDouble(),
       currencyCode: map['currency_code'] as String,
       createdAt:
@@ -47,6 +51,7 @@ class Budget {
     final m = <String, dynamic>{
       'year': year,
       'month': month,
+      'account_id': accountId,
       'amount': amount,
       'currency_code': currencyCode,
       'created_at': createdAt.millisecondsSinceEpoch,

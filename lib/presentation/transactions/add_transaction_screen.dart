@@ -8,6 +8,7 @@ import '../../data/models/category.dart';
 import '../../data/models/transaction.dart';
 import '../../data/repositories/transaction_repository.dart';
 import '../../providers/categories_provider.dart';
+import '../../providers/accounts_provider.dart';
 import '../../providers/database_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/transactions_provider.dart';
@@ -86,12 +87,14 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     try {
       final now = DateTime.now();
       final initial = widget.initialTransaction;
+      final account = ref.read(activeAccountProvider);
 
       if (initial != null) {
         await ref.read(transactionsProvider.notifier).edit(
               Transaction(
                 id: initial.id,
                 uuid: initial.uuid,
+                accountId: initial.accountId,
                 amount: amount,
                 type: _type,
                 description: description,
@@ -105,6 +108,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
         await ref.read(transactionsProvider.notifier).add(
               Transaction(
                 uuid: const Uuid().v4(),
+                accountId: account?.id ?? 1,
                 amount: amount,
                 type: _type,
                 description: description,
@@ -136,9 +140,11 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     final isExpense = _type == TransactionType.expense;
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final account = ref.watch(activeAccountProvider);
     final settingsAsync = ref.watch(settingsProvider);
-    final symbol =
-        settingsAsync.whenOrNull(data: (s) => s.currencySymbol) ?? 'AED';
+    final symbol = account?.currencySymbol ??
+        settingsAsync.whenOrNull(data: (s) => s.currencySymbol) ??
+        'AED';
     final mostUsedUuids =
         ref.watch(mostUsedCategoryUuidsProvider).value ?? [];
 

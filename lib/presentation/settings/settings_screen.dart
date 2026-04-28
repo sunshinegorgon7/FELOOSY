@@ -153,6 +153,13 @@ class _SettingsBody extends ConsumerWidget {
 
         // ── Account (Firebase) ───────────────────────────────────────────
         const _SectionHeader('Account'),
+        ListTile(
+          leading: const Icon(Icons.account_balance_wallet_outlined),
+          title: const Text('Manage accounts'),
+          subtitle: const Text('Add, edit, delete accounts and set favorite'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => context.push('/settings/accounts'),
+        ),
         _AccountTile(isModal: isModal),
 
         // ── Data ─────────────────────────────────────────────────────────
@@ -755,4 +762,3 @@ class _SectionHeader extends StatelessWidget {
     );
   }
 }
-
