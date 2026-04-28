@@ -85,19 +85,34 @@ class TransactionRepository {
     return rows.map(model.Transaction.fromMap).toList();
   }
 
-  /// Returns up to 8 distinct descriptions containing [query] (case-insensitive),
-  /// each paired with the most recently used category for that description.
+  /// Returns up to 8 distinct descriptions containing [query] (case-insensitive).
+  ///
+  /// Each suggestion is paired with the category from the latest transaction
+  /// for that normalized description (ordered by `created_at DESC, id DESC`).
   Future<List<DescriptionSuggestion>> getDescriptionSuggestions(
       String query) async {
     if (query.trim().isEmpty) return [];
     final db = await _db.database;
     final rows = await db.rawQuery(
       '''
+      WITH ranked AS (
+        SELECT
+          id,
+          description,
+          category_uuid,
+          created_at,
+          LOWER(description) AS normalized_description,
+          ROW_NUMBER() OVER (
+            PARTITION BY LOWER(description)
+            ORDER BY created_at DESC, id DESC
+          ) AS row_num
+        FROM transactions
+        WHERE LOWER(description) LIKE LOWER(?)
+      )
       SELECT description, category_uuid
-      FROM transactions
-      WHERE LOWER(description) LIKE LOWER(?)
-      GROUP BY LOWER(description)
-      ORDER BY MAX(created_at) DESC
+      FROM ranked
+      WHERE row_num = 1
+      ORDER BY created_at DESC, id DESC
       LIMIT 8
       ''',
       ['%${query.trim()}%'],
