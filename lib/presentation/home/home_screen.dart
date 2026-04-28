@@ -61,7 +61,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final summaryAsync = ref.watch(budgetSummaryProvider);
     final txAsync = ref.watch(transactionsProvider);
     final catAsync = ref.watch(categoriesProvider);
-    final accounts = ref.watch(accountsProvider).valueOrNull ?? const [];
+    final accounts = ref.watch(accountsProvider).value ?? const [];
     final selectedAccountId = ref.watch(selectedHomeAccountIdProvider);
     final isKeyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
     final shouldHideBottomActions = _isSearching || isKeyboardOpen;
@@ -70,7 +70,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       if (initial.id != null) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) {
-            ref.read(selectedHomeAccountIdProvider.notifier).state = initial.id;
+            ref.read(selectedHomeAccountIdProvider.notifier).select(initial.id);
           }
         });
       }
@@ -273,7 +273,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                   ],
                   onChanged: (value) {
-                    ref.read(selectedHomeAccountIdProvider.notifier).state = value;
+                    ref.read(selectedHomeAccountIdProvider.notifier).select(value);
                   },
                 ),
                 const SizedBox(height: 8),
@@ -362,8 +362,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   onTap: () =>
                       _showDayOverlay(
                         context,
-                        groups,
-                        index,
+                        group,
                         cats,
                         summary,
                         scopedTxs: _searchQuery.isNotEmpty ? filteredTxs : null,

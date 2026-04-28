@@ -48,11 +48,22 @@ class AccountsNotifier extends AsyncNotifier<List<Account>> {
 final accountsProvider =
     AsyncNotifierProvider<AccountsNotifier, List<Account>>(AccountsNotifier.new);
 
+class SelectedHomeAccountIdNotifier extends Notifier<int?> {
+  @override
+  int? build() => null;
+
+  void select(int? accountId) {
+    state = accountId;
+  }
+}
+
 /// Home filter. null => all accounts.
-final selectedHomeAccountIdProvider = StateProvider<int?>((ref) => null);
+final selectedHomeAccountIdProvider =
+    NotifierProvider<SelectedHomeAccountIdNotifier, int?>(
+        SelectedHomeAccountIdNotifier.new);
 
 final activeAccountProvider = Provider<Account?>((ref) {
-  final accounts = ref.watch(accountsProvider).valueOrNull ?? const <Account>[];
+  final accounts = ref.watch(accountsProvider).value ?? const <Account>[];
   if (accounts.isEmpty) return null;
   final selected = ref.watch(selectedHomeAccountIdProvider);
   if (selected != null) {

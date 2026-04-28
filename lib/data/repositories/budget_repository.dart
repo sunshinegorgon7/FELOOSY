@@ -41,12 +41,12 @@ class BudgetRepository {
     );
   }
 
-  Future<void> delete(int year, int month) async {
+  Future<void> delete(int year, int month, {required int accountId}) async {
     final db = await _db.database;
     await db.delete(
       'budgets',
       where: 'year = ? AND month = ? AND account_id = ?',
-      whereArgs: [year, month, budget.accountId],
+      whereArgs: [year, month, accountId],
     );
   }
 }
