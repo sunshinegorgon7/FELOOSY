@@ -5,8 +5,10 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../data/models/category.dart';
+import '../../data/models/account.dart';
 import '../../data/models/transaction.dart';
 import '../../domain/entities/budget_summary.dart';
+import '../../providers/accounts_provider.dart';
 import '../../providers/budget_summary_provider.dart';
 import '../../providers/categories_provider.dart';
 import '../../providers/transactions_provider.dart';
@@ -33,6 +35,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   String? _selectedCategoryUuid;
   bool _isSearching = false;
+  bool _accountInitialized = false;
   String _searchQuery = '';
   final _searchCtrl = TextEditingController();
 
@@ -57,6 +60,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final summaryAsync = ref.watch(budgetSummaryProvider);
     final txAsync = ref.watch(transactionsProvider);
     final catAsync = ref.watch(categoriesProvider);
+    final accounts = ref.watch(accountsProvider).valueOrNull ?? const [];
+    final selectedAccountId = ref.watch(selectedHomeAccountIdProvider);
+    if (!_accountInitialized && accounts.isNotEmpty && selectedAccountId == null) {
+      final initial = accounts.where((a) => a.isFavorite).firstOrNull ?? accounts.first;
+      if (initial.id != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            ref.read(selectedHomeAccountIdProvider.notifier).state = initial.id;
+          }
+        });
+      }
+      _accountInitialized = true;
+    }
+    final isAllAccounts = selectedAccountId == null;
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -104,7 +121,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 IconButton(
                   tooltip: 'Budget',
                   icon: const Icon(Icons.analytics_outlined),
-                  onPressed: () => context.push('/budget'),
+                  onPressed: isAllAccounts ? null : () => context.push('/budget'),
                 ),
                 IconButton(
                   icon: const Icon(Icons.settings_outlined),
@@ -134,8 +151,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         const Center(child: CircularProgressIndicator()),
                     error: (e, _) =>
                         const Center(child: Text('Error loading categories')),
-                    data: (cats) =>
-                        _buildBody(context, summary, txs, cats),
+                    data: (cats) => _buildBody(
+                      context,
+                      summary,
+                      txs,
+                      cats,
+                      accounts,
+                      selectedAccountId,
+                    ),
                   ),
                 ),
               ),
@@ -165,7 +188,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           // Available balance centered between the two FABs
           if (summaryAsync case AsyncData(:final value))
-            if (value.budgetAmount > 0)
+            if (value.budgetAmount > 0 && !isAllAccounts)
               Positioned(
                 bottom: 16 + MediaQuery.paddingOf(context).bottom,
                 left: 72,
@@ -183,10 +206,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     BudgetSummary summary,
     List<Transaction> txs,
     List<Category> cats,
+    List<Account> accounts,
+    int? selectedAccountId,
   ) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
 
+    final isAllAccounts = selectedAccountId == null;
     final activeCats = cats.where((c) => c.isActive).toList();
 
     // Category filter then description search
@@ -217,34 +243,69 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Spacer(),
-                if (summary.budgetAmount == 0)
-                  TextButton.icon(
-                    onPressed: () => context.push('/budget/set'),
-                    icon: const Icon(Icons.add, size: 14),
-                    label: const Text('Set Budget'),
+                DropdownButtonFormField<int?>(
+                  value: selectedAccountId,
+                  decoration: const InputDecoration(
+                    labelText: 'Account',
+                    border: OutlineInputBorder(),
+                    isDense: true,
                   ),
+                  items: [
+                    const DropdownMenuItem<int?>(
+                      value: null,
+                      child: Text('All accounts'),
+                    ),
+                    ...accounts.map<DropdownMenuItem<int?>>(
+                      (account) => DropdownMenuItem<int?>(
+                        value: account.id,
+                        child: Text(account.name),
+                      ),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    ref.read(selectedHomeAccountIdProvider.notifier).state = value;
+                  },
+                ),
+                const SizedBox(height: 8),
+                if (isAllAccounts)
+                  Text(
+                    'Showing last 30 days across all accounts.',
+                    style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                  ),
+                Row(
+                  children: [
+                    const Spacer(),
+                    if (summary.budgetAmount == 0 && !isAllAccounts)
+                      TextButton.icon(
+                        onPressed: () => context.push('/budget/set'),
+                        icon: const Icon(Icons.add, size: 14),
+                        label: const Text('Set Budget'),
+                      ),
+                  ],
+                ),
               ],
             ),
           ),
         ),
 
         // Pie chart
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
-            child: SpendingPieChart(
-              transactions: txs,
-              categories: activeCats,
-              summary: summary,
-              selectedCategoryUuid: _selectedCategoryUuid,
-              onCategoryToggle: (uuid) =>
-                  setState(() => _selectedCategoryUuid = uuid),
+        if (!isAllAccounts)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
+              child: SpendingPieChart(
+                transactions: txs,
+                categories: activeCats,
+                summary: summary,
+                selectedCategoryUuid: _selectedCategoryUuid,
+                onCategoryToggle: (uuid) =>
+                    setState(() => _selectedCategoryUuid = uuid),
+              ),
             ),
           ),
-        ),
 
         // Category filter label (only when a category is selected)
         if (selectedCat != null)

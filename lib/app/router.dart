@@ -7,6 +7,7 @@ import '../presentation/categories/categories_screen.dart';
 import '../presentation/categories/edit_category_screen.dart';
 import '../presentation/home/home_screen.dart';
 import '../presentation/settings/settings_screen.dart';
+import '../presentation/settings/manage_accounts_screen.dart';
 import '../presentation/transactions/add_transaction_screen.dart';
 import 'package:flutter/material.dart';
 
@@ -26,6 +27,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/settings',
       builder: (context, state) => const SettingsScreen(),
+    ),
+    GoRoute(
+      path: '/settings/accounts',
+      builder: (context, state) => const ManageAccountsScreen(),
     ),
 
     GoRoute(

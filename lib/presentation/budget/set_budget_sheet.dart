@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import '../../providers/budget_period_provider.dart';
 import '../../providers/budget_provider.dart';
+import '../../providers/accounts_provider.dart';
 import '../../providers/settings_provider.dart';
 
 class SetBudgetSheet extends ConsumerStatefulWidget {
@@ -50,9 +51,11 @@ class _SetBudgetSheetState extends ConsumerState<SetBudgetSheet> {
   @override
   Widget build(BuildContext context) {
     final period = ref.watch(currentBudgetPeriodProvider);
+    final account = ref.watch(activeAccountProvider);
     final settingsAsync = ref.watch(settingsProvider);
-    final symbol =
-        settingsAsync.whenOrNull(data: (s) => s.currencySymbol) ?? 'AED';
+    final symbol = account?.currencySymbol ??
+        settingsAsync.whenOrNull(data: (s) => s.currencySymbol) ??
+        'AED';
 
     return Padding(
       // Push sheet up when keyboard appears

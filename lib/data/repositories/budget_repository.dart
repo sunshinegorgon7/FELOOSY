@@ -6,12 +6,12 @@ class BudgetRepository {
   final DatabaseHelper _db;
   BudgetRepository(this._db);
 
-  Future<Budget?> getForPeriod(int year, int month) async {
+  Future<Budget?> getForPeriod(int year, int month, {required int accountId}) async {
     final db = await _db.database;
     final rows = await db.query(
       'budgets',
-      where: 'year = ? AND month = ?',
-      whereArgs: [year, month],
+      where: 'year = ? AND month = ? AND account_id = ?',
+      whereArgs: [year, month, accountId],
     );
     return rows.isEmpty ? null : Budget.fromMap(rows.first);
   }
@@ -31,6 +31,7 @@ class BudgetRepository {
     );
     return Budget(
       id: id,
+      accountId: budget.accountId,
       year: budget.year,
       month: budget.month,
       amount: budget.amount,
@@ -44,8 +45,8 @@ class BudgetRepository {
     final db = await _db.database;
     await db.delete(
       'budgets',
-      where: 'year = ? AND month = ?',
-      whereArgs: [year, month],
+      where: 'year = ? AND month = ? AND account_id = ?',
+      whereArgs: [year, month, budget.accountId],
     );
   }
 }

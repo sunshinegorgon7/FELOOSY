@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/database/database_helper.dart';
 import '../data/repositories/budget_repository.dart';
 import '../data/repositories/category_repository.dart';
+import '../data/repositories/account_repository.dart';
 import '../data/repositories/settings_repository.dart';
 import '../data/repositories/transaction_repository.dart';
 
@@ -15,6 +16,10 @@ final settingsRepositoryProvider = Provider<SettingsRepository>((ref) {
 
 final categoryRepositoryProvider = Provider<CategoryRepository>((ref) {
   return CategoryRepository(ref.watch(databaseHelperProvider));
+});
+
+final accountRepositoryProvider = Provider<AccountRepository>((ref) {
+  return AccountRepository(ref.watch(databaseHelperProvider));
 });
 
 final budgetRepositoryProvider = Provider<BudgetRepository>((ref) {
