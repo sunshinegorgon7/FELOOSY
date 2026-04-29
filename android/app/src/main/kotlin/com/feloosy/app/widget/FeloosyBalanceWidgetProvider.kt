@@ -22,9 +22,19 @@ class FeloosyBalanceWidgetProvider : AppWidgetProvider() {
             val prefs = HomeWidgetPlugin.getData(context)
             val accountName = prefs.getString("widget_account_name", "Favorite account") ?: "Favorite account"
             val available = prefs.getString("widget_available_amount", "$0.00") ?: "$0.00"
+            val hasAvailableMoney = prefs.getBoolean("widget_has_available_money", true)
             return RemoteViews(context.packageName, R.layout.feloosy_balance_widget).apply {
                 setTextViewText(R.id.widget_title, accountName)
                 setTextViewText(R.id.widget_amount, available)
+                setInt(
+                    R.id.widget_info_container,
+                    "setBackgroundResource",
+                    if (hasAvailableMoney) {
+                        R.drawable.widget_info_bubble_positive
+                    } else {
+                        R.drawable.widget_info_bubble_negative
+                    }
+                )
                 setOnClickPendingIntent(
                     R.id.widget_info_container,
                     PendingIntent.getActivity(
