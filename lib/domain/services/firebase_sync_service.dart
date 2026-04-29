@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart' hide Transaction;
 import 'package:sqflite/sqflite.dart' hide Transaction;
+import 'dart:convert';
 import '../../data/database/database_helper.dart';
 import '../../data/models/app_settings.dart';
 import '../../data/models/budget.dart';
@@ -31,10 +32,23 @@ class FirebaseSyncService {
 
   // ── Individual sync (called on every local write) ─────────────────────────
 
-  Future<void> syncTransaction(Transaction tx) =>
-      _txCol.doc(tx.uuid).set(tx.toMap());
+  Future<void> syncTransaction(Transaction tx) async {
+    await _runWithOfflineQueue(
+      operation: 'upsert',
+      targetId: tx.uuid,
+      payload: tx.toMap(),
+      remoteAction: () => _txCol.doc(tx.uuid).set(tx.toMap()),
+    );
+  }
 
-  Future<void> deleteTransaction(String uuid) => _txCol.doc(uuid).delete();
+  Future<void> deleteTransaction(String uuid) async {
+    await _runWithOfflineQueue(
+      operation: 'delete',
+      targetId: uuid,
+      payload: null,
+      remoteAction: () => _txCol.doc(uuid).delete(),
+    );
+  }
 
   Future<void> syncBudget(Budget budget) {
     final id = '${budget.year}-${budget.month}';
@@ -135,4 +149,82 @@ class FirebaseSyncService {
 
   Map<String, dynamic> _stripId(Map<String, dynamic> row) =>
       Map.of(row)..remove('id');
+
+  Future<void> flushPendingTransactionOps() async {
+    final db = await _local.database;
+    final pending = await db.query(
+      'pending_sync_ops',
+      where: 'entity_type = ?',
+      whereArgs: ['transaction'],
+      orderBy: 'created_at ASC, id ASC',
+    );
+    for (final row in pending) {
+      final op = row['operation'] as String;
+      final targetId = row['target_id'] as String;
+      final pendingId = row['id'] as int;
+      try {
+        if (op == 'upsert') {
+          final payloadJson = row['payload_json'] as String?;
+          if (payloadJson != null) {
+            final payload = jsonDecode(payloadJson) as Map<String, dynamic>;
+            await _txCol.doc(targetId).set(payload).timeout(
+                  const Duration(seconds: 3),
+                );
+          }
+        } else if (op == 'delete') {
+          await _txCol.doc(targetId).delete().timeout(
+                const Duration(seconds: 3),
+              );
+        }
+        await db.delete('pending_sync_ops', where: 'id = ?', whereArgs: [pendingId]);
+      } catch (_) {
+        break;
+      }
+    }
+  }
+
+  Future<void> _runWithOfflineQueue({
+    required String operation,
+    required String targetId,
+    required Map<String, dynamic>? payload,
+    required Future<void> Function() remoteAction,
+  }) async {
+    try {
+      await remoteAction().timeout(const Duration(seconds: 3));
+      await _deleteQueuedOp(operation: operation, targetId: targetId);
+    } catch (_) {
+      await _queueOp(operation: operation, targetId: targetId, payload: payload);
+    }
+  }
+
+  Future<void> _queueOp({
+    required String operation,
+    required String targetId,
+    required Map<String, dynamic>? payload,
+  }) async {
+    final db = await _local.database;
+    await db.insert(
+      'pending_sync_ops',
+      {
+        'entity_type': 'transaction',
+        'operation': operation,
+        'target_id': targetId,
+        'payload_json': payload == null ? null : jsonEncode(payload),
+        'created_at': DateTime.now().millisecondsSinceEpoch,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<void> _deleteQueuedOp({
+    required String operation,
+    required String targetId,
+  }) async {
+    final db = await _local.database;
+    await db.delete(
+      'pending_sync_ops',
+      where: 'entity_type = ? AND operation = ? AND target_id = ?',
+      whereArgs: ['transaction', operation, targetId],
+    );
+  }
 }

@@ -23,9 +23,11 @@ class TransactionsNotifier extends AsyncNotifier<List<Transaction>> {
   Future<void> add(Transaction tx) async {
     await ref.read(transactionRepositoryProvider).insert(tx);
     try {
-      await ref.read(firebaseSyncProvider)?.syncTransaction(tx);
+      final sync = ref.read(firebaseSyncProvider);
+      await sync?.syncTransaction(tx);
+      await sync?.flushPendingTransactionOps();
     } catch (e) {
-      // Sync failure is non-fatal; sign-out will push all local data as safety net
+      // Sync failure is non-fatal; operation is queued locally for retry.
       debugPrint('Firestore sync (add) error: $e');
     }
     ref.invalidateSelf();
@@ -34,7 +36,9 @@ class TransactionsNotifier extends AsyncNotifier<List<Transaction>> {
   Future<void> remove(String uuid) async {
     await ref.read(transactionRepositoryProvider).delete(uuid);
     try {
-      await ref.read(firebaseSyncProvider)?.deleteTransaction(uuid);
+      final sync = ref.read(firebaseSyncProvider);
+      await sync?.deleteTransaction(uuid);
+      await sync?.flushPendingTransactionOps();
     } catch (e) {
       debugPrint('Firestore sync (delete) error: $e');
     }
@@ -44,7 +48,9 @@ class TransactionsNotifier extends AsyncNotifier<List<Transaction>> {
   Future<void> edit(Transaction tx) async {
     await ref.read(transactionRepositoryProvider).save(tx);
     try {
-      await ref.read(firebaseSyncProvider)?.syncTransaction(tx);
+      final sync = ref.read(firebaseSyncProvider);
+      await sync?.syncTransaction(tx);
+      await sync?.flushPendingTransactionOps();
     } catch (e) {
       debugPrint('Firestore sync (edit) error: $e');
     }

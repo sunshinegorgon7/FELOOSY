@@ -38,5 +38,6 @@ class SyncOrchestrator {
       // First sign-in → push local data to cloud
       await sync.pushAll();
     }
+    await sync.flushPendingTransactionOps();
   }
 }
