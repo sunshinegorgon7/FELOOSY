@@ -17,6 +17,7 @@ Future<void> syncBalanceHomeWidget(WidgetRef ref) async {
   if (favorite?.id == null) {
     await HomeWidget.saveWidgetData<String>('widget_account_name', 'Favorite account');
     await HomeWidget.saveWidgetData<String>('widget_available_amount', '\$0.00');
+    await HomeWidget.saveWidgetData<bool>('widget_has_available_money', true);
     await HomeWidget.updateWidget(qualifiedAndroidName: _balanceWidgetProvider);
     return;
   }
@@ -45,6 +46,7 @@ Future<void> syncBalanceHomeWidget(WidgetRef ref) async {
   final remaining = budgetAmount - expenses + income;
 
   await HomeWidget.saveWidgetData<String>('widget_account_name', favorite.name);
+  await HomeWidget.saveWidgetData<bool>('widget_has_available_money', remaining >= 0);
   await HomeWidget.saveWidgetData<String>(
     'widget_available_amount',
     CurrencyFormatter.formatWith(
