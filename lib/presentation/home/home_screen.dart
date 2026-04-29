@@ -76,7 +76,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       }
       _accountInitialized = true;
     }
-    final isAllAccounts = selectedAccountId == null;
+    final hasSelectedAccount = selectedAccountId != null &&
+        accounts.any((a) => a.id == selectedAccountId);
+    if (selectedAccountId != null && !hasSelectedAccount) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ref.read(selectedHomeAccountIdProvider.notifier).select(null);
+        }
+      });
+    }
+    final isAllAccounts = selectedAccountId == null || !hasSelectedAccount;
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -124,7 +133,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 PopupMenuButton<int>(
                   tooltip: 'Select account',
                   icon: const Icon(Icons.wallet_outlined, size: 20),
-                  initialValue: selectedAccountId ?? -1,
+                  initialValue: hasSelectedAccount ? selectedAccountId : -1,
                   onSelected: (value) {
                     ref
                         .read(selectedHomeAccountIdProvider.notifier)
