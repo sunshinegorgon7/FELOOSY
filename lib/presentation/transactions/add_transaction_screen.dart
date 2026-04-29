@@ -119,7 +119,10 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
               ),
             );
       }
-      if (mounted) context.pop();
+      if (mounted) {
+        if (context.canPop()) { context.pop(); }
+        else { context.go('/'); }
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -156,7 +159,10 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.close),
-          onPressed: () => context.pop(),
+          onPressed: () {
+            if (context.canPop()) { context.pop(); }
+            else { context.go('/'); }
+          },
         ),
         title: Text(_isEditing ? 'Edit Transaction' : 'New Transaction'),
         actions: [
