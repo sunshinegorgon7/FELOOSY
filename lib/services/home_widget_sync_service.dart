@@ -7,6 +7,9 @@ import '../providers/accounts_provider.dart';
 import '../providers/budget_period_provider.dart';
 import '../providers/database_provider.dart';
 
+const _balanceWidgetProvider =
+    'com.feloosy.app.widget.FeloosyBalanceWidgetProvider';
+
 Future<void> syncBalanceHomeWidget(WidgetRef ref) async {
   final accounts = ref.read(accountsProvider).value ?? const [];
   final favorite = accounts.where((a) => a.isFavorite).firstOrNull ?? accounts.firstOrNull;
@@ -14,7 +17,7 @@ Future<void> syncBalanceHomeWidget(WidgetRef ref) async {
   if (favorite?.id == null) {
     await HomeWidget.saveWidgetData<String>('widget_account_name', 'Favorite account');
     await HomeWidget.saveWidgetData<String>('widget_available_amount', '\$0.00');
-    await HomeWidget.updateWidget(androidName: 'FeloosyBalanceWidgetProvider');
+    await HomeWidget.updateWidget(qualifiedAndroidName: _balanceWidgetProvider);
     return;
   }
 
@@ -50,5 +53,5 @@ Future<void> syncBalanceHomeWidget(WidgetRef ref) async {
       symbolLeading: favorite.currencySymbolLeading,
     ),
   );
-  await HomeWidget.updateWidget(androidName: 'FeloosyBalanceWidgetProvider');
+  await HomeWidget.updateWidget(qualifiedAndroidName: _balanceWidgetProvider);
 }
