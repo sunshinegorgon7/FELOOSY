@@ -121,6 +121,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   tooltip: 'Search',
                   onPressed: _startSearch,
                 ),
+                PopupMenuButton<int?>(
+                  tooltip: 'Select account',
+                  icon: const Icon(Icons.wallet_outlined, size: 20),
+                  initialValue: selectedAccountId,
+                  onSelected: (value) {
+                    ref.read(selectedHomeAccountIdProvider.notifier).select(value);
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem<int?>(
+                      value: null,
+                      child: Text('All accounts'),
+                    ),
+                    ...accounts.map(
+                      (account) => PopupMenuItem<int?>(
+                        value: account.id,
+                        child: Text(account.name),
+                      ),
+                    ),
+                  ],
+                ),
                 IconButton(
                   tooltip: 'Budget',
                   icon: const Icon(Icons.analytics_outlined),
@@ -219,6 +239,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final tt = Theme.of(context).textTheme;
 
     final isAllAccounts = selectedAccountId == null;
+    final selectedAccountName = !isAllAccounts
+        ? accounts.where((a) => a.id == selectedAccountId).firstOrNull?.name
+        : null;
     final activeCats = cats.where((c) => c.isActive).toList();
 
     // Category filter then description search
@@ -253,28 +276,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                DropdownButtonFormField<int?>(
-                  value: selectedAccountId,
-                  decoration: const InputDecoration(
-                    labelText: 'Account',
-                    border: OutlineInputBorder(),
-                    isDense: true,
-                  ),
-                  items: [
-                    const DropdownMenuItem<int?>(
-                      value: null,
-                      child: Text('All accounts'),
-                    ),
-                    ...accounts.map<DropdownMenuItem<int?>>(
-                      (account) => DropdownMenuItem<int?>(
-                        value: account.id,
-                        child: Text(account.name),
-                      ),
-                    ),
-                  ],
-                  onChanged: (value) {
-                    ref.read(selectedHomeAccountIdProvider.notifier).select(value);
-                  },
+                Text(
+                  isAllAccounts
+                      ? 'Account: All accounts'
+                      : 'Account: ${selectedAccountName ?? 'Unknown account'}',
+                  style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
                 ),
                 const SizedBox(height: 8),
                 if (isAllAccounts)
