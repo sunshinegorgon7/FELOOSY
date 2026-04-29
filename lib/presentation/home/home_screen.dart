@@ -607,8 +607,8 @@ class _DayOverlayState extends ConsumerState<_DayOverlay> {
 
     final currentDay = visibleDays.isEmpty ? null : visibleDays[_currentIndex];
     final dayTxs = currentDay == null
-        ? const <Transaction>[]
-        : allTxs
+        ? <Transaction>[]
+        : (allTxs
             .where((tx) {
               final txDay = DateUtils.dateOnly(tx.transactionDate);
               final sameDay = txDay == currentDay;
@@ -617,7 +617,7 @@ class _DayOverlayState extends ConsumerState<_DayOverlay> {
               return sameDay && matchesCategory;
             })
             .toList()
-          ..sort((a, b) => b.transactionDate.compareTo(a.transactionDate));
+          ..sort((a, b) => b.transactionDate.compareTo(a.transactionDate)));
 
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
