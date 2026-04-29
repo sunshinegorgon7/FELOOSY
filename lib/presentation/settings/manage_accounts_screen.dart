@@ -83,7 +83,7 @@ class ManageAccountsScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<CurrencyOption>(
-                value: selectedCurrency,
+                initialValue: selectedCurrency,
                 decoration: const InputDecoration(labelText: 'Currency'),
                 items: kCurrencies
                     .map((c) => DropdownMenuItem(value: c, child: Text('${c.code} — ${c.name}')))
