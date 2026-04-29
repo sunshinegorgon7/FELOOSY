@@ -26,7 +26,7 @@ class DatabaseHelper {
     final dbPath = p.join(docDir.path, AppFlavor.databaseName);
     return openDatabase(
       dbPath,
-      version: 6,
+      version: 7,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -82,6 +82,18 @@ class DatabaseHelper {
 
     await db.execute('''
       CREATE INDEX idx_transactions_category ON transactions(category_uuid)
+    ''');
+
+    await db.execute('''
+      CREATE TABLE pending_sync_ops (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        entity_type TEXT NOT NULL,
+        operation TEXT NOT NULL,
+        target_id TEXT NOT NULL,
+        payload_json TEXT,
+        created_at INTEGER NOT NULL,
+        UNIQUE(entity_type, operation, target_id)
+      )
     ''');
 
     await db.execute('''
@@ -198,6 +210,19 @@ class DatabaseHelper {
       await db.execute(
         'CREATE UNIQUE INDEX IF NOT EXISTS idx_budgets_account_period ON budgets(account_id, year, month)',
       );
+    }
+    if (oldVersion < 7) {
+      await db.execute('''
+        CREATE TABLE pending_sync_ops (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          entity_type TEXT NOT NULL,
+          operation TEXT NOT NULL,
+          target_id TEXT NOT NULL,
+          payload_json TEXT,
+          created_at INTEGER NOT NULL,
+          UNIQUE(entity_type, operation, target_id)
+        )
+      ''');
     }
   }
 
