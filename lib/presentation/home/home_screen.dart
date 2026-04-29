@@ -121,21 +121,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   tooltip: 'Search',
                   onPressed: _startSearch,
                 ),
-                PopupMenuButton<int?>(
+                PopupMenuButton<int>(
                   tooltip: 'Select account',
                   icon: const Icon(Icons.wallet_outlined, size: 20),
-                  initialValue: selectedAccountId,
+                  initialValue: selectedAccountId ?? -1,
                   onSelected: (value) {
-                    ref.read(selectedHomeAccountIdProvider.notifier).select(value);
+                    ref
+                        .read(selectedHomeAccountIdProvider.notifier)
+                        .select(value == -1 ? null : value);
                   },
                   itemBuilder: (context) => [
-                    const PopupMenuItem<int?>(
-                      value: null,
+                    const PopupMenuItem<int>(
+                      value: -1,
                       child: Text('All accounts'),
                     ),
                     ...accounts.map(
-                      (account) => PopupMenuItem<int?>(
-                        value: account.id,
+                      (account) => PopupMenuItem<int>(
+                        value: account.id ?? -1,
                         child: Text(account.name),
                       ),
                     ),
