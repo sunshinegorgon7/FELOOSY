@@ -21,9 +21,9 @@ class _FeloosyAppState extends ConsumerState<FeloosyApp> {
   void initState() {
     super.initState();
     Future<void>.microtask(() => syncBalanceHomeWidget(ref));
-    ref.listenManual(accountsProvider, (_, _) => syncBalanceHomeWidget(ref));
-    ref.listenManual(transactionsProvider, (_, _) => syncBalanceHomeWidget(ref));
-    ref.listenManual(currentBudgetProvider, (_, _) => syncBalanceHomeWidget(ref));
+    ref.listenManual(accountsProvider, (_, __) => syncBalanceHomeWidget(ref));
+    ref.listenManual(transactionsProvider, (_, __) => syncBalanceHomeWidget(ref));
+    ref.listenManual(currentBudgetProvider, (_, __) => syncBalanceHomeWidget(ref));
   }
 
   @override
