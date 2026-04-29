@@ -19,12 +19,13 @@
         android:textSize="12sp"
         android:textStyle="bold" />
 
-    <View
+    <TextView
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:layout_marginTop="5dp"
         android:layout_marginBottom="8dp"
-        android:background="#40FFFFFF" />
+        android:background="#40FFFFFF"
+        android:text="" />
 
     <LinearLayout
         android:layout_width="match_parent"
