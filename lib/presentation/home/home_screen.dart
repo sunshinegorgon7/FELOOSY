@@ -130,28 +130,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   tooltip: 'Search',
                   onPressed: _startSearch,
                 ),
-                PopupMenuButton<int>(
-                  tooltip: 'Select account',
-                  icon: const Icon(Icons.wallet_outlined, size: 20),
-                  initialValue: hasSelectedAccount ? selectedAccountId : -1,
-                  onSelected: (value) {
-                    ref
-                        .read(selectedHomeAccountIdProvider.notifier)
-                        .select(value == -1 ? null : value);
-                  },
-                  itemBuilder: (context) => [
-                    const PopupMenuItem<int>(
-                      value: -1,
-                      child: Text('All accounts'),
-                    ),
-                    ...accounts.map(
-                      (account) => PopupMenuItem<int>(
-                        value: account.id ?? -1,
-                        child: Text(account.name),
+                if (accounts.length > 1)
+                  PopupMenuButton<int>(
+                    tooltip: 'Select wallet',
+                    icon: const Icon(Icons.wallet_outlined, size: 20),
+                    initialValue: hasSelectedAccount ? selectedAccountId : -1,
+                    onSelected: (value) {
+                      ref
+                          .read(selectedHomeAccountIdProvider.notifier)
+                          .select(value == -1 ? null : value);
+                    },
+                    itemBuilder: (context) => [
+                      const PopupMenuItem<int>(
+                        value: -1,
+                        child: Text('All wallets'),
                       ),
-                    ),
-                  ],
-                ),
+                      ...accounts.map(
+                        (account) => PopupMenuItem<int>(
+                          value: account.id ?? -1,
+                          child: Text(account.name),
+                        ),
+                      ),
+                    ],
+                  ),
                 IconButton(
                   tooltip: 'Budget',
                   icon: const Icon(Icons.menu_book_outlined),
@@ -287,16 +288,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  isAllAccounts
-                      ? 'Account: All accounts'
-                      : 'Account: ${selectedAccountName ?? 'Unknown account'}',
-                  style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: cs.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.wallet_outlined, size: 13, color: cs.onSurfaceVariant),
+                      const SizedBox(width: 5),
+                      Text(
+                        isAllAccounts
+                            ? 'All wallets'
+                            : selectedAccountName ?? 'Unknown wallet',
+                        style: tt.labelSmall?.copyWith(
+                          color: cs.onSurfaceVariant,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 8),
                 if (isAllAccounts)
                   Text(
-                    'Showing last 30 days across all accounts.',
+                    'Showing last 30 days across all wallets.',
                     style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
                   ),
                 Row(
