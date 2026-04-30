@@ -151,12 +151,12 @@ class _SettingsBody extends ConsumerWidget {
           onTap: () => _navigateCategories(context),
         ),
 
-        // ── Account (Firebase) ───────────────────────────────────────────
-        const _SectionHeader('Account'),
+        // ── Wallets ──────────────────────────────────────────────────────
+        const _SectionHeader('Wallets'),
         ListTile(
           leading: const Icon(Icons.account_balance_wallet_outlined),
-          title: const Text('Manage accounts'),
-          subtitle: const Text('Add, edit, delete accounts and set favorite'),
+          title: const Text('Manage wallets'),
+          subtitle: const Text('Add, edit, delete wallets and set favorite'),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => context.push('/settings/accounts'),
         ),

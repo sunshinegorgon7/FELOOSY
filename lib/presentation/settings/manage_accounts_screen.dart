@@ -11,7 +11,7 @@ class ManageAccountsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final accountsAsync = ref.watch(accountsProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('Manage Accounts')),
+      appBar: AppBar(title: const Text('Manage Wallets')),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAccountEditor(context, ref),
         child: const Icon(Icons.add),
@@ -73,13 +73,13 @@ class ManageAccountsScreen extends ConsumerWidget {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setState) => AlertDialog(
-          title: Text(account == null ? 'Add account' : 'Edit account'),
+          title: Text(account == null ? 'Add wallet' : 'Edit wallet'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: nameCtrl,
-                decoration: const InputDecoration(labelText: 'Account name'),
+                decoration: const InputDecoration(labelText: 'Wallet name'),
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<CurrencyOption>(

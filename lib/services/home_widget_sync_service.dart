@@ -15,7 +15,7 @@ Future<void> syncBalanceHomeWidget(WidgetRef ref) async {
   final favorite = accounts.where((a) => a.isFavorite).firstOrNull ?? accounts.firstOrNull;
 
   if (favorite?.id == null) {
-    await HomeWidget.saveWidgetData<String>('widget_account_name', 'Favorite account');
+    await HomeWidget.saveWidgetData<String>('widget_account_name', 'Favorite wallet');
     await HomeWidget.saveWidgetData<String>('widget_available_amount', '\$0.00');
     await HomeWidget.saveWidgetData<bool>('widget_has_available_money', true);
     await HomeWidget.updateWidget(qualifiedAndroidName: _balanceWidgetProvider);
