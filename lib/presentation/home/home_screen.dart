@@ -86,9 +86,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       });
     }
     final isAllAccounts = selectedAccountId == null || !hasSelectedAccount;
+    final selectedAccountName = !isAllAccounts
+        ? accounts.where((a) => a.id == selectedAccountId).firstOrNull?.name
+        : null;
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: cs.surface,
       appBar: AppBar(
         titleSpacing: 16,
         title: _isSearching
@@ -96,26 +101,51 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 controller: _searchCtrl,
                 autofocus: true,
                 onChanged: (v) => setState(() => _searchQuery = v),
-                style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface,
-                    fontSize: 16),
+                style: TextStyle(color: cs.onSurface, fontSize: 16),
                 decoration: InputDecoration(
                   hintText: 'Search transactions…',
-                  hintStyle: TextStyle(
-                      color:
-                          Theme.of(context).colorScheme.onSurfaceVariant),
+                  hintStyle: TextStyle(color: cs.onSurfaceVariant),
                   border: InputBorder.none,
                   isDense: true,
                   contentPadding: EdgeInsets.zero,
                 ),
               )
-            : Text(
-                'FELOOSY',
-                style: GoogleFonts.rajdhani(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 26,
-                  letterSpacing: 3,
-                ),
+            : Row(
+                children: [
+                  Text(
+                    'FELOOSY',
+                    style: GoogleFonts.rajdhani(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 26,
+                      letterSpacing: 3,
+                    ),
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: cs.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.wallet_outlined, size: 13, color: cs.onSurfaceVariant),
+                            const SizedBox(width: 5),
+                            Text(
+                              isAllAccounts ? 'All wallets' : selectedAccountName ?? 'Unknown wallet',
+                              style: tt.labelSmall?.copyWith(
+                                color: cs.onSurfaceVariant,
+                                letterSpacing: 0.3,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
         actions: _isSearching
             ? [
@@ -251,9 +281,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final tt = Theme.of(context).textTheme;
 
     final isAllAccounts = selectedAccountId == null;
-    final selectedAccountName = !isAllAccounts
-        ? accounts.where((a) => a.id == selectedAccountId).firstOrNull?.name
-        : null;
     final activeCats = cats.where((c) => c.isActive).toList();
 
     // Category filter then description search
@@ -288,30 +315,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: cs.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.wallet_outlined, size: 13, color: cs.onSurfaceVariant),
-                      const SizedBox(width: 5),
-                      Text(
-                        isAllAccounts
-                            ? 'All wallets'
-                            : selectedAccountName ?? 'Unknown wallet',
-                        style: tt.labelSmall?.copyWith(
-                          color: cs.onSurfaceVariant,
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 8),
                 if (isAllAccounts)
                   Text(
                     'Showing last 30 days across all wallets.',
