@@ -13,9 +13,7 @@ class TransactionsNotifier extends AsyncNotifier<List<Transaction>> {
     final selectedAccountId = ref.watch(selectedHomeAccountIdProvider);
     final repo = ref.watch(transactionRepositoryProvider);
     if (selectedAccountId == null) {
-      final end = DateTime.now();
-      final start = end.subtract(const Duration(days: 30));
-      return repo.getForPeriod(start, end);
+      return repo.getForPeriod(period.start, period.end);
     }
     return repo.getForPeriod(period.start, period.end, accountId: selectedAccountId);
   }
