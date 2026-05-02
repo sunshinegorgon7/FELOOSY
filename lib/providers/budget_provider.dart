@@ -8,7 +8,7 @@ import 'firebase_sync_provider.dart';
 class CurrentBudgetNotifier extends AsyncNotifier<Budget?> {
   @override
   Future<Budget?> build() async {
-    final period = ref.watch(currentBudgetPeriodProvider);
+    final period = ref.watch(selectedBudgetPeriodProvider);
     final selectedAccountId = ref.watch(selectedHomeAccountIdProvider);
     if (selectedAccountId == null) return null;
     final repo = ref.watch(budgetRepositoryProvider);
@@ -20,7 +20,7 @@ class CurrentBudgetNotifier extends AsyncNotifier<Budget?> {
   }
 
   Future<void> setAmount(double amount) async {
-    final period = ref.read(currentBudgetPeriodProvider);
+    final period = ref.read(selectedBudgetPeriodProvider);
     final repo = ref.read(budgetRepositoryProvider);
     final account = ref.read(activeAccountProvider);
     if (account?.id == null) return;

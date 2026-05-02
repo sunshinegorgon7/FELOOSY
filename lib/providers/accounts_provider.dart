@@ -13,6 +13,7 @@ class AccountsNotifier extends AsyncNotifier<List<Account>> {
     required String name,
     required CurrencyOption currency,
     double? defaultMonthlyBudget,
+    int? monthStartDay,
   }) async {
     final now = DateTime.now();
     final account = Account(
@@ -22,6 +23,7 @@ class AccountsNotifier extends AsyncNotifier<List<Account>> {
       currencySymbolLeading: currency.symbolLeading,
       defaultMonthlyBudget: defaultMonthlyBudget,
       isFavorite: false,
+      monthStartDay: monthStartDay,
       createdAt: now,
       updatedAt: now,
     );

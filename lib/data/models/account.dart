@@ -6,6 +6,7 @@ class Account {
   final bool currencySymbolLeading;
   final double? defaultMonthlyBudget;
   final bool isFavorite;
+  final int? monthStartDay;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -17,6 +18,7 @@ class Account {
     required this.currencySymbolLeading,
     required this.defaultMonthlyBudget,
     required this.isFavorite,
+    this.monthStartDay,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -29,6 +31,8 @@ class Account {
     double? defaultMonthlyBudget,
     bool clearDefaultMonthlyBudget = false,
     bool? isFavorite,
+    int? monthStartDay,
+    bool clearMonthStartDay = false,
   }) {
     return Account(
       id: id,
@@ -41,6 +45,7 @@ class Account {
           ? null
           : (defaultMonthlyBudget ?? this.defaultMonthlyBudget),
       isFavorite: isFavorite ?? this.isFavorite,
+      monthStartDay: clearMonthStartDay ? null : (monthStartDay ?? this.monthStartDay),
       createdAt: createdAt,
       updatedAt: DateTime.now(),
     );
@@ -56,6 +61,7 @@ class Account {
       defaultMonthlyBudget:
           (map['default_monthly_budget'] as num?)?.toDouble(),
       isFavorite: (map['is_favorite'] as int? ?? 0) == 1,
+      monthStartDay: map['month_start_day'] as int?,
       createdAt:
           DateTime.fromMillisecondsSinceEpoch(map['created_at'] as int),
       updatedAt:
@@ -71,6 +77,7 @@ class Account {
       'currency_symbol_leading': currencySymbolLeading ? 1 : 0,
       'default_monthly_budget': defaultMonthlyBudget,
       'is_favorite': isFavorite ? 1 : 0,
+      'month_start_day': monthStartDay,
       'created_at': createdAt.millisecondsSinceEpoch,
       'updated_at': updatedAt.millisecondsSinceEpoch,
     };

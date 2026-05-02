@@ -54,6 +54,18 @@ class MonthCalculator {
     return periods;
   }
 
+  /// Returns the period immediately before [period].
+  static BudgetPeriod previousPeriod(BudgetPeriod period, int monthStartDay) {
+    final prevStart = _subtractOneMonth(period.start);
+    return periodContaining(prevStart, monthStartDay);
+  }
+
+  /// Returns the period immediately after [period].
+  static BudgetPeriod nextPeriod(BudgetPeriod period, int monthStartDay) {
+    final nextStart = _addOneMonth(period.start);
+    return periodContaining(nextStart, monthStartDay);
+  }
+
   static DateTime _addOneMonth(DateTime date) {
     final nextMonth = date.month + 1;
     return nextMonth > 12

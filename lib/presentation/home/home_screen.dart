@@ -9,6 +9,7 @@ import '../../data/models/account.dart';
 import '../../data/models/transaction.dart';
 import '../../domain/entities/budget_summary.dart';
 import '../../providers/accounts_provider.dart';
+import '../../providers/budget_period_provider.dart';
 import '../../providers/budget_summary_provider.dart';
 import '../../providers/categories_provider.dart';
 import '../../providers/transactions_provider.dart';
@@ -316,21 +317,81 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final groups = _groupByDate(filteredTxs);
     _visibleGroups = groups;
 
-    return CustomScrollView(
+    final period = ref.watch(selectedBudgetPeriodProvider);
+    final periodOffset = ref.watch(selectedPeriodOffsetProvider);
+    final periodLabel = DateFormat('MMMM yyyy')
+        .format(DateTime(period.budgetYear, period.budgetMonth));
+    final isCurrentPeriod = periodOffset == 0;
+
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onHorizontalDragEnd: (details) {
+        final velocity = details.primaryVelocity ?? 0;
+        if (velocity > 300) {
+          // swipe right → go back in time
+          ref.read(selectedPeriodOffsetProvider.notifier).goBack();
+        } else if (velocity < -300 && !isCurrentPeriod) {
+          // swipe left → go forward (only if we're in a past month)
+          ref.read(selectedPeriodOffsetProvider.notifier).goForward();
+        }
+      },
+      child: CustomScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
-        // Period header
+        // Period navigation header
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (isAllAccounts)
-                  Text(
-                    'Showing last 30 days across all wallets.',
-                    style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                  ),
+                Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.chevron_left),
+                      tooltip: 'Previous month',
+                      onPressed: () =>
+                          ref.read(selectedPeriodOffsetProvider.notifier).goBack(),
+                    ),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: isCurrentPeriod
+                            ? null
+                            : () => ref
+                                .read(selectedPeriodOffsetProvider.notifier)
+                                .reset(),
+                        child: Column(
+                          children: [
+                            Text(
+                              periodLabel,
+                              textAlign: TextAlign.center,
+                              style: tt.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            if (!isCurrentPeriod)
+                              Text(
+                                'Tap to return to current month',
+                                textAlign: TextAlign.center,
+                                style: tt.labelSmall?.copyWith(
+                                  color: cs.primary,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.chevron_right),
+                      tooltip: 'Next month',
+                      onPressed: isCurrentPeriod
+                          ? null
+                          : () => ref
+                              .read(selectedPeriodOffsetProvider.notifier)
+                              .goForward(),
+                    ),
+                  ],
+                ),
                 Row(
                   children: [
                     const Spacer(),
@@ -441,6 +502,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
         const SliverToBoxAdapter(child: SizedBox(height: 96)),
       ],
+    ),
     );
   }
 

@@ -26,7 +26,7 @@ class DatabaseHelper {
     final dbPath = p.join(docDir.path, AppFlavor.databaseName);
     return openDatabase(
       dbPath,
-      version: 7,
+      version: 8,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -42,6 +42,7 @@ class DatabaseHelper {
         currency_symbol_leading INTEGER NOT NULL DEFAULT 0,
         default_monthly_budget REAL,
         is_favorite INTEGER NOT NULL DEFAULT 0,
+        month_start_day INTEGER,
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL
       )
@@ -223,6 +224,11 @@ class DatabaseHelper {
           UNIQUE(entity_type, operation, target_id)
         )
       ''');
+    }
+    if (oldVersion < 8) {
+      await db.execute(
+        'ALTER TABLE accounts ADD COLUMN month_start_day INTEGER',
+      );
     }
   }
 

@@ -8,7 +8,7 @@ import 'settings_provider.dart';
 import 'transactions_provider.dart';
 
 final budgetSummaryProvider = FutureProvider<BudgetSummary>((ref) async {
-  final period = ref.watch(currentBudgetPeriodProvider);
+  final period = ref.watch(selectedBudgetPeriodProvider);
   final selectedAccountId = ref.watch(selectedHomeAccountIdProvider);
   final transactions = await ref.watch(transactionsProvider.future);
   if (selectedAccountId == null) {

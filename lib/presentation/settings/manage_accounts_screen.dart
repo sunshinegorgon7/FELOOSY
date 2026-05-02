@@ -68,6 +68,8 @@ class ManageAccountsScreen extends ConsumerWidget {
       text: account?.defaultMonthlyBudget?.toStringAsFixed(2) ?? '',
     );
     var selectedCurrency = kCurrencies.where((c) => c.code == account?.currencyCode).firstOrNull ?? kCurrencies.first;
+    // null = use app default
+    int? selectedMonthStartDay = account?.monthStartDay;
     String? nameError;
 
     await showDialog<void>(
@@ -75,40 +77,63 @@ class ManageAccountsScreen extends ConsumerWidget {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setState) => AlertDialog(
           title: Text(account == null ? 'Add wallet' : 'Edit wallet'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameCtrl,
-                onChanged: (_) {
-                  if (nameError != null) setState(() => nameError = null);
-                },
-                decoration: InputDecoration(
-                  labelText: 'Wallet name',
-                  errorText: nameError,
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameCtrl,
+                  onChanged: (_) {
+                    if (nameError != null) setState(() => nameError = null);
+                  },
+                  decoration: InputDecoration(
+                    labelText: 'Wallet name',
+                    errorText: nameError,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<CurrencyOption>(
-                initialValue: selectedCurrency,
-                decoration: const InputDecoration(labelText: 'Currency'),
-                items: kCurrencies
-                    .map((c) => DropdownMenuItem(value: c, child: Text('${c.code} — ${c.name}')))
-                    .toList(),
-                onChanged: (value) {
-                  if (value != null) setState(() => selectedCurrency = value);
-                },
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: budgetCtrl,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(
-                  labelText: 'Default monthly budget (optional)',
-                  hintText: 'Leave empty to disable',
+                const SizedBox(height: 12),
+                DropdownButtonFormField<CurrencyOption>(
+                  initialValue: selectedCurrency,
+                  decoration: const InputDecoration(labelText: 'Currency'),
+                  items: kCurrencies
+                      .map((c) => DropdownMenuItem(value: c, child: Text('${c.code} — ${c.name}')))
+                      .toList(),
+                  onChanged: (value) {
+                    if (value != null) setState(() => selectedCurrency = value);
+                  },
                 ),
-              ),
-            ],
+                const SizedBox(height: 12),
+                TextField(
+                  controller: budgetCtrl,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: const InputDecoration(
+                    labelText: 'Default monthly budget (optional)',
+                    hintText: 'Leave empty to disable',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<int?>(
+                  initialValue: selectedMonthStartDay,
+                  decoration: const InputDecoration(
+                    labelText: 'Month starts on (optional)',
+                    helperText: 'Leave as app default if not set',
+                  ),
+                  items: [
+                    const DropdownMenuItem<int?>(
+                      value: null,
+                      child: Text('App default'),
+                    ),
+                    ...List.generate(28, (i) => i + 1).map(
+                      (d) => DropdownMenuItem<int?>(
+                        value: d,
+                        child: Text('Day $d'),
+                      ),
+                    ),
+                  ],
+                  onChanged: (value) => setState(() => selectedMonthStartDay = value),
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
@@ -135,6 +160,7 @@ class ManageAccountsScreen extends ConsumerWidget {
                         name: name,
                         currency: selectedCurrency,
                         defaultMonthlyBudget: budget,
+                        monthStartDay: selectedMonthStartDay,
                       );
                 } else {
                   await ref.read(accountsProvider.notifier).save(
@@ -145,6 +171,8 @@ class ManageAccountsScreen extends ConsumerWidget {
                           currencySymbolLeading: selectedCurrency.symbolLeading,
                           defaultMonthlyBudget: budget,
                           clearDefaultMonthlyBudget: budget == null,
+                          monthStartDay: selectedMonthStartDay,
+                          clearMonthStartDay: selectedMonthStartDay == null,
                         ),
                       );
                 }
