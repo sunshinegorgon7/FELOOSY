@@ -57,7 +57,7 @@ class SelectedHomeAccountIdNotifier extends Notifier<int?> {
   }
 }
 
-/// Home filter. null => all accounts.
+/// Home filter. null => all wallets.
 final selectedHomeAccountIdProvider =
     NotifierProvider<SelectedHomeAccountIdNotifier, int?>(
         SelectedHomeAccountIdNotifier.new);

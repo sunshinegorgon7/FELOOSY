@@ -85,6 +85,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         }
       });
     }
+    // When only one wallet remains and the view is "all wallets", auto-select it.
+    if (accounts.length == 1 && selectedAccountId == null) {
+      final single = accounts.first;
+      if (single.id != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            ref.read(selectedHomeAccountIdProvider.notifier).select(single.id);
+          }
+        });
+      }
+    }
     final isAllAccounts = selectedAccountId == null || !hasSelectedAccount;
     final selectedAccountName = !isAllAccounts
         ? accounts.where((a) => a.id == selectedAccountId).firstOrNull?.name

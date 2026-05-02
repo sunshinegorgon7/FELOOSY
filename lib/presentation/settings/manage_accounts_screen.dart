@@ -68,6 +68,7 @@ class ManageAccountsScreen extends ConsumerWidget {
       text: account?.defaultMonthlyBudget?.toStringAsFixed(2) ?? '',
     );
     var selectedCurrency = kCurrencies.where((c) => c.code == account?.currencyCode).firstOrNull ?? kCurrencies.first;
+    String? nameError;
 
     await showDialog<void>(
       context: context,
@@ -79,7 +80,13 @@ class ManageAccountsScreen extends ConsumerWidget {
             children: [
               TextField(
                 controller: nameCtrl,
-                decoration: const InputDecoration(labelText: 'Wallet name'),
+                onChanged: (_) {
+                  if (nameError != null) setState(() => nameError = null);
+                },
+                decoration: InputDecoration(
+                  labelText: 'Wallet name',
+                  errorText: nameError,
+                ),
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<CurrencyOption>(
@@ -109,6 +116,16 @@ class ManageAccountsScreen extends ConsumerWidget {
               onPressed: () async {
                 final name = nameCtrl.text.trim();
                 if (name.isEmpty) return;
+
+                final currentAccounts = ref.read(accountsProvider).value ?? [];
+                final isDuplicate = currentAccounts.any(
+                  (a) => a.name.toLowerCase() == name.toLowerCase() && a.id != account?.id,
+                );
+                if (isDuplicate) {
+                  setState(() => nameError = 'A wallet with this name already exists');
+                  return;
+                }
+
                 final budget = budgetCtrl.text.trim().isEmpty
                     ? null
                     : double.tryParse(budgetCtrl.text.trim().replaceAll(',', ''));
