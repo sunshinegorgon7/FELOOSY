@@ -19,7 +19,11 @@ class TransactionsNotifier extends AsyncNotifier<List<Transaction>> {
     if (selectedAccountId == null) {
       return repo.getForPeriod(period.start, period.end);
     }
-    return repo.getForPeriod(period.start, period.end, accountId: selectedAccountId);
+    return repo.getForPeriod(
+      period.start,
+      period.end,
+      accountId: selectedAccountId,
+    );
   }
 
   Future<void> add(Transaction tx) async {
@@ -34,6 +38,7 @@ class TransactionsNotifier extends AsyncNotifier<List<Transaction>> {
       debugPrint('Firestore sync (add) error: $e');
     }
     ref.invalidateSelf();
+    ref.invalidate(transactionPeriodOffsetsProvider);
   }
 
   Future<void> remove(String uuid) async {
@@ -46,6 +51,7 @@ class TransactionsNotifier extends AsyncNotifier<List<Transaction>> {
       debugPrint('Firestore sync (delete) error: $e');
     }
     ref.invalidateSelf();
+    ref.invalidate(transactionPeriodOffsetsProvider);
   }
 
   Future<void> edit(Transaction tx) async {
@@ -59,6 +65,7 @@ class TransactionsNotifier extends AsyncNotifier<List<Transaction>> {
       debugPrint('Firestore sync (edit) error: $e');
     }
     ref.invalidateSelf();
+    ref.invalidate(transactionPeriodOffsetsProvider);
   }
 
   /// Creates a budget row for the month the transaction falls in, if one does
@@ -69,14 +76,15 @@ class TransactionsNotifier extends AsyncNotifier<List<Transaction>> {
     final account = accounts.where((a) => a.id == tx.accountId).firstOrNull;
     if (account?.id == null) return;
 
-    final globalDay = ref
-            .read(settingsProvider)
-            .whenOrNull(data: (s) => s.monthStartDay) ??
+    final globalDay =
+        ref.read(settingsProvider).whenOrNull(data: (s) => s.monthStartDay) ??
         1;
     final monthStartDay = account!.monthStartDay ?? globalDay;
 
-    final period =
-        MonthCalculator.periodContaining(tx.transactionDate, monthStartDay);
+    final period = MonthCalculator.periodContaining(
+      tx.transactionDate,
+      monthStartDay,
+    );
 
     final budgetRepo = ref.read(budgetRepositoryProvider);
     final existing = await budgetRepo.getForPeriod(
@@ -87,27 +95,55 @@ class TransactionsNotifier extends AsyncNotifier<List<Transaction>> {
     if (existing != null) return;
 
     final now = DateTime.now();
-    await budgetRepo.upsert(Budget(
-      accountId: account.id!,
-      year: period.budgetYear,
-      month: period.budgetMonth,
-      amount: account.defaultMonthlyBudget ?? 0,
-      currencyCode: account.currencyCode,
-      createdAt: now,
-      updatedAt: now,
-    ));
+    await budgetRepo.upsert(
+      Budget(
+        accountId: account.id!,
+        year: period.budgetYear,
+        month: period.budgetMonth,
+        amount: account.defaultMonthlyBudget ?? 0,
+        currencyCode: account.currencyCode,
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
     ref.invalidate(currentBudgetProvider);
   }
 }
 
 final transactionsProvider =
     AsyncNotifierProvider<TransactionsNotifier, List<Transaction>>(
-        TransactionsNotifier.new);
+      TransactionsNotifier.new,
+    );
+
+final transactionPeriodOffsetsProvider = FutureProvider<Set<int>>((ref) async {
+  final selectedAccountId = ref.watch(selectedHomeAccountIdProvider);
+  final currentPeriod = ref.watch(currentBudgetPeriodProvider);
+  final monthStartDay = ref.watch(effectiveMonthStartDayProvider);
+  final repo = ref.watch(transactionRepositoryProvider);
+  final txs = await repo.getAll(accountId: selectedAccountId);
+  final offsets = <int>{};
+
+  for (final tx in txs) {
+    final period = MonthCalculator.periodContaining(
+      tx.transactionDate,
+      monthStartDay,
+    );
+    final offset =
+        (period.budgetYear - currentPeriod.budgetYear) * 12 +
+        period.budgetMonth -
+        currentPeriod.budgetMonth;
+    if (offset <= 0) {
+      offsets.add(offset);
+    }
+  }
+
+  return offsets;
+});
 
 final mostUsedCategoryUuidsProvider = FutureProvider<List<String>>((ref) async {
   ref.watch(transactionsProvider); // re-run when transactions change
   final activeAccount = ref.watch(activeAccountProvider);
-  return ref.read(transactionRepositoryProvider).getMostUsedCategoryUuids(
-        accountId: activeAccount?.id,
-      );
+  return ref
+      .read(transactionRepositoryProvider)
+      .getMostUsedCategoryUuids(accountId: activeAccount?.id);
 });

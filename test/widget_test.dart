@@ -8,8 +8,9 @@ import 'package:feloosy/presentation/transactions/widgets/transaction_tile.dart'
 import 'package:feloosy/providers/settings_provider.dart';
 
 void main() {
-  testWidgets('TransactionTile renders formatted amount and category',
-      (tester) async {
+  testWidgets('TransactionTile renders formatted amount and category', (
+    tester,
+  ) async {
     final settings = AppSettings(
       currencyCode: 'USD',
       currencySymbol: r'$',
@@ -19,6 +20,7 @@ void main() {
 
     final tx = Transaction(
       uuid: 'tx-1',
+      accountId: 1,
       amount: 12.5,
       type: TransactionType.expense,
       description: 'Coffee run',
@@ -47,14 +49,12 @@ void main() {
         ],
         child: MaterialApp(
           home: Scaffold(
-            body: TransactionTile(
-              transaction: tx,
-              category: category,
-            ),
+            body: TransactionTile(transaction: tx, category: category),
           ),
         ),
       ),
     );
+    await tester.pump();
 
     expect(find.text('Coffee run'), findsOneWidget);
     expect(find.text('Coffee'), findsOneWidget);

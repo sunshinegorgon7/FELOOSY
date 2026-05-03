@@ -457,6 +457,7 @@ class _SettingsBody extends ConsumerWidget {
   Future<void> _resetApp(BuildContext context, WidgetRef ref) async {
     await DatabaseHelper.instance.resetAll();
     ref.invalidate(transactionsProvider);
+    ref.invalidate(transactionPeriodOffsetsProvider);
     ref.invalidate(categoriesProvider);
     ref.invalidate(currentBudgetProvider);
     ref.invalidate(settingsProvider);
@@ -680,6 +681,7 @@ class _LocalBackupTileState extends ConsumerState<_LocalBackupTile> {
     try {
       final done = await _svc.commit(path);
       ref.invalidate(transactionsProvider);
+      ref.invalidate(transactionPeriodOffsetsProvider);
       ref.invalidate(currentBudgetProvider);
       ref.invalidate(settingsProvider);
       ref.invalidate(categoriesProvider);

@@ -25,7 +25,8 @@ final currentBudgetPeriodProvider = Provider<BudgetPeriod>((ref) {
 /// Reset to 0 whenever the selected wallet changes.
 final selectedPeriodOffsetProvider =
     NotifierProvider<_SelectedPeriodOffsetNotifier, int>(
-        _SelectedPeriodOffsetNotifier.new);
+      _SelectedPeriodOffsetNotifier.new,
+    );
 
 class _SelectedPeriodOffsetNotifier extends Notifier<int> {
   @override
@@ -39,6 +40,8 @@ class _SelectedPeriodOffsetNotifier extends Notifier<int> {
   void goForward() {
     if (state < 0) state++;
   }
+
+  void goTo(int offset) => state = offset <= 0 ? offset : 0;
 
   void reset() => state = 0;
 }

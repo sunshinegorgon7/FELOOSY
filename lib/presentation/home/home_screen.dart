@@ -57,6 +57,38 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     });
   }
 
+  int? _olderTransactionPeriodOffset(
+    int currentOffset,
+    Set<int> availableOffsets,
+  ) {
+    int? olderOffset;
+    for (final offset in availableOffsets) {
+      if (offset < currentOffset &&
+          (olderOffset == null || offset > olderOffset)) {
+        olderOffset = offset;
+      }
+    }
+    return olderOffset;
+  }
+
+  int? _newerTransactionPeriodOffset(
+    int currentOffset,
+    Set<int> availableOffsets,
+  ) {
+    int? newerOffset;
+    for (final offset in availableOffsets) {
+      if (offset > currentOffset &&
+          (newerOffset == null || offset < newerOffset)) {
+        newerOffset = offset;
+      }
+    }
+    return newerOffset;
+  }
+
+  void _goToPeriodOffset(int offset) {
+    ref.read(selectedPeriodOffsetProvider.notifier).goTo(offset);
+  }
+
   @override
   Widget build(BuildContext context) {
     final summaryAsync = ref.watch(budgetSummaryProvider);
@@ -66,8 +98,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final selectedAccountId = ref.watch(selectedHomeAccountIdProvider);
     final isKeyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
     final shouldHideBottomActions = _isSearching || isKeyboardOpen;
-    if (!_accountInitialized && accounts.isNotEmpty && selectedAccountId == null) {
-      final initial = accounts.where((a) => a.isFavorite).firstOrNull ?? accounts.first;
+    if (!_accountInitialized &&
+        accounts.isNotEmpty &&
+        selectedAccountId == null) {
+      final initial =
+          accounts.where((a) => a.isFavorite).firstOrNull ?? accounts.first;
       if (initial.id != null) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) {
@@ -77,7 +112,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       }
       _accountInitialized = true;
     }
-    final hasSelectedAccount = selectedAccountId != null &&
+    final hasSelectedAccount =
+        selectedAccountId != null &&
         accounts.any((a) => a.id == selectedAccountId);
     if (selectedAccountId != null && !hasSelectedAccount) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -135,7 +171,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   Expanded(
                     child: Center(
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
                         decoration: BoxDecoration(
                           color: cs.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(20),
@@ -143,10 +182,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.wallet_outlined, size: 13, color: cs.onSurfaceVariant),
+                            Icon(
+                              Icons.wallet_outlined,
+                              size: 13,
+                              color: cs.onSurfaceVariant,
+                            ),
                             const SizedBox(width: 5),
                             Text(
-                              isAllAccounts ? 'All wallets' : selectedAccountName ?? 'Unknown wallet',
+                              isAllAccounts
+                                  ? 'All wallets'
+                                  : selectedAccountName ?? 'Unknown wallet',
                               style: tt.labelSmall?.copyWith(
                                 color: cs.onSurfaceVariant,
                                 letterSpacing: 0.3,
@@ -198,7 +243,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 IconButton(
                   tooltip: 'Budget',
                   icon: const Icon(Icons.menu_book_outlined),
-                  onPressed: isAllAccounts ? null : () => context.push('/budget'),
+                  onPressed: isAllAccounts
+                      ? null
+                      : () => context.push('/budget'),
                 ),
                 IconButton(
                   icon: const Icon(Icons.settings_outlined),
@@ -213,10 +260,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               onRefresh: () async {
                 ref.invalidate(budgetSummaryProvider);
                 ref.invalidate(transactionsProvider);
+                ref.invalidate(transactionPeriodOffsetsProvider);
               },
               child: summaryAsync.when(
-                loading: () =>
-                    const Center(child: CircularProgressIndicator()),
+                loading: () => const Center(child: CircularProgressIndicator()),
                 error: (e, _) => Center(child: Text('Error: $e')),
                 data: (summary) => txAsync.when(
                   loading: () =>
@@ -268,14 +315,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           // Available balance centered between the two FABs
           if (!shouldHideBottomActions)
             if (summaryAsync case AsyncData(:final value))
-            if (value.budgetAmount > 0 && !isAllAccounts)
-              Positioned(
-                bottom: 16 + MediaQuery.paddingOf(context).bottom,
-                left: 72,
-                right: 72,
-                height: 56,
-                child: _BalancePill(summary: value),
-              ),
+              if (value.budgetAmount > 0 && !isAllAccounts)
+                Positioned(
+                  bottom: 16 + MediaQuery.paddingOf(context).bottom,
+                  left: 72,
+                  right: 72,
+                  height: 56,
+                  child: _BalancePill(summary: value),
+                ),
         ],
       ),
     );
@@ -298,17 +345,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // Category filter then description search
     final categoryFiltered = _selectedCategoryUuid == null
         ? txs
-        : txs
-            .where((tx) => tx.categoryUuid == _selectedCategoryUuid)
-            .toList();
+        : txs.where((tx) => tx.categoryUuid == _selectedCategoryUuid).toList();
 
     final filteredTxs = _searchQuery.isEmpty
         ? categoryFiltered
         : categoryFiltered
-            .where((tx) => tx.description
-                .toLowerCase()
-                .contains(_searchQuery.toLowerCase()))
-            .toList();
+              .where(
+                (tx) => tx.description.toLowerCase().contains(
+                  _searchQuery.toLowerCase(),
+                ),
+              )
+              .toList();
 
     final selectedCat = _selectedCategoryUuid != null
         ? cats.where((c) => c.uuid == _selectedCategoryUuid).firstOrNull
@@ -319,190 +366,202 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     final period = ref.watch(selectedBudgetPeriodProvider);
     final periodOffset = ref.watch(selectedPeriodOffsetProvider);
-    final periodLabel = DateFormat('MMMM yyyy')
-        .format(DateTime(period.budgetYear, period.budgetMonth));
+    final transactionPeriodOffsets =
+        ref.watch(transactionPeriodOffsetsProvider).asData?.value ??
+        const <int>{};
+    final olderPeriodOffset = _olderTransactionPeriodOffset(
+      periodOffset,
+      transactionPeriodOffsets,
+    );
+    final newerPeriodOffset = _newerTransactionPeriodOffset(
+      periodOffset,
+      transactionPeriodOffsets,
+    );
+    final periodLabel = DateFormat(
+      'MMMM yyyy',
+    ).format(DateTime(period.budgetYear, period.budgetMonth));
     final isCurrentPeriod = periodOffset == 0;
 
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
       onHorizontalDragEnd: (details) {
         final velocity = details.primaryVelocity ?? 0;
-        if (velocity > 300) {
-          // swipe right → go back in time
-          ref.read(selectedPeriodOffsetProvider.notifier).goBack();
-        } else if (velocity < -300 && !isCurrentPeriod) {
-          // swipe left → go forward (only if we're in a past month)
-          ref.read(selectedPeriodOffsetProvider.notifier).goForward();
+        if (velocity > 300 && olderPeriodOffset != null) {
+          // Swipe right to the nearest older period with transactions.
+          _goToPeriodOffset(olderPeriodOffset);
+        } else if (velocity < -300 && newerPeriodOffset != null) {
+          // Swipe left to the nearest newer period with transactions.
+          _goToPeriodOffset(newerPeriodOffset);
         }
       },
       child: CustomScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      slivers: [
-        // Period navigation header
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.chevron_left),
-                      tooltip: 'Previous month',
-                      onPressed: () =>
-                          ref.read(selectedPeriodOffsetProvider.notifier).goBack(),
-                    ),
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: isCurrentPeriod
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          // Period navigation header
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.chevron_left),
+                        tooltip: 'Previous month',
+                        onPressed: olderPeriodOffset == null
                             ? null
-                            : () => ref
-                                .read(selectedPeriodOffsetProvider.notifier)
-                                .reset(),
-                        child: Column(
-                          children: [
-                            Text(
-                              periodLabel,
-                              textAlign: TextAlign.center,
-                              style: tt.titleSmall?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            if (!isCurrentPeriod)
+                            : () => _goToPeriodOffset(olderPeriodOffset),
+                      ),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: isCurrentPeriod
+                              ? null
+                              : () => ref
+                                    .read(selectedPeriodOffsetProvider.notifier)
+                                    .reset(),
+                          child: Column(
+                            children: [
                               Text(
-                                'Tap to return to current month',
+                                periodLabel,
                                 textAlign: TextAlign.center,
-                                style: tt.labelSmall?.copyWith(
-                                  color: cs.primary,
+                                style: tt.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
-                          ],
+                              if (!isCurrentPeriod)
+                                Text(
+                                  'Tap to return to current month',
+                                  textAlign: TextAlign.center,
+                                  style: tt.labelSmall?.copyWith(
+                                    color: cs.primary,
+                                  ),
+                                ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.chevron_right),
-                      tooltip: 'Next month',
-                      onPressed: isCurrentPeriod
-                          ? null
-                          : () => ref
-                              .read(selectedPeriodOffsetProvider.notifier)
-                              .goForward(),
-                    ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    const Spacer(),
-                    if (summary.budgetAmount == 0 && !isAllAccounts)
-                      TextButton.icon(
-                        onPressed: () => context.push('/budget/set'),
-                        icon: const Icon(Icons.add, size: 14),
-                        label: const Text('Set Budget'),
+                      IconButton(
+                        icon: const Icon(Icons.chevron_right),
+                        tooltip: 'Next month',
+                        onPressed: newerPeriodOffset == null
+                            ? null
+                            : () => _goToPeriodOffset(newerPeriodOffset),
                       ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-
-        // Pie chart
-        if (!isAllAccounts)
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
-              child: SpendingPieChart(
-                transactions: txs,
-                categories: activeCats,
-                summary: summary,
-                selectedCategoryUuid: _selectedCategoryUuid,
-                onCategoryToggle: (uuid) =>
-                    setState(() => _selectedCategoryUuid = uuid),
-              ),
-            ),
-          ),
-
-        // Category filter label (only when a category is selected)
-        if (selectedCat != null)
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 4),
-              child: Row(
-                children: [
-                  Text(selectedCat.name, style: tt.titleSmall),
-                  const SizedBox(width: 4),
-                  GestureDetector(
-                    onTap: () =>
-                        setState(() => _selectedCategoryUuid = null),
-                    child: Icon(Icons.close_rounded,
-                        size: 16, color: cs.onSurfaceVariant),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      const Spacer(),
+                      if (summary.budgetAmount == 0 && !isAllAccounts)
+                        TextButton.icon(
+                          onPressed: () => context.push('/budget/set'),
+                          icon: const Icon(Icons.add, size: 14),
+                          label: const Text('Set Budget'),
+                        ),
+                    ],
                   ),
                 ],
               ),
             ),
-          )
-        else
-          const SliverToBoxAdapter(child: SizedBox(height: 16)),
+          ),
 
-        if (filteredTxs.isEmpty)
-          SliverFillRemaining(
-            hasScrollBody: false,
-            child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Center(
-                child: Text(
-                  selectedCat != null
-                      ? 'No ${selectedCat.name} transactions this period.'
-                      : 'No transactions yet.\nTap + to add one.',
-                  textAlign: TextAlign.center,
-                  style: tt.bodyMedium
-                      ?.copyWith(color: cs.onSurfaceVariant),
+          // Pie chart
+          if (!isAllAccounts)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
+                child: SpendingPieChart(
+                  transactions: txs,
+                  categories: activeCats,
+                  summary: summary,
+                  selectedCategoryUuid: _selectedCategoryUuid,
+                  onCategoryToggle: (uuid) =>
+                      setState(() => _selectedCategoryUuid = uuid),
                 ),
               ),
             ),
-          )
-        else
-          SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
+
+          // Category filter label (only when a category is selected)
+          if (selectedCat != null)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 20, 16, 4),
+                child: Row(
+                  children: [
+                    Text(selectedCat.name, style: tt.titleSmall),
+                    const SizedBox(width: 4),
+                    GestureDetector(
+                      onTap: () => setState(() => _selectedCategoryUuid = null),
+                      child: Icon(
+                        Icons.close_rounded,
+                        size: 16,
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
+          if (filteredTxs.isEmpty)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Center(
+                  child: Text(
+                    selectedCat != null
+                        ? 'No ${selectedCat.name} transactions this period.'
+                        : 'No transactions yet.\nTap + to add one.',
+                    textAlign: TextAlign.center,
+                    style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+                  ),
+                ),
+              ),
+            )
+          else
+            SliverList(
+              delegate: SliverChildBuilderDelegate((context, index) {
                 final group = groups[index];
                 return InkWell(
-                  onTap: () =>
-                      _showDayOverlay(
-                        context,
-                        group,
-                        cats,
-                        summary,
-                        scopedTxs: _searchQuery.isNotEmpty ? filteredTxs : null,
-                      ),
+                  onTap: () => _showDayOverlay(
+                    context,
+                    group,
+                    cats,
+                    summary,
+                    scopedTxs: _searchQuery.isNotEmpty ? filteredTxs : null,
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
                     child: Row(
                       children: [
-                        Icon(Icons.chevron_right,
-                            size: 16, color: cs.onSurfaceVariant),
+                        Icon(
+                          Icons.chevron_right,
+                          size: 16,
+                          color: cs.onSurfaceVariant,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           _searchQuery.isNotEmpty
                               ? '${group.label} (${group.txs.length})'
                               : group.label,
-                          style: tt.labelMedium
-                              ?.copyWith(color: cs.onSurfaceVariant),
+                          style: tt.labelMedium?.copyWith(
+                            color: cs.onSurfaceVariant,
+                          ),
                         ),
                       ],
                     ),
                   ),
                 );
-              },
-              childCount: groups.length,
+              }, childCount: groups.length),
             ),
-          ),
 
-        const SliverToBoxAdapter(child: SizedBox(height: 96)),
-      ],
-    ),
+          const SliverToBoxAdapter(child: SizedBox(height: 96)),
+        ],
+      ),
     );
   }
 
@@ -513,10 +572,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     BudgetSummary summary, {
     List<Transaction>? scopedTxs,
   }) {
-    final overlayGroups =
-        scopedTxs == null ? _visibleGroups : _groupByDate(scopedTxs);
-    final initialIndex =
-        overlayGroups.indexWhere((visible) => visible.day == group.day);
+    final overlayGroups = scopedTxs == null
+        ? _visibleGroups
+        : _groupByDate(scopedTxs);
+    final initialIndex = overlayGroups.indexWhere(
+      (visible) => visible.day == group.day,
+    );
     if (initialIndex < 0) return;
 
     showModalBottomSheet<void>(
@@ -557,8 +618,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     Text(
                       'Settings',
                       style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const Spacer(),
                     IconButton(
@@ -569,8 +630,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               ),
               Divider(
-                  height: 1,
-                  color: Theme.of(ctx).colorScheme.outlineVariant),
+                height: 1,
+                color: Theme.of(ctx).colorScheme.outlineVariant,
+              ),
               const Expanded(child: SettingsScreen(isModal: true)),
             ],
           ),
@@ -597,14 +659,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return groupOrder.map((day) {
       final dayTxs = groupTxs[day]!;
       final dayNet = dayTxs.fold(
-          0.0,
-          (sum, tx) => tx.type == TransactionType.income
-              ? sum + tx.amount
-              : sum - tx.amount);
+        0.0,
+        (sum, tx) => tx.type == TransactionType.income
+            ? sum + tx.amount
+            : sum - tx.amount,
+      );
       return _DayGroup(day, _dayLabel(day), dayNet, dayTxs);
     }).toList();
   }
-
 }
 
 class _DayGroup {
@@ -654,8 +716,7 @@ class _DayOverlayState extends ConsumerState<_DayOverlay> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Delete transaction?'),
-        content:
-            Text('"${tx.description}" will be permanently removed.'),
+        content: Text('"${tx.description}" will be permanently removed.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -676,14 +737,16 @@ class _DayOverlayState extends ConsumerState<_DayOverlay> {
 
   @override
   Widget build(BuildContext context) {
-    final allTxs = widget.scopedTxs ??
+    final allTxs =
+        widget.scopedTxs ??
         ref.watch(transactionsProvider).asData?.value ??
         const <Transaction>[];
     final visibleDays = widget.dayKeys.where((day) {
       return allTxs.any((tx) {
         final txDay = DateUtils.dateOnly(tx.transactionDate);
         final sameDay = txDay == day;
-        final matchesCategory = widget.selectedCategoryUuid == null ||
+        final matchesCategory =
+            widget.selectedCategoryUuid == null ||
             tx.categoryUuid == widget.selectedCategoryUuid;
         return sameDay && matchesCategory;
       });
@@ -702,16 +765,15 @@ class _DayOverlayState extends ConsumerState<_DayOverlay> {
     final currentDay = visibleDays.isEmpty ? null : visibleDays[_currentIndex];
     final dayTxs = currentDay == null
         ? <Transaction>[]
-        : (allTxs
-            .where((tx) {
+        : (allTxs.where((tx) {
               final txDay = DateUtils.dateOnly(tx.transactionDate);
               final sameDay = txDay == currentDay;
-              final matchesCategory = widget.selectedCategoryUuid == null ||
+              final matchesCategory =
+                  widget.selectedCategoryUuid == null ||
                   tx.categoryUuid == widget.selectedCategoryUuid;
               return sameDay && matchesCategory;
-            })
-            .toList()
-          ..sort((a, b) => b.transactionDate.compareTo(a.transactionDate)));
+            }).toList()
+            ..sort((a, b) => b.transactionDate.compareTo(a.transactionDate)));
 
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
@@ -724,8 +786,7 @@ class _DayOverlayState extends ConsumerState<_DayOverlay> {
       builder: (ctx, scrollController) => Container(
         decoration: BoxDecoration(
           color: cs.surface,
-          borderRadius:
-              const BorderRadius.vertical(top: Radius.circular(20)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: Column(
           children: [
@@ -750,8 +811,9 @@ class _DayOverlayState extends ConsumerState<_DayOverlay> {
                 children: [
                   Text(
                     currentDay == null ? '' : _dayLabel(currentDay),
-                    style: tt.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w600),
+                    style: tt.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   const Spacer(),
                   if (visibleDays.length > 1) ...[
@@ -812,7 +874,8 @@ class _DayOverlayState extends ConsumerState<_DayOverlay> {
                             icon: Icons.delete_outline,
                             label: 'Delete',
                             borderRadius: const BorderRadius.horizontal(
-                                right: Radius.circular(12)),
+                              right: Radius.circular(12),
+                            ),
                           ),
                         ],
                       ),

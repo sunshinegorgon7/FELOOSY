@@ -24,13 +24,16 @@ class SyncOrchestrator {
   SyncOrchestrator(this._ref);
 
   Future<void> onSignIn(String uid) async {
-    final sync =
-        FirebaseSyncService(uid: uid, localDb: DatabaseHelper.instance);
+    final sync = FirebaseSyncService(
+      uid: uid,
+      localDb: DatabaseHelper.instance,
+    );
     final hasRemote = await sync.hasRemoteData();
     if (hasRemote) {
       // Cloud has data (returning user / new device) → pull to local
       await sync.pullAll();
       _ref.invalidate(transactionsProvider);
+      _ref.invalidate(transactionPeriodOffsetsProvider);
       _ref.invalidate(currentBudgetProvider);
       _ref.invalidate(settingsProvider);
       _ref.invalidate(categoriesProvider);
