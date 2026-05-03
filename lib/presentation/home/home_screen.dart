@@ -40,6 +40,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   String _searchQuery = '';
   final _searchCtrl = TextEditingController();
   List<_DayGroup> _visibleGroups = const [];
+  Set<int> _cachedPeriodOffsets = const {};
 
   @override
   void dispose() {
@@ -366,17 +367,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     final period = ref.watch(selectedBudgetPeriodProvider);
     final periodOffset = ref.watch(selectedPeriodOffsetProvider);
-    final transactionPeriodOffsets =
-        ref.watch(transactionPeriodOffsetsProvider).asData?.value ??
-        const <int>{};
+    // Keep the last known offsets across provider reloads so swipe is never
+    // briefly disabled during account switches or transaction mutations.
+    final freshOffsets =
+        ref.watch(transactionPeriodOffsetsProvider).asData?.value;
+    if (freshOffsets != null) _cachedPeriodOffsets = freshOffsets;
+    final transactionPeriodOffsets = _cachedPeriodOffsets;
     final olderPeriodOffset = _olderTransactionPeriodOffset(
       periodOffset,
       transactionPeriodOffsets,
     );
-    final newerPeriodOffset = _newerTransactionPeriodOffset(
-      periodOffset,
-      transactionPeriodOffsets,
-    );
+    // Always allow navigating toward the current period even if it has no
+    // transactions — fall back to offset 0 so the right chevron is never
+    // disabled while the user is stuck in a past period.
+    final newerPeriodOffset = periodOffset == 0
+        ? null
+        : (_newerTransactionPeriodOffset(periodOffset, transactionPeriodOffsets) ?? 0);
     final periodLabel = DateFormat(
       'MMMM yyyy',
     ).format(DateTime(period.budgetYear, period.budgetMonth));
