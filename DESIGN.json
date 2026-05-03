@@ -1,0 +1,245 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-05-03T00:00:00Z",
+  "title": "Design System: FELOOSY",
+  "extensions": {
+    "colorMeta": {
+      "fern": {
+        "role": "primary",
+        "displayName": "Fern",
+        "canonical": "#639922",
+        "tonalRamp": ["#162008", "#253A0E", "#375515", "#4A711B", "#639922", "#7BB52E", "#9FD057", "#D4EAB0"]
+      },
+      "washed-sage": {
+        "role": "secondary",
+        "displayName": "Washed Sage",
+        "canonical": "#7A9A7A",
+        "tonalRamp": ["#172017", "#283D28", "#3A5A3A", "#4E734E", "#7A9A7A", "#9AB89A", "#BDD4BD", "#DFF0DF"]
+      },
+      "forest-deep": {
+        "role": "tertiary",
+        "displayName": "Forest Deep",
+        "canonical": "#5A8A40",
+        "tonalRamp": ["#121D0C", "#1F3314", "#2E4A1E", "#3F6329", "#5A8A40", "#74A855", "#96C877", "#C8E8B0"]
+      },
+      "mint-mist": {
+        "role": "neutral",
+        "displayName": "Mint Mist",
+        "canonical": "#F4F7F1",
+        "tonalRamp": ["#1A1E17", "#2D3329", "#434940", "#5A6156", "#7A8273", "#B2BCB0", "#D4DDD0", "#F4F7F1"]
+      },
+      "pale-grove": {
+        "role": "neutral",
+        "displayName": "Pale Grove",
+        "canonical": "#E4EBDE",
+        "tonalRamp": ["#181D15", "#292F24", "#3B4435", "#515E48", "#788E68", "#B0C4A0", "#C8D9BA", "#E4EBDE"]
+      },
+      "pale-grove-high": {
+        "role": "neutral",
+        "displayName": "Pale Grove High",
+        "canonical": "#C4D4C4",
+        "tonalRamp": ["#151B15", "#242D24", "#354035", "#475447", "#6A7E6A", "#9BB09B", "#B4C7B4", "#C4D4C4"]
+      },
+      "ink-deep": {
+        "role": "neutral",
+        "displayName": "Ink Deep",
+        "canonical": "#2C2C2C",
+        "tonalRamp": ["#0A0A0A", "#141414", "#1E1E1E", "#2C2C2C", "#444444", "#6A6A6A", "#9E9E9E", "#D6D6D6"]
+      },
+      "ice-glow": {
+        "role": "primary-dark",
+        "displayName": "Ice Glow",
+        "canonical": "#4D7FA8",
+        "tonalRamp": ["#0A1218", "#111922", "#1E2E3D", "#243547", "#2A3D52", "#4D7FA8", "#7AAECF", "#C4D7EB"]
+      },
+      "deep-nimbus": {
+        "role": "neutral-dark",
+        "displayName": "Deep Nimbus",
+        "canonical": "#111922",
+        "tonalRamp": ["#060C11", "#0C1318", "#111922", "#1A2535", "#243040", "#3A4F63", "#6A8299", "#B0C4D4"]
+      },
+      "nimbus-surface": {
+        "role": "neutral-dark",
+        "displayName": "Nimbus Surface",
+        "canonical": "#1E2E3D",
+        "tonalRamp": ["#08101A", "#0F1C29", "#1E2E3D", "#273D50", "#304D63", "#4A6880", "#7A9AB5", "#C0D4E5"]
+      },
+      "ledger-red": {
+        "role": "semantic-expense",
+        "displayName": "Ledger Red",
+        "canonical": "#D64545",
+        "tonalRamp": ["#280E0E", "#4A1A1A", "#6E2525", "#963232", "#D64545", "#E47575", "#EFAAAA", "#F9DEDC"]
+      },
+      "ledger-green": {
+        "role": "semantic-income",
+        "displayName": "Ledger Green",
+        "canonical": "#4A9955",
+        "tonalRamp": ["#0E1F11", "#18381F", "#25532F", "#346E40", "#4A9955", "#6BB87A", "#97D4A2", "#C8EED0"]
+      },
+      "amber-mark": {
+        "role": "semantic-warning",
+        "displayName": "Amber Mark",
+        "canonical": "#CC8830",
+        "tonalRamp": ["#251A07", "#43310D", "#634916", "#886120", "#CC8830", "#E0AA5C", "#EDCC98", "#F9EDD5"]
+      }
+    },
+    "typographyMeta": {
+      "wordmark": {
+        "displayName": "Wordmark",
+        "purpose": "FELOOSY app name in the AppBar only. Never used for headings or decorative text. Identity mark."
+      },
+      "headline": {
+        "displayName": "Balance Display",
+        "purpose": "Remaining budget or wallet balance — the hero number. Always the largest, heaviest element on the screen."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Card headers, section labels, dialog titles."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Transaction descriptions, category names, all supporting text. Never below 14sp."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Stat chip labels, date headers, percentage captions, all secondary metadata."
+      }
+    },
+    "shadows": [
+      {
+        "name": "none",
+        "value": "none",
+        "purpose": "All cards and containers. Depth comes from tonal layering only — no shadows on surfaces."
+      },
+      {
+        "name": "fab-lift",
+        "value": "0 3px 8px rgba(0,0,0,0.18)",
+        "purpose": "FABs only — a faint directional shadow to lift them off scrolling content. Structural, not decorative."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-standard",
+        "value": "cubic-bezier(0.4, 0.0, 0.2, 1.0)",
+        "purpose": "Default state transitions: color changes, background tints, opacity."
+      },
+      {
+        "name": "ease-out-quick",
+        "value": "cubic-bezier(0.0, 0.0, 0.2, 1.0)",
+        "purpose": "Elements entering or expanding: chip selection, container reveals."
+      },
+      {
+        "name": "duration-fast",
+        "value": "150ms",
+        "purpose": "Instant feedback: button press, tap ripple, toggle state."
+      },
+      {
+        "name": "duration-standard",
+        "value": "180ms",
+        "purpose": "Container transitions: chip selection, type toggle color change."
+      },
+      {
+        "name": "duration-deliberate",
+        "value": "250ms",
+        "purpose": "Screen-level transitions, sheet enter/exit."
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "FilledButton (Primary)",
+      "kind": "button",
+      "refersTo": "button-filled",
+      "description": "Primary action button. Fern green in light mode, Ice Glow in dark mode. Used for Set Budget, Save, Confirm.",
+      "html": "<button class=\"ds-btn-filled\">Set Budget</button>",
+      "css": ".ds-btn-filled { background: #639922; color: #ffffff; font-family: Roboto, system-ui, sans-serif; font-size: 14px; font-weight: 500; letter-spacing: 0.1px; padding: 12px 24px; border: none; border-radius: 16px; cursor: pointer; min-height: 48px; transition: background 150ms cubic-bezier(0,0,0.2,1), transform 100ms cubic-bezier(0,0,0.2,1); } .ds-btn-filled:hover { background: #5A8A40; transform: translateY(-1px); } .ds-btn-filled:active { transform: translateY(0); background: #4A7130; } .ds-btn-filled:focus-visible { outline: 2px solid #639922; outline-offset: 3px; }"
+    },
+    {
+      "name": "TextButton",
+      "kind": "button",
+      "refersTo": "button-text",
+      "description": "Secondary action. Transparent background, Fern text. Used for Cancel, See All, navigation links.",
+      "html": "<button class=\"ds-btn-text\">Cancel</button>",
+      "css": ".ds-btn-text { background: transparent; color: #639922; font-family: Roboto, system-ui, sans-serif; font-size: 14px; font-weight: 500; padding: 10px 16px; border: none; border-radius: 16px; cursor: pointer; min-height: 48px; transition: background 150ms cubic-bezier(0,0,0.2,1); } .ds-btn-text:hover { background: rgba(99,153,34,0.08); } .ds-btn-text:active { background: rgba(99,153,34,0.16); } .ds-btn-text:focus-visible { outline: 2px solid #639922; outline-offset: 2px; }"
+    },
+    {
+      "name": "FAB — Expense",
+      "kind": "button",
+      "refersTo": "fab-expense",
+      "description": "Primary expense entry point. Bottom-right. Ledger Red with a minus icon. The most-tapped element in the app.",
+      "html": "<button class=\"ds-fab-expense\" aria-label=\"Add expense\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\"><path d=\"M5 12h14\" stroke=\"white\" stroke-width=\"2.5\" stroke-linecap=\"round\"/></svg></button>",
+      "css": ".ds-fab-expense { background: #D64545; color: white; width: 56px; height: 56px; border: none; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 8px rgba(214,69,69,0.35); transition: background 150ms cubic-bezier(0,0,0.2,1), transform 100ms cubic-bezier(0,0,0.2,1); } .ds-fab-expense:hover { background: #C43535; transform: scale(1.06); box-shadow: 0 6px 16px rgba(214,69,69,0.45); } .ds-fab-expense:active { transform: scale(0.97); } .ds-fab-expense:focus-visible { outline: 2px solid #D64545; outline-offset: 3px; }"
+    },
+    {
+      "name": "FAB — Income",
+      "kind": "button",
+      "refersTo": "fab-income",
+      "description": "Primary income entry point. Bottom-left. Ledger Green with a plus icon.",
+      "html": "<button class=\"ds-fab-income\" aria-label=\"Add income\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\"><path d=\"M12 5v14M5 12h14\" stroke=\"white\" stroke-width=\"2.5\" stroke-linecap=\"round\"/></svg></button>",
+      "css": ".ds-fab-income { background: #4A9955; color: white; width: 56px; height: 56px; border: none; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 8px rgba(74,153,85,0.35); transition: background 150ms cubic-bezier(0,0,0.2,1), transform 100ms cubic-bezier(0,0,0.2,1); } .ds-fab-income:hover { background: #3D8047; transform: scale(1.06); box-shadow: 0 6px 16px rgba(74,153,85,0.45); } .ds-fab-income:active { transform: scale(0.97); } .ds-fab-income:focus-visible { outline: 2px solid #4A9955; outline-offset: 3px; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "All card-like containers. Flat, zero elevation, 16dp radius, 1dp border. Budget summary, stat containers, etc.",
+      "html": "<div class=\"ds-card\"><p class=\"ds-card-label\">May 2026</p><p class=\"ds-card-amount\">AED 1,240</p><p class=\"ds-card-sublabel\">remaining</p></div>",
+      "css": ".ds-card { background: #C4D4C4; border: 1px solid #B8CABC; border-radius: 16px; padding: 20px; font-family: Roboto, system-ui, sans-serif; } .ds-card-label { font-size: 12px; font-weight: 400; color: #4A5E40; margin: 0 0 8px 0; } .ds-card-amount { font-size: 32px; font-weight: 700; color: #4A9955; margin: 0 0 2px 0; line-height: 1.1; } .ds-card-sublabel { font-size: 12px; color: #4A5E40; margin: 0; }"
+    },
+    {
+      "name": "Transaction Tile",
+      "kind": "custom",
+      "description": "Signature list item. Category icon in tinted circle, description and category sub-label, right-aligned semantic amount. Expense rows have a faint red background tint; income rows a faint green tint.",
+      "html": "<div class=\"ds-tx-tile\"><div class=\"ds-tx-icon\" style=\"background:rgba(224,92,138,0.15)\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\"><circle cx=\"12\" cy=\"12\" r=\"9\" stroke=\"#E05C8A\" stroke-width=\"1.8\"/><path d=\"M8 12h8M12 8v8\" stroke=\"#E05C8A\" stroke-width=\"1.8\" stroke-linecap=\"round\"/></svg></div><div class=\"ds-tx-body\"><span class=\"ds-tx-desc\">Grocery run</span><span class=\"ds-tx-cat\">Food &amp; Dining</span></div><span class=\"ds-tx-amount ds-tx-expense\">-AED 85</span></div>",
+      "css": ".ds-tx-tile { display: flex; align-items: center; padding: 12px 16px 12px 28px; font-family: Roboto, system-ui, sans-serif; gap: 12px; background: rgba(214,69,69,0.04); } .ds-tx-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; } .ds-tx-body { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; } .ds-tx-desc { font-size: 14px; font-weight: 400; color: #2C2C2C; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .ds-tx-cat { font-size: 12px; color: #4A5E40; } .ds-tx-amount { font-size: 14px; font-weight: 600; flex-shrink: 0; } .ds-tx-expense { color: #D64545; } .ds-tx-income { color: #4A9955; }"
+    },
+    {
+      "name": "Type Toggle (Expense / Income)",
+      "kind": "chip",
+      "description": "Two-chip transaction type selector. Expense chip uses Ledger Red tones when selected; Income uses Ledger Green. Animated 180ms ease-out.",
+      "html": "<div class=\"ds-type-toggle\"><button class=\"ds-chip ds-chip-exp-sel\">Expense</button><button class=\"ds-chip ds-chip-inc\">Income</button></div>",
+      "css": ".ds-type-toggle { display: flex; gap: 8px; font-family: Roboto, system-ui, sans-serif; } .ds-chip { padding: 8px 16px; border-radius: 24px; font-size: 13px; font-weight: 500; border: 1.5px solid transparent; cursor: pointer; background: transparent; color: #4A5E40; min-height: 36px; transition: background 180ms cubic-bezier(0,0,0.2,1), border-color 180ms cubic-bezier(0,0,0.2,1), color 180ms cubic-bezier(0,0,0.2,1); } .ds-chip-exp-sel { background: #F6E5E5; border-color: #D64545; color: #D64545; } .ds-chip-inc-sel { background: #E5F2E7; border-color: #4A9955; color: #4A9955; } .ds-chip-inc:hover, .ds-chip:not(.ds-chip-exp-sel):not(.ds-chip-inc-sel):hover { background: #E4EBDE; } .ds-chip:focus-visible { outline: 2px solid #639922; outline-offset: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Still Ledger",
+    "overview": "FELOOSY is a personal budgeting app that earns its simplicity. The design philosophy is not minimalism as an aesthetic — it is restraint in service of a single user task: knowing where you stand, instantly. Every screen should feel like opening a well-kept paper ledger: each entry in its place, confident spacing, nothing decorative, nothing performing.\n\nThe palette is nature-anchored in light mode (Fern green over Mint Mist) and shifts to a cool deep-water darkness for night use. Both themes feel deliberate, not fashionable. The two FABs are the only saturated color on the home screen at rest — their rarity is the signal.\n\nThe system explicitly rejects analysis-heavy dashboards, corporate bank app coldness, and the gamified cartoon warmth of apps like Monefy. If it looks like it is trying to teach the user something, it is wrong.",
+    "keyCharacteristics": [
+      "Flat surfaces with tonal layering — no shadows, no elevation drama",
+      "Numbers are the visual hero — balance and amounts are always the largest element on screen",
+      "Deliberate and spacious — comfortable margins, generous touch targets, never cramped",
+      "Two named color families: Grove (light) and Nimbus (dark), with three shared semantic colors",
+      "Semantic coloring: Ledger Red and Ledger Green are locked to expense/income meaning across every screen"
+    ],
+    "rules": [
+      { "name": "The Semantic Parity Rule", "body": "Ledger Red and Ledger Green are the only colors with locked meaning. They must never appear in non-semantic contexts.", "section": "colors" },
+      { "name": "The Rarity Rule", "body": "Fern (light) and Ice Glow (dark) appear on no more than 15% of any given screen surface. Their scarcity is their authority.", "section": "colors" },
+      { "name": "The No-Gray Rule", "body": "Every neutral carries a tint toward the brand hue. Pure #808080 is forbidden. Placeholder text uses Grove Shadow; disabled states use onSurface at 38% opacity.", "section": "colors" },
+      { "name": "The Number-First Rule", "body": "On any screen with a balance or amount, that number uses the largest size and highest weight on screen. If a label is competing with a number, the label is winning incorrectly.", "section": "typography" },
+      { "name": "The Wordmark Boundary", "body": "Rajdhani is used for the FELOOSY logotype only. Not for headings, labels, or decorative text.", "section": "typography" },
+      { "name": "The Flat Register Rule", "body": "Shadows are prohibited on cards, containers, and inputs. A desire to add a shadow is a signal to step the container color darker instead. FABs are the only exception.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use Ledger Red and Ledger Green exclusively for semantic expense/income contexts.",
+      "Do make the balance or remaining amount the largest, heaviest type on any screen that shows a number.",
+      "Do use tonal surface steps for depth — no shadows on containers.",
+      "Do keep touch targets a minimum of 48dp tall.",
+      "Do use cs.error for destructive actions, not Ledger Red.",
+      "Do use generous whitespace to communicate grouping.",
+      "Do apply 16dp radius uniformly to all card-like containers.",
+      "Do hide both FABs when the keyboard is open or search is active."
+    ],
+    "donts": [
+      "Don't add charts, graphs, pie charts, or trend visualizations as primary UI elements.",
+      "Don't replicate the Monefy aesthetic: no bright cartoon colors, no icon-grid home screen, no pie chart as hero.",
+      "Don't use a corporate bank app style: no navy headers, no gold accents, no cold formal typography.",
+      "Don't add shadows to cards, containers, or inputs. The Flat Register Rule is not a preference.",
+      "Don't use Ledger Red or Ledger Green in non-semantic contexts.",
+      "Don't use Rajdhani outside the FELOOSY wordmark.",
+      "Don't use pure #000000 or #FFFFFF for text or surfaces.",
+      "Don't nest cards.",
+      "Don't add complexity as a feature.",
+      "Don't use Amber Mark decoratively — it is a warning signal only."
+    ]
+  }
+}

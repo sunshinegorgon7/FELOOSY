@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
+import '../../app/app_theme.dart';
 import '../../data/models/category.dart';
 import '../../data/models/transaction.dart';
 import '../../data/repositories/transaction_repository.dart';
@@ -152,7 +153,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
         ref.watch(mostUsedCategoryUuidsProvider).value ?? [];
 
     final amountColor =
-        isExpense ? Colors.red.shade400 : Colors.green.shade500;
+        isExpense ? AppTheme.expenseColor : AppTheme.incomeColor;
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -407,7 +408,7 @@ class _SelectionHint extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Text(
-        'Add ${parts.join(' & ')} to save',
+        'Add ${parts.join(' & ')} to continue',
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
               color: cs.onSurfaceVariant,
               fontStyle: FontStyle.italic,
@@ -440,14 +441,14 @@ class _TypeToggle extends StatelessWidget {
         _Chip(
           label: 'Expense',
           selected: isExpense,
-          selectedColor: Colors.red.shade400,
+          selectedColor: AppTheme.expenseColor,
           onTap: onExpense,
         ),
         const SizedBox(width: 8),
         _Chip(
           label: 'Income',
           selected: !isExpense,
-          selectedColor: Colors.green.shade500,
+          selectedColor: AppTheme.incomeColor,
           onTap: onIncome,
         ),
       ],

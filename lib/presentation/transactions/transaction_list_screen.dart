@@ -34,7 +34,7 @@ class TransactionListScreen extends ConsumerWidget {
                           .colorScheme
                           .onSurfaceVariant),
                   const SizedBox(height: 12),
-                  Text('No transactions yet',
+                  Text('No transactions yet.',
                       style: Theme.of(context).textTheme.titleMedium),
                   const SizedBox(height: 4),
                   Text('Tap + to add one.',
@@ -85,8 +85,8 @@ class TransactionListScreen extends ConsumerWidget {
                   children: [
                     SlidableAction(
                       onPressed: (_) => _confirmDelete(context, ref, tx),
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
+                      backgroundColor: Theme.of(context).colorScheme.error,
+                      foregroundColor: Theme.of(context).colorScheme.onError,
                       icon: Icons.delete_outline,
                       label: 'Delete',
                       borderRadius: const BorderRadius.horizontal(
@@ -144,7 +144,7 @@ class TransactionListScreen extends ConsumerWidget {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            style: FilledButton.styleFrom(backgroundColor: Theme.of(ctx).colorScheme.error),
             child: const Text('Delete'),
           ),
         ],

@@ -4,6 +4,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import '../../app/app_theme.dart';
 import '../../data/models/category.dart';
 import '../../data/models/account.dart';
 import '../../data/models/transaction.dart';
@@ -295,7 +296,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               left: 16,
               child: FloatingActionButton(
                 heroTag: 'income_fab',
-                backgroundColor: Colors.green.shade600,
+                backgroundColor: AppTheme.incomeColor,
                 foregroundColor: Colors.white,
                 onPressed: () => context.push('/transactions/add?type=income'),
                 child: const Icon(Icons.add),
@@ -307,7 +308,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               right: 16,
               child: FloatingActionButton(
                 heroTag: 'expense_fab',
-                backgroundColor: Colors.red.shade600,
+                backgroundColor: AppTheme.expenseColor,
                 foregroundColor: Colors.white,
                 onPressed: () => context.push('/transactions/add?type=expense'),
                 child: const Icon(Icons.remove),
@@ -730,7 +731,7 @@ class _DayOverlayState extends ConsumerState<_DayOverlay> {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            style: FilledButton.styleFrom(backgroundColor: Theme.of(ctx).colorScheme.error),
             child: const Text('Delete'),
           ),
         ],
@@ -875,8 +876,8 @@ class _DayOverlayState extends ConsumerState<_DayOverlay> {
                         children: [
                           SlidableAction(
                             onPressed: (_) => _delete(tx),
-                            backgroundColor: Colors.red,
-                            foregroundColor: Colors.white,
+                            backgroundColor: Theme.of(context).colorScheme.error,
+                            foregroundColor: Theme.of(context).colorScheme.onError,
                             icon: Icons.delete_outline,
                             label: 'Delete',
                             borderRadius: const BorderRadius.horizontal(
@@ -916,7 +917,7 @@ class _BalancePill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isOver = summary.isOverBudget;
-    final color = isOver ? Colors.red.shade600 : Colors.green.shade600;
+    final color = isOver ? AppTheme.expenseColor : AppTheme.incomeColor;
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.symmetric(horizontal: 10),

@@ -5,6 +5,12 @@ class AppTheme {
   // Light: Mint Mist bg · Almost Aqua surface · Fern accent · near-black text
   // Dark:  Deep Nimbus bg · Nimbus Surface · Ice Glow accent · muted-blue text
 
+  // Semantic transaction colors — theme-independent, used for expense/income
+  // amounts, FABs, type toggles, and budget stats across the whole app.
+  static const Color expenseColor = Color(0xFFD64545);
+  static const Color incomeColor = Color(0xFF4A9955);
+  static const Color warningColor = Color(0xFFCC8830);
+
   static final ThemeData light = _build(
     brightness: Brightness.light,
     cs: const ColorScheme(

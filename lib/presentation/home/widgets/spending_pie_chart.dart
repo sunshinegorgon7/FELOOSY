@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import '../../../app/app_theme.dart';
 import '../../../data/models/category.dart';
 import '../../../data/models/transaction.dart';
 import '../../../domain/entities/budget_summary.dart';
@@ -69,30 +70,6 @@ class SpendingPieChart extends StatelessWidget {
       final cat = categories.where((c) => c.uuid == e.key).firstOrNull;
       if (cat != null) data.add(_Stat(cat, e.value));
     }
-    if (data.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 24),
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                summary.period.label,
-                style: tt.labelMedium
-                    ?.copyWith(color: cs.onSurfaceVariant),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'No expenses this period.',
-                style:
-                    tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
     final total = data.fold(0.0, (s, d) => s + d.amount);
 
     return LayoutBuilder(builder: (context, constraints) {
@@ -136,7 +113,7 @@ class SpendingPieChart extends StatelessWidget {
         angle += sweep;
       }
 
-      const spentColor = Color(0xFFE64A19); // deep orange-red
+      final spentColor = AppTheme.expenseColor;
 
       // When a category is selected, show its amount; otherwise the grand total.
       final selectedStat = selectedCategoryUuid != null
@@ -146,7 +123,6 @@ class SpendingPieChart extends StatelessWidget {
           : null;
       final displayTotal = selectedStat?.amount ?? total;
       final centerLabel = selectedStat?.category.name ?? summary.period.label;
-      final bottomLabel = selectedStat != null ? 'spent' : 'spent';
 
       final half = size / 2;
 
@@ -212,7 +188,7 @@ class SpendingPieChart extends StatelessWidget {
                       textAlign: TextAlign.center,
                     ),
                     Text(
-                      bottomLabel,
+                      'spent',
                       style: TextStyle(
                         fontSize: 10,
                         color: spentColor.withValues(alpha: 0.7),

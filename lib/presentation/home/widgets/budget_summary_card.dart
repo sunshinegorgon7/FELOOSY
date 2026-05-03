@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
+import '../../../app/app_theme.dart';
 import '../../../domain/entities/budget_summary.dart';
 
 class BudgetSummaryCard extends StatelessWidget {
@@ -67,8 +68,8 @@ class _BudgetCard extends StatelessWidget {
   const _BudgetCard({required this.summary, required this.onSetBudget});
 
   Color _barColor(BuildContext context) {
-    if (summary.isOverBudget) return Colors.red;
-    if (summary.spentPercentage > 0.8) return Colors.orange;
+    if (summary.isOverBudget) return AppTheme.expenseColor;
+    if (summary.spentPercentage > 0.8) return AppTheme.warningColor;
     return Theme.of(context).colorScheme.primary;
   }
 
@@ -78,9 +79,9 @@ class _BudgetCard extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final progress = summary.spentPercentage.clamp(0.0, 1.0);
     final remainingColor = summary.isOverBudget
-        ? Colors.red
+        ? AppTheme.expenseColor
         : summary.spentPercentage > 0.8
-            ? Colors.orange
+            ? AppTheme.warningColor
             : cs.primary;
 
     return Card(
@@ -153,13 +154,13 @@ class _BudgetCard extends StatelessWidget {
                 _Stat(
                   label: 'Spent',
                   value: summary.formatAmount(summary.totalExpenses),
-                  color: Colors.red.shade400,
+                  color: AppTheme.expenseColor,
                 ),
                 const Gap(8),
                 _Stat(
                   label: 'Income',
                   value: summary.formatAmount(summary.totalIncome),
-                  color: Colors.green.shade600,
+                  color: AppTheme.incomeColor,
                 ),
               ],
             ),
@@ -185,7 +186,7 @@ class _Stat extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         decoration: BoxDecoration(
-          color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
+          color: cs.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Column(

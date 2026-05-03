@@ -102,7 +102,7 @@ class _CategoryTile extends ConsumerWidget {
             IconButton(
               icon: const Icon(Icons.delete_outline),
               tooltip: 'Delete',
-              color: Colors.red.shade400,
+              color: Theme.of(context).colorScheme.error,
               onPressed: () => _confirmDelete(context, ref, cat),
             )
           else
@@ -138,7 +138,7 @@ class _CategoryTile extends ConsumerWidget {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            style: FilledButton.styleFrom(backgroundColor: Theme.of(ctx).colorScheme.error),
             child: const Text('Delete'),
           ),
         ],

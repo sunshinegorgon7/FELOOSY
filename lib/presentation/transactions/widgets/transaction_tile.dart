@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../app/app_theme.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../data/models/category.dart';
 import '../../../data/models/transaction.dart';
@@ -27,14 +28,14 @@ class TransactionTile extends ConsumerWidget {
 
     final isExpense = transaction.type == TransactionType.expense;
     final amountColor =
-        isExpense ? Colors.red.shade400 : Colors.green.shade600;
+        isExpense ? AppTheme.expenseColor : AppTheme.incomeColor;
     final amountText = settings != null
         ? CurrencyFormatter.format(transaction.amount, settings)
         : transaction.amount.toStringAsFixed(2);
 
     final tileColor = isExpense
-        ? Colors.red.withValues(alpha: isDark ? 0.07 : 0.04)
-        : Colors.green.withValues(alpha: isDark ? 0.07 : 0.04);
+        ? AppTheme.expenseColor.withValues(alpha: isDark ? 0.07 : 0.04)
+        : AppTheme.incomeColor.withValues(alpha: isDark ? 0.07 : 0.04);
 
     final iconColor =
         category != null ? Color(category!.colorValue) : Colors.grey;
@@ -87,7 +88,7 @@ class TransactionTile extends ConsumerWidget {
         overflow: TextOverflow.ellipsis,
       ),
       subtitle: Text(
-        category?.name ?? 'Uncategorized',
+        category?.name ?? 'No category',
         style: TextStyle(
           color: Theme.of(context).colorScheme.onSurfaceVariant,
           fontSize: 12,
