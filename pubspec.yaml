@@ -41,15 +41,14 @@ dependencies:
   gap: ^3.0.1
   google_fonts: ^8.0.2
 
-  # Firebase + auth
-  firebase_core: ^4.7.0
-  firebase_auth: ^6.4.0
-  cloud_firestore: ^6.3.0
+  # Auth + Google Drive backup
   google_sign_in: ^7.2.0
+  googleapis: ^16.0.0
+  extension_google_sign_in_as_googleapis_auth: ^3.0.0
 
   # Local export / import
   share_plus: ^12.0.0
-  file_picker: ^8.0.0
+  file_picker: ^11.0.2
 
 dev_dependencies:
   flutter_test:

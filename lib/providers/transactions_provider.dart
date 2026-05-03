@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/utils/month_calculator.dart';
 import '../data/models/budget.dart';
@@ -7,7 +6,6 @@ import 'accounts_provider.dart';
 import 'budget_period_provider.dart';
 import 'budget_provider.dart';
 import 'database_provider.dart';
-import 'firebase_sync_provider.dart';
 import 'settings_provider.dart';
 
 class TransactionsNotifier extends AsyncNotifier<List<Transaction>> {
@@ -29,27 +27,12 @@ class TransactionsNotifier extends AsyncNotifier<List<Transaction>> {
   Future<void> add(Transaction tx) async {
     await ref.read(transactionRepositoryProvider).insert(tx);
     await _ensureBudgetExists(tx);
-    try {
-      final sync = ref.read(firebaseSyncProvider);
-      await sync?.syncTransaction(tx);
-      await sync?.flushPendingTransactionOps();
-    } catch (e) {
-      // Sync failure is non-fatal; operation is queued locally for retry.
-      debugPrint('Firestore sync (add) error: $e');
-    }
     ref.invalidateSelf();
     ref.invalidate(transactionPeriodOffsetsProvider);
   }
 
   Future<void> remove(String uuid) async {
     await ref.read(transactionRepositoryProvider).delete(uuid);
-    try {
-      final sync = ref.read(firebaseSyncProvider);
-      await sync?.deleteTransaction(uuid);
-      await sync?.flushPendingTransactionOps();
-    } catch (e) {
-      debugPrint('Firestore sync (delete) error: $e');
-    }
     ref.invalidateSelf();
     ref.invalidate(transactionPeriodOffsetsProvider);
   }
@@ -57,13 +40,6 @@ class TransactionsNotifier extends AsyncNotifier<List<Transaction>> {
   Future<void> edit(Transaction tx) async {
     await ref.read(transactionRepositoryProvider).save(tx);
     await _ensureBudgetExists(tx);
-    try {
-      final sync = ref.read(firebaseSyncProvider);
-      await sync?.syncTransaction(tx);
-      await sync?.flushPendingTransactionOps();
-    } catch (e) {
-      debugPrint('Firestore sync (edit) error: $e');
-    }
     ref.invalidateSelf();
     ref.invalidate(transactionPeriodOffsetsProvider);
   }

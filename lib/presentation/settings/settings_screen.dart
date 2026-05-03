@@ -9,13 +9,13 @@ import '../../core/constants/currencies.dart';
 import '../../data/database/database_helper.dart';
 import '../../data/models/app_settings.dart';
 import '../../domain/services/local_export_service.dart';
-import '../../providers/auth_provider.dart';
 import '../../providers/budget_provider.dart';
 import '../../providers/categories_provider.dart';
-import '../../providers/firebase_sync_provider.dart';
+import '../../providers/drive_backup_provider.dart';
+import '../../providers/google_auth_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/transactions_provider.dart';
-import 'feedback_sheet.dart';
+import '../../providers/accounts_provider.dart';
 
 class SettingsScreen extends ConsumerWidget {
   final bool isModal;
@@ -160,30 +160,14 @@ class _SettingsBody extends ConsumerWidget {
           trailing: const Icon(Icons.chevron_right),
           onTap: () => context.push('/settings/accounts'),
         ),
-        _AccountTile(isModal: isModal),
 
         // ── Data ─────────────────────────────────────────────────────────
         const _SectionHeader('Data'),
+        _DriveBackupTile(isModal: isModal),
         _LocalBackupTile(isModal: isModal),
 
         // ── About ────────────────────────────────────────────────────────
         const _SectionHeader('About'),
-        ListTile(
-          leading: const Icon(Icons.chat_bubble_outline),
-          title: const Text('Send feedback'),
-          subtitle: const Text('Share a bug, idea, or question'),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () async {
-            final sent = await showFeedbackSheet(context);
-            if (sent == true && context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Thanks - your feedback was sent.'),
-                ),
-              );
-            }
-          },
-        ),
         ListTile(
           leading: const Icon(Icons.info_outline),
           title: const Text('App version'),
@@ -496,95 +480,244 @@ class _SettingsBody extends ConsumerWidget {
   }
 }
 
-// ── Account tile ─────────────────────────────────────────────────────────────
+// ── Google Drive backup tile ──────────────────────────────────────────────────
 
-class _AccountTile extends ConsumerStatefulWidget {
+class _DriveBackupTile extends ConsumerStatefulWidget {
   final bool isModal;
-  const _AccountTile({this.isModal = false});
+  const _DriveBackupTile({this.isModal = false});
 
   @override
-  ConsumerState<_AccountTile> createState() => _AccountTileState();
+  ConsumerState<_DriveBackupTile> createState() => _DriveBackupTileState();
 }
 
-class _AccountTileState extends ConsumerState<_AccountTile> {
-  bool _busy = false;
+class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
+  bool _signingIn = false;
+  bool _backingUp = false;
+  bool _restoring = false;
+  DateTime? _lastBackupTime;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLastBackupTime();
+  }
+
+  Future<void> _loadLastBackupTime() async {
+    final account = ref.read(googleAccountProvider).value;
+    if (account == null) return;
+    final t = await ref.read(googleDriveBackupProvider).lastBackupTime();
+    if (mounted) setState(() => _lastBackupTime = t);
+  }
+
+  Future<void> _signIn() async {
+    setState(() => _signingIn = true);
+    try {
+      await ref.read(googleAuthActionsProvider).signIn();
+      await _loadLastBackupTime();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Sign-in failed: $e'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _signingIn = false);
+    }
+  }
+
+  Future<void> _signOut() async {
+    setState(() => _signingIn = true);
+    try {
+      await ref.read(googleAuthActionsProvider).signOut();
+      if (mounted) setState(() => _lastBackupTime = null);
+    } finally {
+      if (mounted) setState(() => _signingIn = false);
+    }
+  }
+
+  Future<void> _backup() async {
+    setState(() => _backingUp = true);
+    try {
+      await ref.read(googleDriveBackupProvider).backup();
+      final t = await ref.read(googleDriveBackupProvider).lastBackupTime();
+      if (mounted) {
+        setState(() => _lastBackupTime = t);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Backup saved to Google Drive.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Backup failed: $e'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _backingUp = false);
+    }
+  }
+
+  Future<void> _restore() async {
+    final svc = ref.read(googleDriveBackupProvider);
+    final hasLocal = await svc.hasLocalData();
+
+    if (!mounted) return;
+
+    if (hasLocal) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) {
+          final cs = Theme.of(ctx).colorScheme;
+          return AlertDialog(
+            icon: Icon(Icons.warning_rounded, color: cs.error, size: 36),
+            title: const Text('Replace all local data?'),
+            content: const Text(
+              'Restoring from Google Drive will permanently delete '
+              'everything currently on this device — all transactions, '
+              'budgets, and categories — and replace it with the backup.\n\n'
+              'This cannot be undone.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                style: FilledButton.styleFrom(backgroundColor: cs.error),
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('Replace my data'),
+              ),
+            ],
+          );
+        },
+      );
+      if (confirmed != true) return;
+    }
+
+    setState(() => _restoring = true);
+    try {
+      await svc.restore();
+      ref.invalidate(transactionsProvider);
+      ref.invalidate(transactionPeriodOffsetsProvider);
+      ref.invalidate(currentBudgetProvider);
+      ref.invalidate(settingsProvider);
+      ref.invalidate(categoriesProvider);
+      ref.invalidate(accountsProvider);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Data restored from Google Drive.')),
+        );
+        if (widget.isModal) Navigator.of(context).pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Restore failed: $e'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _restoring = false);
+    }
+  }
+
+  String _formatBackupTime(DateTime dt) {
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 1) return 'Just now';
+    if (diff.inHours < 1) return '${diff.inMinutes}m ago';
+    if (diff.inDays < 1) return '${diff.inHours}h ago';
+    if (diff.inDays == 1) return 'Yesterday';
+    return '${dt.day}/${dt.month}/${dt.year}';
+  }
 
   @override
   Widget build(BuildContext context) {
-    final user = ref.watch(currentUserProvider);
+    final account = ref.watch(googleAccountProvider).value;
     final cs = Theme.of(context).colorScheme;
+    final anyBusy = _signingIn || _backingUp || _restoring;
 
-    if (user != null) {
+    if (account == null) {
       return ListTile(
-        leading: user.photoURL != null
-            ? CircleAvatar(
-                backgroundImage: NetworkImage(user.photoURL!),
-                radius: 18,
-              )
-            : const CircleAvatar(
-                radius: 18,
-                child: Icon(Icons.person_outline, size: 18),
-              ),
-        title: Text(user.displayName ?? 'Signed in',
-            style: const TextStyle(fontWeight: FontWeight.w500)),
-        subtitle: Text(user.email ?? '',
-            style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
-        trailing: _busy
+        leading: const Icon(Icons.cloud_upload_outlined),
+        title: const Text('Back up to Google Drive'),
+        subtitle: const Text('Sign in to back up your data'),
+        trailing: _signingIn
             ? const SizedBox(
                 width: 20,
                 height: 20,
                 child: CircularProgressIndicator(strokeWidth: 2),
               )
-            : TextButton(
-                onPressed: _signOut,
-                child: const Text('Sign out'),
-              ),
+            : const Icon(Icons.chevron_right),
+        onTap: anyBusy ? null : _signIn,
       );
     }
 
-    return ListTile(
-      leading: const Icon(Icons.account_circle_outlined),
-      title: const Text('Sign in with Google'),
-      subtitle: const Text('Sync your data across devices'),
-      trailing: _busy
-          ? const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          : const Icon(Icons.chevron_right),
-      onTap: _busy ? null : _signIn,
-    );
-  }
+    final lastBackupLabel = _lastBackupTime != null
+        ? 'Last backup: ${_formatBackupTime(_lastBackupTime!)}'
+        : 'No backup yet';
 
-  Future<void> _signIn() async {
-    setState(() => _busy = true);
-    try {
-      final user = await ref.read(googleAuthActionsProvider).signIn();
-      if (user != null && mounted) {
-        await ref.read(syncOrchestratorProvider).onSignIn(user.uid);
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Sign-in failed: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
+    return Column(
+      children: [
+        ListTile(
+          leading: account.photoUrl != null
+              ? CircleAvatar(
+                  backgroundImage: NetworkImage(account.photoUrl!),
+                  radius: 18,
+                )
+              : const CircleAvatar(
+                  radius: 18,
+                  child: Icon(Icons.person_outline, size: 18),
+                ),
+          title: Text(
+            account.displayName ?? 'Google account',
+            style: const TextStyle(fontWeight: FontWeight.w500),
           ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  Future<void> _signOut() async {
-    setState(() => _busy = true);
-    try {
-      await ref.read(googleAuthActionsProvider).signOut();
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
+          subtitle: Text(
+            account.email,
+            style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+          ),
+          trailing: _signingIn
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : TextButton(
+                  onPressed: anyBusy ? null : _signOut,
+                  child: const Text('Sign out'),
+                ),
+        ),
+        ListTile(
+          leading: const Icon(Icons.cloud_upload_outlined),
+          title: const Text('Back up now'),
+          subtitle: Text(lastBackupLabel),
+          trailing: _backingUp
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.chevron_right),
+          onTap: anyBusy ? null : _backup,
+        ),
+        ListTile(
+          leading: const Icon(Icons.cloud_download_outlined),
+          title: const Text('Restore from backup'),
+          subtitle: const Text('Replace local data with Drive backup'),
+          trailing: _restoring
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.chevron_right),
+          onTap: anyBusy ? null : _restore,
+        ),
+      ],
+    );
   }
 }
 
@@ -631,7 +764,6 @@ class _LocalBackupTileState extends ConsumerState<_LocalBackupTile> {
     if (result == null || result.files.single.path == null) return;
     final path = result.files.single.path!;
 
-    // Parse to get preview counts before asking confirmation
     final ImportSummary summary;
     try {
       summary = await _svc.preview(path);
@@ -647,7 +779,6 @@ class _LocalBackupTileState extends ConsumerState<_LocalBackupTile> {
       return;
     }
 
-    // Confirmation dialog
     if (!mounted) return;
     final confirmed = await showDialog<bool>(
       context: context,

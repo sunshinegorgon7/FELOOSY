@@ -3,7 +3,6 @@ import '../data/models/budget.dart';
 import 'accounts_provider.dart';
 import 'budget_period_provider.dart';
 import 'database_provider.dart';
-import 'firebase_sync_provider.dart';
 
 class CurrentBudgetNotifier extends AsyncNotifier<Budget?> {
   @override
@@ -35,7 +34,6 @@ class CurrentBudgetNotifier extends AsyncNotifier<Budget?> {
       updatedAt: now,
     );
     await repo.upsert(budget);
-    ref.read(firebaseSyncProvider)?.syncBudget(budget);
     ref.invalidateSelf();
   }
 }
