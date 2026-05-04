@@ -3,19 +3,37 @@ import 'package:google_sign_in/google_sign_in.dart';
 
 const kDriveAppDataScope = 'https://www.googleapis.com/auth/drive.appdata';
 
-// Singleton shared by the auth provider and the backup service.
-final googleSignIn = GoogleSignIn(
-  scopes: ['email', 'profile', kDriveAppDataScope],
-);
+class GoogleAccountNotifier extends Notifier<GoogleSignInAccount?> {
+  static final _init = GoogleSignIn.instance.initialize();
 
-final googleAccountProvider = StreamProvider<GoogleSignInAccount?>((ref) {
-  return googleSignIn.onCurrentUserChanged;
-});
+  @override
+  GoogleSignInAccount? build() {
+    _restoreSession();
+    return null;
+  }
 
-class GoogleAuthActions {
-  Future<GoogleSignInAccount?> signIn() => googleSignIn.signIn();
-  Future<void> signOut() => googleSignIn.disconnect();
+  Future<void> _restoreSession() async {
+    await _init;
+    final account =
+        await GoogleSignIn.instance.attemptLightweightAuthentication();
+    if (account != null) state = account;
+  }
+
+  Future<void> signIn() async {
+    await _init;
+    final account = await GoogleSignIn.instance.authenticate(
+      scopeHint: ['email', 'profile', kDriveAppDataScope],
+    );
+    state = account;
+  }
+
+  Future<void> signOut() async {
+    await GoogleSignIn.instance.disconnect();
+    state = null;
+  }
 }
 
-final googleAuthActionsProvider =
-    Provider<GoogleAuthActions>((_) => GoogleAuthActions());
+final googleAccountProvider =
+    NotifierProvider<GoogleAccountNotifier, GoogleSignInAccount?>(
+      GoogleAccountNotifier.new,
+    );

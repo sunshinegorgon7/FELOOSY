@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'package:extension_google_sign_in_as_googleapis_auth/extension_google_sign_in_as_googleapis_auth.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sqflite/sqflite.dart';
 import '../../data/database/database_helper.dart';
-import '../../providers/google_auth_provider.dart';
+import '../../providers/google_auth_provider.dart' show kDriveAppDataScope;
 
 class GoogleDriveBackupService {
   final DatabaseHelper _db;
@@ -12,8 +13,9 @@ class GoogleDriveBackupService {
   static const _backupFileName = 'feloosy_backup.json';
 
   Future<drive.DriveApi> _api() async {
-    final client = await googleSignIn.authenticatedClient();
-    if (client == null) throw Exception('Not signed in.');
+    final auth = await GoogleSignIn.instance.authorizationClient
+        .authorizeScopes([kDriveAppDataScope]);
+    final client = auth.authClient(scopes: [kDriveAppDataScope]);
     return drive.DriveApi(client);
   }
 

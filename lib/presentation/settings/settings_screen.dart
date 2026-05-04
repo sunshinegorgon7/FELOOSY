@@ -503,7 +503,7 @@ class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
   }
 
   Future<void> _loadLastBackupTime() async {
-    final account = ref.read(googleAccountProvider).value;
+    final account = ref.read(googleAccountProvider);
     if (account == null) return;
     final t = await ref.read(googleDriveBackupProvider).lastBackupTime();
     if (mounted) setState(() => _lastBackupTime = t);
@@ -512,7 +512,7 @@ class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
   Future<void> _signIn() async {
     setState(() => _signingIn = true);
     try {
-      await ref.read(googleAuthActionsProvider).signIn();
+      await ref.read(googleAccountProvider.notifier).signIn();
       await _loadLastBackupTime();
     } catch (e) {
       if (mounted) {
@@ -529,7 +529,7 @@ class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
   Future<void> _signOut() async {
     setState(() => _signingIn = true);
     try {
-      await ref.read(googleAuthActionsProvider).signOut();
+      await ref.read(googleAccountProvider.notifier).signOut();
       if (mounted) setState(() => _lastBackupTime = null);
     } finally {
       if (mounted) setState(() => _signingIn = false);
@@ -635,7 +635,7 @@ class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
 
   @override
   Widget build(BuildContext context) {
-    final account = ref.watch(googleAccountProvider).value;
+    final account = ref.watch(googleAccountProvider);
     final cs = Theme.of(context).colorScheme;
     final anyBusy = _signingIn || _backingUp || _restoring;
 
@@ -756,7 +756,7 @@ class _LocalBackupTileState extends ConsumerState<_LocalBackupTile> {
   }
 
   Future<void> _pickAndImport() async {
-    final result = await FilePicker.platform.pickFiles(
+    final result = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['json'],
       allowMultiple: false,
