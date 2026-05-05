@@ -69,15 +69,17 @@ class _SettingsBody extends ConsumerWidget {
 
     return ListView(
       children: [
-        // ── Appearance ──────────────────────────────────────────────────
         const _SectionHeader('Appearance'),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Brightness', style: tt.bodyMedium),
-              const Gap(10),
+              Text(
+                'Brightness',
+                style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+              ),
+              const Gap(6),
               SegmentedButton<String>(
                 segments: const [
                   ButtonSegment(
@@ -104,89 +106,61 @@ class _SettingsBody extends ConsumerWidget {
           ),
         ),
 
-        // ── Budget ───────────────────────────────────────────────────────
         const _SectionHeader('Budget'),
-        ListTile(
-          leading: const Icon(Icons.attach_money),
-          title: const Text('Currency'),
-          subtitle: Text(
-              '${settings.currencySymbol} — ${_currencyName(settings.currencyCode)}'),
-          trailing: const Icon(Icons.chevron_right),
+        _SettingsRow(
+          title: 'Currency',
+          value:
+              '${settings.currencySymbol}  ${_currencyName(settings.currencyCode)}',
           onTap: () => _showCurrencyPicker(context, ref, settings),
         ),
-        ListTile(
-          leading: const Icon(Icons.calendar_today_outlined),
-          title: const Text('Month starts on'),
-          subtitle: Text(
-              'Day ${settings.monthStartDay}${_ordinal(settings.monthStartDay)} of each month'),
-          trailing: const Icon(Icons.chevron_right),
+        _SettingsRow(
+          title: 'Month starts on',
+          value:
+              'Day ${settings.monthStartDay}${_ordinal(settings.monthStartDay)}',
           onTap: () => _showDayPicker(context, ref, settings),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
           child: Text(
-            'Day 29–31 not available to ensure February compatibility.',
+            'Days 29–31 unavailable to ensure February compatibility.',
             style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
           ),
         ),
-        ListTile(
-          leading: const Icon(Icons.wallet_outlined),
-          title: const Text('Default monthly budget'),
-          subtitle: Text(
-            settings.defaultMonthlyBudget > 0
-                ? '${settings.currencySymbol} ${settings.defaultMonthlyBudget.toStringAsFixed(2)}'
-                : 'Not set — tap to configure',
-          ),
-          trailing: const Icon(Icons.chevron_right),
+        _SettingsRow(
+          title: 'Default monthly budget',
+          value: settings.defaultMonthlyBudget > 0
+              ? '${settings.currencySymbol} ${settings.defaultMonthlyBudget.toStringAsFixed(2)}'
+              : 'Not set',
           onTap: () => _showDefaultBudgetDialog(context, ref, settings),
         ),
 
-        // ── Categories ───────────────────────────────────────────────────
         const _SectionHeader('Categories'),
-        ListTile(
-          leading: const Icon(Icons.category_outlined),
-          title: const Text('Manage categories'),
-          subtitle: const Text('Edit, add or hide spending categories'),
-          trailing: const Icon(Icons.chevron_right),
+        _SettingsRow(
+          title: 'Manage categories',
           onTap: () => _navigateCategories(context),
         ),
 
-        // ── Wallets ──────────────────────────────────────────────────────
         const _SectionHeader('Wallets'),
-        ListTile(
-          leading: const Icon(Icons.account_balance_wallet_outlined),
-          title: const Text('Manage wallets'),
-          subtitle: const Text('Add, edit, delete wallets and set favorite'),
-          trailing: const Icon(Icons.chevron_right),
+        _SettingsRow(
+          title: 'Manage wallets',
           onTap: () => context.push('/settings/accounts'),
         ),
 
-        // ── Data ─────────────────────────────────────────────────────────
         const _SectionHeader('Data'),
         _DriveBackupTile(isModal: isModal),
         _LocalBackupTile(isModal: isModal),
 
-        // ── About ────────────────────────────────────────────────────────
         const _SectionHeader('About'),
-        ListTile(
-          leading: const Icon(Icons.info_outline),
-          title: const Text('App version'),
-          trailing: Text(
-            kAppVersionLabel,
-            style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-          ),
-        ),
+        const _InfoRow(title: 'Version', value: kAppVersionLabel),
 
-        // ── Danger zone ──────────────────────────────────────────────────
-        const _SectionHeader('Danger Zone'),
-        ListTile(
-          leading: Icon(Icons.delete_forever_outlined, color: cs.error),
-          title: Text('Reset app',
-              style: TextStyle(color: cs.error, fontWeight: FontWeight.w500)),
-          subtitle: const Text(
-              'Erase all transactions & budgets, restore default settings'),
+        const _SectionHeader('Danger Zone', danger: true),
+        _SettingsRow(
+          title: 'Reset app',
+          subtitle: 'Erase all transactions and budgets, restore defaults',
+          danger: true,
           onTap: () => _showResetConfirmation(context, ref),
         ),
+
         const Gap(32),
       ],
     );
@@ -640,80 +614,73 @@ class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
     final anyBusy = _signingIn || _backingUp || _restoring;
 
     if (account == null) {
-      return ListTile(
-        leading: const Icon(Icons.cloud_upload_outlined),
-        title: const Text('Back up to Google Drive'),
-        subtitle: const Text('Sign in to back up your data'),
-        trailing: _signingIn
-            ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : const Icon(Icons.chevron_right),
+      return _SettingsRow(
+        title: 'Back up to Google Drive',
+        subtitle: 'Sign in to enable backup',
+        busy: _signingIn,
         onTap: anyBusy ? null : _signIn,
       );
     }
 
+    final tt = Theme.of(context).textTheme;
     final lastBackupLabel = _lastBackupTime != null
         ? 'Last backup: ${_formatBackupTime(_lastBackupTime!)}'
         : 'No backup yet';
 
     return Column(
       children: [
-        ListTile(
-          leading: account.photoUrl != null
-              ? CircleAvatar(
-                  backgroundImage: NetworkImage(account.photoUrl!),
-                  radius: 18,
-                )
-              : const CircleAvatar(
-                  radius: 18,
-                  child: Icon(Icons.person_outline, size: 18),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 8, 6),
+          child: Row(
+            children: [
+              account.photoUrl != null
+                  ? CircleAvatar(
+                      backgroundImage: NetworkImage(account.photoUrl!),
+                      radius: 13,
+                    )
+                  : const CircleAvatar(
+                      radius: 13,
+                      child: Icon(Icons.person_outline, size: 13),
+                    ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  account.email,
+                  style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                  overflow: TextOverflow.ellipsis,
                 ),
-          title: Text(
-            account.displayName ?? 'Google account',
-            style: const TextStyle(fontWeight: FontWeight.w500),
+              ),
+              _signingIn
+                  ? const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    )
+                  : TextButton(
+                      onPressed: anyBusy ? null : _signOut,
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                      child: const Text('Sign out'),
+                    ),
+            ],
           ),
-          subtitle: Text(
-            account.email,
-            style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
-          ),
-          trailing: _signingIn
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : TextButton(
-                  onPressed: anyBusy ? null : _signOut,
-                  child: const Text('Sign out'),
-                ),
         ),
-        ListTile(
-          leading: const Icon(Icons.cloud_upload_outlined),
-          title: const Text('Back up now'),
-          subtitle: Text(lastBackupLabel),
-          trailing: _backingUp
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.chevron_right),
+        _SettingsRow(
+          title: 'Back up now',
+          value: lastBackupLabel,
+          busy: _backingUp,
           onTap: anyBusy ? null : _backup,
         ),
-        ListTile(
-          leading: const Icon(Icons.cloud_download_outlined),
-          title: const Text('Restore from backup'),
-          subtitle: const Text('Replace local data with Drive backup'),
-          trailing: _restoring
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.chevron_right),
+        _SettingsRow(
+          title: 'Restore from Drive',
+          subtitle: 'Replace local data with Drive backup',
+          busy: _restoring,
           onTap: anyBusy ? null : _restore,
         ),
       ],
@@ -845,30 +812,16 @@ class _LocalBackupTileState extends ConsumerState<_LocalBackupTile> {
     final busy = _exporting || _importing;
     return Column(
       children: [
-        ListTile(
-          leading: const Icon(Icons.download_outlined),
-          title: const Text('Export backup'),
-          subtitle: const Text('Save all data as a JSON file'),
-          trailing: _exporting
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.chevron_right),
+        _SettingsRow(
+          title: 'Export backup',
+          subtitle: 'Save all data as a JSON file',
+          busy: _exporting,
           onTap: busy ? null : _export,
         ),
-        ListTile(
-          leading: const Icon(Icons.upload_outlined),
-          title: const Text('Import backup'),
-          subtitle: const Text('Restore from a previously exported file'),
-          trailing: _importing
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.chevron_right),
+        _SettingsRow(
+          title: 'Restore from file',
+          subtitle: 'Replace local data with an exported backup',
+          busy: _importing,
           onTap: busy ? null : _pickAndImport,
         ),
       ],
@@ -876,20 +829,143 @@ class _LocalBackupTileState extends ConsumerState<_LocalBackupTile> {
   }
 }
 
-class _SectionHeader extends StatelessWidget {
+class _SettingsRow extends StatelessWidget {
   final String title;
-  const _SectionHeader(this.title);
+  final String? subtitle;
+  final String? value;
+  final bool busy;
+  final bool danger;
+  final VoidCallback? onTap;
+
+  const _SettingsRow({
+    required this.title,
+    this.subtitle,
+    this.value,
+    this.busy = false,
+    this.danger = false,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+
+    final content = Padding(
+      padding: EdgeInsets.fromLTRB(
+        16,
+        subtitle != null ? 11 : 13,
+        16,
+        subtitle != null ? 11 : 13,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: tt.bodyMedium?.copyWith(
+                    color: danger ? cs.error : null,
+                    fontWeight: danger ? FontWeight.w500 : null,
+                  ),
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle!,
+                    style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          if (value != null) ...[
+            const SizedBox(width: 12),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 150),
+              child: Text(
+                value!,
+                style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+                textAlign: TextAlign.right,
+              ),
+            ),
+          ],
+          const SizedBox(width: 6),
+          if (busy)
+            const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          else
+            Icon(
+              Icons.chevron_right,
+              size: 18,
+              color: danger
+                  ? cs.error.withValues(alpha: 0.4)
+                  : cs.outlineVariant,
+            ),
+        ],
+      ),
+    );
+
+    if (danger) {
+      return Ink(
+        color: cs.errorContainer.withValues(alpha: 0.05),
+        child: InkWell(onTap: onTap, child: content),
+      );
+    }
+    return InkWell(onTap: onTap, child: content);
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  final String title;
+  final String value;
+  const _InfoRow({required this.title, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 4),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+      child: Row(
+        children: [
+          Expanded(child: Text(title, style: tt.bodyMedium)),
+          Text(
+            value,
+            style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final bool danger;
+  const _SectionHeader(this.title, {this.danger = false});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 28, 16, 2),
       child: Text(
-        title.toUpperCase(),
+        title,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.2,
+              color: danger
+                  ? cs.error.withValues(alpha: 0.8)
+                  : cs.onSurfaceVariant,
+              fontWeight: FontWeight.w500,
+              letterSpacing: 0.3,
             ),
       ),
     );
