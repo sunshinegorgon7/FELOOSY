@@ -267,7 +267,7 @@ A floating pill centered above the two FABs, showing remaining budget in context
 - **Do** keep FAB visibility logic strict: hide both FABs when the keyboard is open or search is active. They must never overlap content the user is interacting with.
 
 ### Don't:
-- **Don't** add charts, graphs, pie charts, or trend visualizations as primary UI elements. This app records; it does not analyze. If a screen looks like a dashboard, it is wrong.
+- **Don't** use charts or graphs as primary UI elements, hero content, or the first thing a user sees. This app records; it does not analyze dashboards. **One exception:** the top spending categories bar chart at the bottom of the home screen transaction list is permitted as secondary, glanceable context — not a main feature. It must never outcompete the balance or transaction list visually.
 - **Don't** replicate the Monefy aesthetic: no bright cartoon color palette, no icon-grid as the primary home screen layout, no pie chart as a hero element. The app takes inspiration from Monefy's simplicity of concept, not its visual language.
 - **Don't** use a corporate bank app style: no navy blue header bars, no gold accents, no cold formal typography, no excessive security-theater UI patterns.
 - **Don't** add shadows to cards, containers, or inputs. The Flat Register Rule is not a preference — it defines the register. A shadow here would be a category error.

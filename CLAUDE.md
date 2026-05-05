@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-FELOOSY is a Flutter personal budgeting app targeting iOS and Android. It uses SQLite for local-first persistence with optional Firebase/Firestore sync and Google Sign-In.
+FELOOSY is a Flutter personal budgeting app targeting iOS and Android. It uses SQLite for local-first persistence with optional Google Drive backup (Google Sign-In required). Firebase/Firestore has been removed.
 
 ## Common Commands
 
@@ -33,9 +33,9 @@ dart analyze
 
 The app follows a three-layer architecture:
 
-**`data/`** — SQLite repositories and model serialization. All models use `toMap()`/`fromMap()` (not Freezed/json_serializable, despite those deps being in pubspec). `DatabaseHelper` is a singleton managing schema migrations up to v7.
+**`data/`** — SQLite repositories and model serialization. All models use `toMap()`/`fromMap()` (not Freezed/json_serializable, despite those deps being in pubspec). `DatabaseHelper` is a singleton managing schema migrations up to v9.
 
-**`domain/`** — Business logic entities (`BudgetSummary`, `BudgetPeriod`) and services (`FirebaseSyncService`, `LocalExportService`). Services are stateless and called directly from providers.
+**`domain/`** — Business logic entities (`BudgetSummary`, `BudgetPeriod`) and services (`GoogleDriveBackupService`, `LocalExportService`, `BudgetService`). Services are stateless and called directly from providers.
 
 **`presentation/`** — Screens and widgets. All screens are `ConsumerWidget` or `ConsumerStatefulWidget`.
 
@@ -43,9 +43,11 @@ The app follows a three-layer architecture:
 
 ## Key Patterns
 
-**Data flow**: UI watches a provider → provider calls repository → repository queries `DatabaseHelper` → on writes, `FirebaseSyncService` also pushes to Firestore asynchronously with a 3-second timeout (non-fatal).
+**Data flow**: UI watches a provider → provider calls repository → repository queries `DatabaseHelper`. There is no automatic cloud sync on writes; data lives locally and is backed up to Google Drive on demand.
 
-**Offline queue**: Failed Firestore writes are stored in the `pending_sync_ops` SQLite table and retried on next sync. Never treat sync failures as fatal.
+**Google Drive backup**: `GoogleDriveBackupService` exports all SQLite tables as JSON to the Drive `appDataFolder` scope. It retains up to 5 backups (auto-prunes oldest). Restore replaces all local tables in a single SQLite transaction. The `last_backup_at` timestamp is stored in `app_settings`. Triggered from the Settings screen.
+
+**Google sign-in**: Handled by `GoogleAccountNotifier` in `google_auth_provider.dart` using `GoogleSignIn.instance` directly (no Firebase Auth dependency). Scopes: `email`, `profile`, and `drive.appdata`.
 
 **Navigation**: GoRouter with named routes. Complex objects (e.g., a `Transaction` being edited) are passed via the `extra` parameter. See [app/router.dart](lib/app/router.dart) for all routes.
 
@@ -57,16 +59,21 @@ The app follows a three-layer architecture:
 
 **Home widget**: `HomeWidgetSyncService` bridges Flutter data to the native home screen widget. `FeloosyApp` listens to provider changes via `ref.listenManual()` to keep the widget in sync.
 
-## Database Schema (v7)
+**Period navigation**: The home screen supports swiping between budget periods (months). Available offsets are cached in `_cachedPeriodOffsets` (a `Set<int>`) when the data loads, so swipe buttons don't disable mid-gesture during account switches. `selectedPeriodOffsetProvider` tracks the current offset.
+
+**Top spending chart**: `_TopCategoriesChart` is an inline widget at the bottom of `home_screen.dart` (also referenced from the budget screen). It renders a vertical bar chart of top expense categories for the current period, using each category's own `colorValue`. Not a separate file.
+
+## Database Schema (v9)
 
 | Table | Key columns |
 |---|---|
-| `accounts` | id, name, currency_code, currency_symbol, default_monthly_budget, is_favorite |
+| `accounts` | id, name, currency_code, currency_symbol, default_monthly_budget, is_favorite, month_start_day |
 | `transactions` | uuid, account_id, amount, type (expense/income), category_uuid, transaction_date |
 | `budgets` | id, account_id, year, month, amount — unique on (account_id, year, month) |
-| `categories` | uuid, name, color_value, icon_code_point, is_custom, is_active, sort_order |
-| `app_settings` | singleton row: theme_mode, color_theme, currency, month_start_day |
-| `pending_sync_ops` | entity_type, operation, target_id, payload_json (offline Firestore queue) |
+| `categories` | uuid, name, color_value, icon_code_point, icon_font_family, is_custom, is_active, sort_order |
+| `app_settings` | singleton row: theme_mode, color_theme, currency, month_start_day, google_backup_enabled, last_backup_at |
+
+Migration notes: v8 added `month_start_day` to `accounts`. v9 dropped `pending_sync_ops` (Firestore offline queue — no longer used).
 
 All timestamps are stored as milliseconds-since-epoch integers.
 
@@ -89,9 +96,18 @@ class TransactionsNotifier extends _$TransactionsNotifier {
 
 `database_provider.dart` exposes repository instances as simple `Provider`s so they can be read synchronously by notifiers.
 
-## Firebase / Sync
+Additional providers:
+- `google_auth_provider.dart` — `googleAccountProvider` (`NotifierProvider<GoogleAccountNotifier, GoogleSignInAccount?>`) for Google sign-in state. Attempts a lightweight session restore on first build.
+- `drive_backup_provider.dart` — `googleDriveBackupProvider` (simple `Provider`) exposing a `GoogleDriveBackupService` instance.
 
-- Auth is Google Sign-In via Firebase Auth, exposed as a `StreamProvider` in `auth_provider.dart`.
-- Firestore structure: `users/{uid}/transactions`, `users/{uid}/budgets`, `users/{uid}/categories`, `users/{uid}/settings/main`.
-- Sync is triggered manually (export button) or automatically on login. It is always async and non-blocking.
-- `firebase_options.dart` is auto-generated by the Firebase CLI — do not edit manually.
+## Google Drive Backup
+
+Firebase and Firestore have been fully removed from the project. Cloud backup is now handled exclusively via Google Drive.
+
+- Google sign-in uses `GoogleSignIn.instance` directly (no Firebase Auth). See `google_auth_provider.dart`.
+- `GoogleDriveBackupService` in `domain/services/` handles backup, restore, and listing. It stores files in the Drive `appDataFolder` (private, app-only scope — not visible in the user's Drive).
+- Backup format: JSON with a `version` key and a `data` map containing all five tables. Timestamped filename `feloosy_backup_{ms}.json`.
+- Up to 5 backups retained; oldest are pruned automatically after each backup.
+- `restore(fileId)` — atomically replaces all local data in a single SQLite transaction. Irreversible; UI should confirm before calling.
+- `listBackups()` returns `List<BackupEntry>` (id + modifiedTime), sorted newest-first.
+- `firebase_options.dart` may still exist in the repo but Firebase is no longer initialised or used.

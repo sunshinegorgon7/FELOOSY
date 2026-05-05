@@ -10,7 +10,9 @@ Anyone who wants to track their money without learning a system — a person man
 
 ## Product Purpose
 
-Budgeting made radically simple. No graphs, no analysis, no categories-within-categories. One wallet, one balance, one month at a time. Success looks like: the user logs a transaction in under five seconds and never feels confused about where they stand.
+Budgeting made radically simple. One wallet, one balance, one month at a time. Success looks like: the user logs a transaction in under five seconds and never feels confused about where they stand.
+
+The home screen shows a top spending categories chart at the bottom of the transaction list. This is the only analytical element in the app — a glanceable breakdown of where money went this period, not a dashboard. It should never be the primary focus of the screen; the balance and transaction list come first.
 
 ## Brand Personality
 
