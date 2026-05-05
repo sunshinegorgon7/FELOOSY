@@ -46,12 +46,8 @@ class GoogleDriveBackupService {
   }
 
   Future<List<BackupEntry>> listBackups() async {
-    try {
-      final api = await _api();
-      return await _listAllBackups(api);
-    } catch (_) {
-      return [];
-    }
+    final api = await _api();
+    return _listAllBackups(api);
   }
 
   Future<DateTime?> lastBackupTime() async {

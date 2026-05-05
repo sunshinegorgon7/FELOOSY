@@ -24,6 +24,8 @@ class GoogleAccountNotifier extends Notifier<GoogleSignInAccount?> {
     final account = await GoogleSignIn.instance.authenticate(
       scopeHint: ['email', 'profile', kDriveAppDataScope],
     );
+    await GoogleSignIn.instance.authorizationClient
+        .authorizeScopes([kDriveAppDataScope]);
     state = account;
   }
 
