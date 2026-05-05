@@ -354,6 +354,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final groups = _groupByDate(filteredTxs);
     _visibleGroups = groups;
 
+    // Compute top 5 expense categories for the current period
+    final expenseTotals = <String, double>{};
+    for (final tx in txs.where((t) => t.type == TransactionType.expense)) {
+      expenseTotals[tx.categoryUuid] =
+          (expenseTotals[tx.categoryUuid] ?? 0) + tx.amount;
+    }
+    final sortedExpenses = expenseTotals.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final top5 = sortedExpenses
+        .take(5)
+        .map((e) {
+          final cat = cats.where((c) => c.uuid == e.key).firstOrNull;
+          return cat != null ? _CatStat(cat, e.value) : null;
+        })
+        .whereType<_CatStat>()
+        .toList();
+
     final period = ref.watch(selectedBudgetPeriodProvider);
     final periodOffset = ref.watch(selectedPeriodOffsetProvider);
     // Keep the last known offsets across provider reloads so swipe is never
@@ -451,6 +468,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
 
           const SliverToBoxAdapter(child: SizedBox(height: 8)),
+
+          if (top5.isNotEmpty)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'TOP SPENDING',
+                      style: tt.labelSmall?.copyWith(
+                        color: cs.primary,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.1,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    _TopCategoriesChart(stats: top5, summary: summary),
+                    const SizedBox(height: 16),
+                  ],
+                ),
+              ),
+            ),
 
           if (filteredTxs.isEmpty)
             SliverFillRemaining(
@@ -971,6 +1011,89 @@ class _BalancePill extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Top spending categories bar chart (shared with budget screen)
+// ---------------------------------------------------------------------------
+
+class _CatStat {
+  final Category category;
+  final double amount;
+  const _CatStat(this.category, this.amount);
+}
+
+class _TopCategoriesChart extends StatelessWidget {
+  final List<_CatStat> stats;
+  final BudgetSummary summary;
+
+  const _TopCategoriesChart({required this.stats, required this.summary});
+
+  @override
+  Widget build(BuildContext context) {
+    const barAreaHeight = 80.0;
+    final maxAmount = stats.first.amount;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: stats.map((stat) {
+        final color = Color(stat.category.colorValue);
+        final barH =
+            (barAreaHeight * (stat.amount / maxAmount)).clamp(4.0, barAreaHeight);
+        return Expanded(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                summary.formatAmount(stat.amount),
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: color,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 4),
+              CircleAvatar(
+                radius: 14,
+                backgroundColor: color.withValues(alpha: 0.15),
+                child: Icon(
+                  IconData(stat.category.iconCodePoint,
+                      fontFamily: stat.category.iconFontFamily),
+                  size: 14,
+                  color: color,
+                ),
+              ),
+              const SizedBox(height: 4),
+              SizedBox(
+                height: barAreaHeight,
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                    height: barH,
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(6)),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                stat.category.name,
+                style: const TextStyle(fontSize: 10),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        );
+      }).toList(),
     );
   }
 }
