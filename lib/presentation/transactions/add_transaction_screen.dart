@@ -279,7 +279,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                       FilteringTextInputFormatter.allow(
                           RegExp(r'[\d.]')),
                     ],
-                    autofocus: !_isEditing,
+                    autofocus: true,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 52,
