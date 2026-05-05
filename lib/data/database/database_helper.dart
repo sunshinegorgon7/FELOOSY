@@ -26,7 +26,7 @@ class DatabaseHelper {
     final dbPath = p.join(docDir.path, AppFlavor.databaseName);
     return openDatabase(
       dbPath,
-      version: 9,
+      version: 10,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -113,7 +113,8 @@ class DatabaseHelper {
         google_backup_enabled INTEGER NOT NULL DEFAULT 0,
         default_monthly_budget REAL NOT NULL DEFAULT 0,
         last_backup_at INTEGER,
-        updated_at INTEGER NOT NULL
+        updated_at INTEGER NOT NULL,
+        tutorial_completed INTEGER NOT NULL DEFAULT 0
       )
     ''');
 
@@ -207,6 +208,11 @@ class DatabaseHelper {
     }
     if (oldVersion < 9) {
       await db.execute('DROP TABLE IF EXISTS pending_sync_ops');
+    }
+    if (oldVersion < 10) {
+      await db.execute(
+        'ALTER TABLE app_settings ADD COLUMN tutorial_completed INTEGER NOT NULL DEFAULT 0',
+      );
     }
   }
 

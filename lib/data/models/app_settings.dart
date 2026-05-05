@@ -10,6 +10,7 @@ class AppSettings {
   final double defaultMonthlyBudget;
   final DateTime? lastBackupAt;
   final DateTime updatedAt;
+  final bool tutorialCompleted;
 
   const AppSettings({
     this.id = 1,
@@ -23,6 +24,7 @@ class AppSettings {
     this.defaultMonthlyBudget = 0,
     this.lastBackupAt,
     required this.updatedAt,
+    this.tutorialCompleted = false,
   });
 
   static AppSettings get defaults => AppSettings(updatedAt: DateTime.now());
@@ -37,6 +39,7 @@ class AppSettings {
     bool? googleBackupEnabled,
     double? defaultMonthlyBudget,
     DateTime? lastBackupAt,
+    bool? tutorialCompleted,
   }) {
     return AppSettings(
       id: id,
@@ -51,6 +54,7 @@ class AppSettings {
       defaultMonthlyBudget: defaultMonthlyBudget ?? this.defaultMonthlyBudget,
       lastBackupAt: lastBackupAt ?? this.lastBackupAt,
       updatedAt: DateTime.now(),
+      tutorialCompleted: tutorialCompleted ?? this.tutorialCompleted,
     );
   }
 
@@ -71,6 +75,7 @@ class AppSettings {
           : null,
       updatedAt:
           DateTime.fromMillisecondsSinceEpoch(map['updated_at'] as int),
+      tutorialCompleted: (map['tutorial_completed'] as int? ?? 0) == 1,
     );
   }
 
@@ -87,6 +92,7 @@ class AppSettings {
       'default_monthly_budget': defaultMonthlyBudget,
       'last_backup_at': lastBackupAt?.millisecondsSinceEpoch,
       'updated_at': updatedAt.millisecondsSinceEpoch,
+      'tutorial_completed': tutorialCompleted ? 1 : 0,
     };
   }
 }

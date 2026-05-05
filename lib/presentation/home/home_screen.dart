@@ -13,9 +13,11 @@ import '../../providers/accounts_provider.dart';
 import '../../providers/budget_period_provider.dart';
 import '../../providers/budget_summary_provider.dart';
 import '../../providers/categories_provider.dart';
+import '../../providers/settings_provider.dart';
 import '../../providers/transactions_provider.dart';
 import '../settings/settings_screen.dart';
 import '../transactions/widgets/transaction_tile.dart';
+import '../tutorial/tutorial_overlay.dart';
 
 String _dayLabel(DateTime date) {
   final now = DateTime.now();
@@ -40,6 +42,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   final _searchCtrl = TextEditingController();
   List<_DayGroup> _visibleGroups = const [];
   Set<int> _cachedPeriodOffsets = const {};
+
+  bool _tutorialDismissed = false;
+  final _incomeFabKey = GlobalKey();
+  final _expenseFabKey = GlobalKey();
+  final _settingsIconKey = GlobalKey();
+  final _budgetHeroKey = GlobalKey();
+  final _periodNavKey = GlobalKey();
 
   @override
   void dispose() {
@@ -96,6 +105,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final catAsync = ref.watch(categoriesProvider);
     final accounts = ref.watch(accountsProvider).value ?? const [];
     final selectedAccountId = ref.watch(selectedHomeAccountIdProvider);
+    final settingsAsync = ref.watch(settingsProvider);
     final isKeyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
     final shouldHideBottomActions = _isSearching || isKeyboardOpen;
     if (!_accountInitialized &&
@@ -140,7 +150,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
 
-    return Scaffold(
+    final showTutorial =
+        !_tutorialDismissed &&
+        settingsAsync.value?.tutorialCompleted == false;
+
+    final scaffold = Scaffold(
       backgroundColor: cs.surface,
       appBar: AppBar(
         titleSpacing: 16,
@@ -248,6 +262,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       : () => context.push('/budget'),
                 ),
                 IconButton(
+                  key: _settingsIconKey,
                   icon: const Icon(Icons.settings_outlined),
                   onPressed: () => _openSettings(context),
                 ),
@@ -293,6 +308,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               bottom: 16 + MediaQuery.paddingOf(context).bottom,
               left: 16,
               child: FloatingActionButton(
+                key: _incomeFabKey,
                 heroTag: 'income_fab',
                 backgroundColor: AppTheme.incomeColor,
                 foregroundColor: Colors.white,
@@ -305,6 +321,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               bottom: 16 + MediaQuery.paddingOf(context).bottom,
               right: 16,
               child: FloatingActionButton(
+                key: _expenseFabKey,
                 heroTag: 'expense_fab',
                 backgroundColor: AppTheme.expenseColor,
                 foregroundColor: Colors.white,
@@ -325,6 +342,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
         ],
       ),
+    );
+    if (!showTutorial) return scaffold;
+    return Stack(
+      children: [
+        scaffold,
+        TutorialOverlay(
+          steps: _buildTutorialSteps(),
+          onComplete: _completeTutorial,
+        ),
+      ],
     );
   }
 
@@ -414,6 +441,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
               child: Row(
+                key: _periodNavKey,
                 children: [
                   IconButton(
                     icon: const Icon(Icons.chevron_left),
@@ -464,7 +492,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
           if (!isAllAccounts)
             SliverToBoxAdapter(
-              child: _BudgetHero(summary: summary),
+              child: KeyedSubtree(
+                key: _budgetHeroKey,
+                child: _BudgetHero(summary: summary),
+              ),
             ),
 
           const SliverToBoxAdapter(child: SizedBox(height: 8)),
@@ -636,6 +667,56 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       },
     );
   }
+
+  void _completeTutorial() {
+    setState(() => _tutorialDismissed = true);
+    ref.read(settingsProvider.notifier).markTutorialComplete();
+  }
+
+  List<TutorialStep> _buildTutorialSteps() => [
+        const TutorialStep(
+          title: 'Welcome to FELOOSY',
+          body:
+              'Your personal budget, beautifully simple.\nLet\'s take a quick tour of the key features.',
+        ),
+        TutorialStep(
+          title: 'Monthly Budget',
+          body:
+              'This card shows your budget vs. spending for the month. Tap "Set Budget" to define your monthly limit.',
+          spotlightKey: _budgetHeroKey,
+          padding: 16,
+        ),
+        TutorialStep(
+          title: 'Log Income',
+          body:
+              'Tap the green + button to add money coming in — salary, freelance, gifts, and more.',
+          spotlightKey: _incomeFabKey,
+        ),
+        TutorialStep(
+          title: 'Track Expenses',
+          body:
+              'Tap the red − button to record a purchase or bill. Pick a category to see where your money goes.',
+          spotlightKey: _expenseFabKey,
+        ),
+        TutorialStep(
+          title: 'Browse Past Months',
+          body:
+              'Tap the arrows or swipe left/right on the home screen to review any previous month.',
+          spotlightKey: _periodNavKey,
+        ),
+        TutorialStep(
+          title: 'Settings & More',
+          body:
+              'Change currency, manage accounts, customise categories, and back up your data from here.',
+          spotlightKey: _settingsIconKey,
+          padding: 18,
+        ),
+        const TutorialStep(
+          title: 'You\'re all set!',
+          body:
+              'Start by adding your first transaction. FELOOSY will track the rest.',
+        ),
+      ];
 
   List<_DayGroup> _groupByDate(List<Transaction> txs) {
     if (txs.isEmpty) return [];

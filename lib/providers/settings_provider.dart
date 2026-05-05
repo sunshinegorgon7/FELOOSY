@@ -14,6 +14,13 @@ class SettingsNotifier extends AsyncNotifier<AppSettings> {
     await repo.save(settings);
     state = AsyncData(settings);
   }
+
+  Future<void> markTutorialComplete() async {
+    final current = state.value;
+    if (current == null) return;
+    final updated = current.copyWith(tutorialCompleted: true);
+    await saveSettings(updated);
+  }
 }
 
 final settingsProvider =
