@@ -2,7 +2,6 @@ plugins {
     id("com.android.application")
     id("kotlin-android")
     id("dev.flutter.flutter-gradle-plugin")
-    id("com.google.gms.google-services")
 }
 
 android {
@@ -35,12 +34,6 @@ android {
             applicationIdSuffix = ".dev"
             versionNameSuffix = "-dev"
             resValue("string", "app_name", "FELOOSY Dev")
-        }
-        create("uat") {
-            dimension = "environment"
-            applicationIdSuffix = ".uat"
-            versionNameSuffix = "-uat"
-            resValue("string", "app_name", "FELOOSY UAT")
         }
         create("prod") {
             dimension = "environment"
