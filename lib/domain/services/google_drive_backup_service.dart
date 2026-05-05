@@ -6,11 +6,18 @@ import 'package:sqflite/sqflite.dart';
 import '../../data/database/database_helper.dart';
 import '../../providers/google_auth_provider.dart' show kDriveAppDataScope;
 
+class BackupEntry {
+  final String id;
+  final DateTime modifiedTime;
+  const BackupEntry({required this.id, required this.modifiedTime});
+}
+
 class GoogleDriveBackupService {
   final DatabaseHelper _db;
   const GoogleDriveBackupService(this._db);
 
-  static const _backupFileName = 'feloosy_backup.json';
+  static const _maxBackups = 5;
+  static const _backupPrefix = 'feloosy_backup';
 
   Future<drive.DriveApi> _api() async {
     final auth = await GoogleSignIn.instance.authorizationClient
@@ -25,24 +32,33 @@ class GoogleDriveBackupService {
     return (Sqflite.firstIntValue(result) ?? 0) > 0;
   }
 
-  Future<String?> _findBackupFileId(drive.DriveApi api) async {
+  Future<List<BackupEntry>> _listAllBackups(drive.DriveApi api) async {
     final list = await api.files.list(
       spaces: 'appDataFolder',
-      q: "name = '$_backupFileName' and trashed = false",
-      $fields: 'files(id)',
+      q: "name contains '$_backupPrefix' and trashed = false",
+      $fields: 'files(id,name,modifiedTime)',
+      orderBy: 'modifiedTime desc',
     );
-    return list.files?.firstOrNull?.id;
+    return (list.files ?? [])
+        .where((f) => f.id != null && f.modifiedTime != null)
+        .map((f) => BackupEntry(id: f.id!, modifiedTime: f.modifiedTime!))
+        .toList();
+  }
+
+  Future<List<BackupEntry>> listBackups() async {
+    try {
+      final api = await _api();
+      return await _listAllBackups(api);
+    } catch (_) {
+      return [];
+    }
   }
 
   Future<DateTime?> lastBackupTime() async {
     try {
       final api = await _api();
-      final list = await api.files.list(
-        spaces: 'appDataFolder',
-        q: "name = '$_backupFileName' and trashed = false",
-        $fields: 'files(id,modifiedTime)',
-      );
-      return list.files?.firstOrNull?.modifiedTime;
+      final all = await _listAllBackups(api);
+      return all.firstOrNull?.modifiedTime;
     } catch (_) {
       return null;
     }
@@ -52,9 +68,10 @@ class GoogleDriveBackupService {
     final api = await _api();
     final db = await _db.database;
 
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
     final payload = jsonEncode({
       'version': 1,
-      'created_at': DateTime.now().millisecondsSinceEpoch,
+      'created_at': timestamp,
       'data': {
         'accounts': await db.query('accounts'),
         'transactions': await db.query('transactions'),
@@ -71,35 +88,30 @@ class GoogleDriveBackupService {
       contentType: 'application/json',
     );
 
-    final existingId = await _findBackupFileId(api);
-    if (existingId != null) {
-      await api.files.update(drive.File(), existingId, uploadMedia: media);
-    } else {
-      await api.files.create(
-        drive.File()
-          ..name = _backupFileName
-          ..parents = ['appDataFolder'],
-        uploadMedia: media,
-      );
+    await api.files.create(
+      drive.File()
+        ..name = '${_backupPrefix}_$timestamp.json'
+        ..parents = ['appDataFolder'],
+      uploadMedia: media,
+    );
+
+    // Prune: keep only the 5 most recent backups
+    final all = await _listAllBackups(api);
+    if (all.length > _maxBackups) {
+      for (final entry in all.skip(_maxBackups)) {
+        await api.files.delete(entry.id);
+      }
     }
 
     await db.update(
       'app_settings',
-      {'last_backup_at': DateTime.now().millisecondsSinceEpoch},
+      {'last_backup_at': timestamp},
       where: 'id = 1',
     );
   }
 
-  Future<void> restore() async {
+  Future<void> restore(String fileId) async {
     final api = await _api();
-
-    final list = await api.files.list(
-      spaces: 'appDataFolder',
-      q: "name = '$_backupFileName' and trashed = false",
-      $fields: 'files(id)',
-    );
-    final fileId = list.files?.firstOrNull?.id;
-    if (fileId == null) throw Exception('No backup found in Google Drive.');
 
     final response = await api.files.get(
       fileId,

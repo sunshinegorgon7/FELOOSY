@@ -8,6 +8,7 @@ import '../../core/constants/app_info.dart';
 import '../../core/constants/currencies.dart';
 import '../../data/database/database_helper.dart';
 import '../../data/models/app_settings.dart';
+import '../../domain/services/google_drive_backup_service.dart';
 import '../../domain/services/local_export_service.dart';
 import '../../providers/budget_provider.dart';
 import '../../providers/categories_provider.dart';
@@ -391,7 +392,9 @@ class _SettingsBody extends ConsumerWidget {
           '  • All transactions\n'
           '  • All budgets\n'
           '  • All custom categories\n\n'
-          'Settings will be restored to defaults.\n\n'
+          'Settings will be restored to defaults and you will be '
+          'signed out of Google. Sign in again afterwards to restore '
+          'from a backup.\n\n'
           'This cannot be undone.',
         ),
         actions: [
@@ -414,6 +417,7 @@ class _SettingsBody extends ConsumerWidget {
 
   Future<void> _resetApp(BuildContext context, WidgetRef ref) async {
     await DatabaseHelper.instance.resetAll();
+    await ref.read(googleAccountProvider.notifier).signOut();
     ref.invalidate(transactionsProvider);
     ref.invalidate(transactionPeriodOffsetsProvider);
     ref.invalidate(categoriesProvider);
@@ -468,6 +472,7 @@ class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
   bool _signingIn = false;
   bool _backingUp = false;
   bool _restoring = false;
+  bool _loadingBackups = false;
   DateTime? _lastBackupTime;
 
   @override
@@ -535,8 +540,46 @@ class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
 
   Future<void> _restore() async {
     final svc = ref.read(googleDriveBackupProvider);
-    final hasLocal = await svc.hasLocalData();
 
+    // Step 1: fetch available backups
+    setState(() => _loadingBackups = true);
+    List<BackupEntry> backups;
+    try {
+      backups = await svc.listBackups();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Could not list backups: $e'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ));
+      }
+      if (mounted) setState(() => _loadingBackups = false);
+      return;
+    }
+    if (mounted) setState(() => _loadingBackups = false);
+
+    if (!mounted) return;
+
+    if (backups.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: const Text('No backup found in Google Drive.'),
+        backgroundColor: Theme.of(context).colorScheme.error,
+      ));
+      return;
+    }
+
+    // Step 2: pick which backup to restore (skip picker if only one)
+    final String selectedId;
+    if (backups.length == 1) {
+      selectedId = backups.first.id;
+    } else {
+      final picked = await _pickBackup(backups);
+      if (picked == null || !mounted) return;
+      selectedId = picked;
+    }
+
+    // Step 3: warn if local data will be overwritten
+    final hasLocal = await svc.hasLocalData();
     if (!mounted) return;
 
     if (hasLocal) {
@@ -571,9 +614,10 @@ class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
       if (confirmed != true) return;
     }
 
+    // Step 4: do the restore
     setState(() => _restoring = true);
     try {
-      await svc.restore();
+      await svc.restore(selectedId);
       ref.invalidate(transactionsProvider);
       ref.invalidate(transactionPeriodOffsetsProvider);
       ref.invalidate(currentBudgetProvider);
@@ -598,6 +642,30 @@ class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
     }
   }
 
+  Future<String?> _pickBackup(List<BackupEntry> backups) {
+    return showDialog<String>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: const Text('Select backup to restore'),
+        children: [
+          ...backups.map(
+            (b) => SimpleDialogOption(
+              onPressed: () => Navigator.pop(ctx, b.id),
+              child: Text(_formatBackupTime(b.modifiedTime)),
+            ),
+          ),
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(ctx, null),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: Theme.of(ctx).colorScheme.onSurfaceVariant),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   String _formatBackupTime(DateTime dt) {
     final diff = DateTime.now().difference(dt);
     if (diff.inMinutes < 1) return 'Just now';
@@ -611,7 +679,7 @@ class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
   Widget build(BuildContext context) {
     final account = ref.watch(googleAccountProvider);
     final cs = Theme.of(context).colorScheme;
-    final anyBusy = _signingIn || _backingUp || _restoring;
+    final anyBusy = _signingIn || _backingUp || _restoring || _loadingBackups;
 
     if (account == null) {
       return _SettingsRow(
@@ -680,7 +748,7 @@ class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
         _SettingsRow(
           title: 'Restore from Drive',
           subtitle: 'Replace local data with Drive backup',
-          busy: _restoring,
+          busy: _restoring || _loadingBackups,
           onTap: anyBusy ? null : _restore,
         ),
       ],
