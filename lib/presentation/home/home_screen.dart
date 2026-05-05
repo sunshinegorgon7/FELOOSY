@@ -16,7 +16,6 @@ import '../../providers/categories_provider.dart';
 import '../../providers/transactions_provider.dart';
 import '../settings/settings_screen.dart';
 import '../transactions/widgets/transaction_tile.dart';
-import 'widgets/spending_pie_chart.dart';
 
 String _dayLabel(DateTime date) {
   final now = DateTime.now();
@@ -35,7 +34,6 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  String? _selectedCategoryUuid;
   bool _isSearching = false;
   bool _accountInitialized = false;
   String _searchQuery = '';
@@ -342,26 +340,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final tt = Theme.of(context).textTheme;
 
     final isAllAccounts = selectedAccountId == null;
-    final activeCats = cats.where((c) => c.isActive).toList();
-
-    // Category filter then description search
-    final categoryFiltered = _selectedCategoryUuid == null
-        ? txs
-        : txs.where((tx) => tx.categoryUuid == _selectedCategoryUuid).toList();
 
     final filteredTxs = _searchQuery.isEmpty
-        ? categoryFiltered
-        : categoryFiltered
+        ? txs
+        : txs
               .where(
                 (tx) => tx.description.toLowerCase().contains(
                   _searchQuery.toLowerCase(),
                 ),
               )
               .toList();
-
-    final selectedCat = _selectedCategoryUuid != null
-        ? cats.where((c) => c.uuid == _selectedCategoryUuid).firstOrNull
-        : null;
 
     final groups = _groupByDate(filteredTxs);
     _visibleGroups = groups;
@@ -407,111 +395,62 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           // Period navigation header
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: Row(
                 children: [
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.chevron_left),
-                        tooltip: 'Previous month',
-                        onPressed: olderPeriodOffset == null
-                            ? null
-                            : () => _goToPeriodOffset(olderPeriodOffset),
-                      ),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: isCurrentPeriod
-                              ? null
-                              : () => ref
-                                    .read(selectedPeriodOffsetProvider.notifier)
-                                    .reset(),
-                          child: Column(
-                            children: [
-                              Text(
-                                periodLabel,
-                                textAlign: TextAlign.center,
-                                style: tt.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              if (!isCurrentPeriod)
-                                Text(
-                                  'Tap to return to current month',
-                                  textAlign: TextAlign.center,
-                                  style: tt.labelSmall?.copyWith(
-                                    color: cs.primary,
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.chevron_right),
-                        tooltip: 'Next month',
-                        onPressed: newerPeriodOffset == null
-                            ? null
-                            : () => _goToPeriodOffset(newerPeriodOffset),
-                      ),
-                    ],
+                  IconButton(
+                    icon: const Icon(Icons.chevron_left),
+                    tooltip: 'Previous month',
+                    onPressed: olderPeriodOffset == null
+                        ? null
+                        : () => _goToPeriodOffset(olderPeriodOffset),
                   ),
-                  Row(
-                    children: [
-                      const Spacer(),
-                      if (summary.budgetAmount == 0 && !isAllAccounts)
-                        TextButton.icon(
-                          onPressed: () => context.push('/budget/set'),
-                          icon: const Icon(Icons.add, size: 14),
-                          label: const Text('Set Budget'),
-                        ),
-                    ],
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: isCurrentPeriod
+                          ? null
+                          : () => ref
+                                .read(selectedPeriodOffsetProvider.notifier)
+                                .reset(),
+                      child: Column(
+                        children: [
+                          Text(
+                            periodLabel,
+                            textAlign: TextAlign.center,
+                            style: tt.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          if (!isCurrentPeriod)
+                            Text(
+                              'Tap to return to current month',
+                              textAlign: TextAlign.center,
+                              style: tt.labelSmall?.copyWith(
+                                color: cs.primary,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.chevron_right),
+                    tooltip: 'Next month',
+                    onPressed: newerPeriodOffset == null
+                        ? null
+                        : () => _goToPeriodOffset(newerPeriodOffset),
                   ),
                 ],
               ),
             ),
           ),
 
-          // Pie chart
           if (!isAllAccounts)
             SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
-                child: SpendingPieChart(
-                  transactions: txs,
-                  categories: activeCats,
-                  summary: summary,
-                  selectedCategoryUuid: _selectedCategoryUuid,
-                  onCategoryToggle: (uuid) =>
-                      setState(() => _selectedCategoryUuid = uuid),
-                ),
-              ),
+              child: _BudgetHero(summary: summary),
             ),
 
-          // Category filter label (only when a category is selected)
-          if (selectedCat != null)
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 20, 16, 4),
-                child: Row(
-                  children: [
-                    Text(selectedCat.name, style: tt.titleSmall),
-                    const SizedBox(width: 4),
-                    GestureDetector(
-                      onTap: () => setState(() => _selectedCategoryUuid = null),
-                      child: Icon(
-                        Icons.close_rounded,
-                        size: 16,
-                        color: cs.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            )
-          else
-            const SliverToBoxAdapter(child: SizedBox(height: 16)),
+          const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
           if (filteredTxs.isEmpty)
             SliverFillRemaining(
@@ -520,9 +459,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 padding: const EdgeInsets.all(32),
                 child: Center(
                   child: Text(
-                    selectedCat != null
-                        ? 'No ${selectedCat.name} transactions this period.'
-                        : 'No transactions yet.\nTap + to add one.',
+                    'No transactions yet.\nTap + to add one.',
                     textAlign: TextAlign.center,
                     style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
                   ),
@@ -533,6 +470,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             SliverList(
               delegate: SliverChildBuilderDelegate((context, index) {
                 final group = groups[index];
+                final netColor = group.dayNet <= 0
+                    ? AppTheme.expenseColor
+                    : AppTheme.incomeColor;
                 return InkWell(
                   onTap: () => _showDayOverlay(
                     context,
@@ -542,21 +482,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     scopedTxs: _searchQuery.isNotEmpty ? filteredTxs : null,
                   ),
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 13),
                     child: Row(
                       children: [
-                        Icon(
-                          Icons.chevron_right,
-                          size: 16,
-                          color: cs.onSurfaceVariant,
+                        Expanded(
+                          child: Text(
+                            group.label,
+                            style: tt.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
                         ),
-                        const SizedBox(width: 4),
                         Text(
-                          _searchQuery.isNotEmpty
-                              ? '${group.label} (${group.txs.length})'
-                              : group.label,
-                          style: tt.labelMedium?.copyWith(
+                          '${group.txs.length}',
+                          style: tt.labelSmall?.copyWith(
                             color: cs.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          summary.formatAmount(group.dayNet.abs()),
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: netColor,
                           ),
                         ),
                       ],
@@ -595,7 +545,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         dayKeys: overlayGroups.map((g) => g.day).toList(),
         initialIndex: initialIndex,
         cats: cats,
-        selectedCategoryUuid: _selectedCategoryUuid,
         summary: summary,
         scopedTxs: scopedTxs,
       ),
@@ -692,7 +641,6 @@ class _DayOverlay extends ConsumerStatefulWidget {
   final List<DateTime> dayKeys;
   final int initialIndex;
   final List<Category> cats;
-  final String? selectedCategoryUuid;
   final BudgetSummary summary;
   final List<Transaction>? scopedTxs;
 
@@ -700,7 +648,6 @@ class _DayOverlay extends ConsumerStatefulWidget {
     required this.dayKeys,
     required this.initialIndex,
     required this.cats,
-    required this.selectedCategoryUuid,
     required this.summary,
     this.scopedTxs,
   });
@@ -748,16 +695,11 @@ class _DayOverlayState extends ConsumerState<_DayOverlay> {
         widget.scopedTxs ??
         ref.watch(transactionsProvider).asData?.value ??
         const <Transaction>[];
-    final visibleDays = widget.dayKeys.where((day) {
-      return allTxs.any((tx) {
-        final txDay = DateUtils.dateOnly(tx.transactionDate);
-        final sameDay = txDay == day;
-        final matchesCategory =
-            widget.selectedCategoryUuid == null ||
-            tx.categoryUuid == widget.selectedCategoryUuid;
-        return sameDay && matchesCategory;
-      });
-    }).toList();
+    final visibleDays = widget.dayKeys
+        .where((day) => allTxs.any(
+              (tx) => DateUtils.dateOnly(tx.transactionDate) == day,
+            ))
+        .toList();
 
     if (visibleDays.isEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -772,15 +714,11 @@ class _DayOverlayState extends ConsumerState<_DayOverlay> {
     final currentDay = visibleDays.isEmpty ? null : visibleDays[_currentIndex];
     final dayTxs = currentDay == null
         ? <Transaction>[]
-        : (allTxs.where((tx) {
-              final txDay = DateUtils.dateOnly(tx.transactionDate);
-              final sameDay = txDay == currentDay;
-              final matchesCategory =
-                  widget.selectedCategoryUuid == null ||
-                  tx.categoryUuid == widget.selectedCategoryUuid;
-              return sameDay && matchesCategory;
-            }).toList()
-            ..sort((a, b) => b.transactionDate.compareTo(a.transactionDate)));
+        : (allTxs
+                .where((tx) =>
+                    DateUtils.dateOnly(tx.transactionDate) == currentDay)
+                .toList()
+              ..sort((a, b) => b.transactionDate.compareTo(a.transactionDate)));
 
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
@@ -901,6 +839,90 @@ class _DayOverlayState extends ConsumerState<_DayOverlay> {
             SizedBox(height: MediaQuery.paddingOf(context).bottom),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Budget hero — remaining amount + thin progress line, no card surround
+// ---------------------------------------------------------------------------
+
+class _BudgetHero extends StatelessWidget {
+  final BudgetSummary summary;
+  const _BudgetHero({required this.summary});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+
+    if (summary.budgetAmount == 0) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+        child: Row(
+          children: [
+            Text(
+              'No budget set.',
+              style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+            ),
+            const SizedBox(width: 6),
+            TextButton(
+              onPressed: () => context.push('/budget/set'),
+              style: TextButton.styleFrom(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                visualDensity: VisualDensity.compact,
+              ),
+              child: const Text('Set Budget'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final isOver = summary.isOverBudget;
+    final heroColor =
+        isOver ? AppTheme.expenseColor : AppTheme.incomeColor;
+    final barColor = isOver
+        ? AppTheme.expenseColor
+        : summary.spentPercentage > 0.8
+            ? AppTheme.warningColor
+            : cs.primary;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            summary.formatAmount(summary.remaining.abs()),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 34,
+              fontWeight: FontWeight.w700,
+              color: heroColor,
+              height: 1.0,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            isOver ? 'over budget' : 'remaining this month',
+            style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+          ),
+          const SizedBox(height: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(2),
+            child: LinearProgressIndicator(
+              value: summary.spentPercentage.clamp(0.0, 1.0),
+              minHeight: 3,
+              backgroundColor: cs.surfaceContainerHighest,
+              valueColor: AlwaysStoppedAnimation<Color>(barColor),
+            ),
+          ),
+        ],
       ),
     );
   }

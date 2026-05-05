@@ -42,6 +42,16 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
 
   bool get _isEditing => widget.initialTransaction != null;
 
+  bool get _canSave {
+    final amount =
+        double.tryParse(_amountController.text.replaceAll(',', ''));
+    return amount != null && amount > 0 && _selectedCategoryUuid != null;
+  }
+
+  void _onFieldChanged() {
+    if (mounted) setState(() {});
+  }
+
   @override
   void initState() {
     super.initState();
@@ -56,10 +66,13 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
       _date = initial.transactionDate;
       _selectedCategoryUuid = initial.categoryUuid;
     }
+
+    if (_isEditing) _amountController.addListener(_onFieldChanged);
   }
 
   @override
   void dispose() {
+    _amountController.removeListener(_onFieldChanged);
     _amountController.dispose();
     super.dispose();
   }
@@ -69,13 +82,38 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   /// Called whenever a field changes. Saves silently when all three
   /// required fields (amount, description, category) are complete.
   void _tryAutoSave() {
-    if (_saving) return;
+    if (_saving || _isEditing) return;
     final amount =
         double.tryParse(_amountController.text.replaceAll(',', ''));
     if (amount == null || amount <= 0) return;
     final desc = _descFieldController?.text.trim() ?? '';
     if (desc.isEmpty) return;
     if (_selectedCategoryUuid == null) return;
+    _commit(amount: amount, description: desc);
+  }
+
+  void _manualSave() {
+    final amount =
+        double.tryParse(_amountController.text.replaceAll(',', ''));
+    if (amount == null || amount <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter a valid amount.')),
+      );
+      return;
+    }
+    final desc = _descFieldController?.text.trim() ?? '';
+    if (desc.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Add a description.')),
+      );
+      return;
+    }
+    if (_selectedCategoryUuid == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Select a category.')),
+      );
+      return;
+    }
     _commit(amount: amount, description: desc);
   }
 
@@ -175,6 +213,11 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                 height: 20,
                 child: CircularProgressIndicator(strokeWidth: 2),
               ),
+            )
+          else if (_isEditing)
+            TextButton(
+              onPressed: _canSave ? _manualSave : null,
+              child: const Text('Save'),
             ),
         ],
       ),
@@ -557,7 +600,7 @@ class _DescriptionAutocomplete extends ConsumerWidget {
                       .where((c) => c.uuid == opt.categoryUuid)
                       .firstOrNull;
                   final iconColor =
-                      cat != null ? Color(cat.colorValue) : Colors.grey;
+                      cat != null ? Color(cat.colorValue) : cs.onSurfaceVariant;
                   final iconData = cat != null
                       ? IconData(cat.iconCodePoint,
                           fontFamily: cat.iconFontFamily)

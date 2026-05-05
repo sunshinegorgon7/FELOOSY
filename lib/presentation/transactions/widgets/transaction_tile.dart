@@ -37,8 +37,9 @@ class TransactionTile extends ConsumerWidget {
         ? AppTheme.expenseColor.withValues(alpha: isDark ? 0.07 : 0.04)
         : AppTheme.incomeColor.withValues(alpha: isDark ? 0.07 : 0.04);
 
-    final iconColor =
-        category != null ? Color(category!.colorValue) : Colors.grey;
+    final iconColor = category != null
+        ? Color(category!.colorValue)
+        : Theme.of(context).colorScheme.onSurfaceVariant;
     final iconData = category != null
         ? IconData(category!.iconCodePoint,
             fontFamily: category!.iconFontFamily)
