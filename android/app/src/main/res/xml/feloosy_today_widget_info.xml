@@ -8,4 +8,5 @@
     android:updatePeriodMillis="1800000"
     android:initialLayout="@layout/feloosy_today_widget"
     android:widgetCategory="home_screen"
+    android:description="@string/widget_description"
     android:previewLayout="@layout/feloosy_today_widget" />
