@@ -36,23 +36,22 @@ class FeloosyTodayWidgetProvider : AppWidgetProvider() {
 
         fun buildViews(context: Context): RemoteViews {
             val prefs = HomeWidgetPlugin.getData(context)
-            val accountName = prefs.getString("widget_today_account_name", "Wallet") ?: "Wallet"
-            val totalStr = prefs.getString("widget_today_total", "0") ?: "0"
-            val categoriesJson = prefs.getString("widget_today_categories_json", "[]") ?: "[]"
-            val isEmpty = prefs.getBoolean("widget_today_is_empty", true)
-            val currencyCode = prefs.getString("widget_today_currency_code", "AED") ?: "AED"
+            val accountName = prefs.getString("widget_spend_account_name", "Wallet") ?: "Wallet"
+            val totalStr = prefs.getString("widget_spend_available", "0") ?: "0"
+            val categoriesJson = prefs.getString("widget_spend_categories_json", "[]") ?: "[]"
+            val isEmpty = prefs.getBoolean("widget_spend_is_empty", true)
+            val currencyCode = prefs.getString("widget_spend_currency_code", "AED") ?: "AED"
 
-            val total = totalStr.toDoubleOrNull() ?: 0.0
+            val available = totalStr.toDoubleOrNull() ?: 0.0
             val categories = parseCategories(categoriesJson)
 
             val views = RemoteViews(context.packageName, R.layout.feloosy_today_widget)
 
-            // Header text
             views.setTextViewText(R.id.widget_today_account_label, accountName.uppercase())
-            views.setTextViewText(R.id.widget_today_total, formatAmount(total))
+            views.setTextViewText(R.id.widget_today_total, formatAmount(available))
             views.setTextViewText(R.id.widget_today_currency, " $currencyCode")
 
-            // Tap root → open home (today's transactions)
+            // Tap root → open home screen
             val homeIntent = PendingIntent.getActivity(
                 context,
                 200,
@@ -61,7 +60,7 @@ class FeloosyTodayWidgetProvider : AppWidgetProvider() {
             )
             views.setOnClickPendingIntent(R.id.widget_today_root, homeIntent)
 
-            // Add expense button → new expense screen
+            // CTA → new expense screen
             val addIntent = PendingIntent.getActivity(
                 context,
                 201,
@@ -73,11 +72,11 @@ class FeloosyTodayWidgetProvider : AppWidgetProvider() {
             )
             views.setOnClickPendingIntent(R.id.widget_today_add_btn, addIntent)
 
-            // Progress bar bitmap (handles both normal and empty states)
-            val progressBitmap = drawProgressBar(context, categories, total, isEmpty)
+            // Progress bar bitmap (total expenses as denominator, not available)
+            val totalExpenses = categories.sumOf { it.amount }
+            val progressBitmap = drawProgressBar(context, categories, totalExpenses, isEmpty)
             views.setImageViewBitmap(R.id.widget_today_progress_bar, progressBitmap)
 
-            // Legend vs empty text
             if (isEmpty || categories.isEmpty()) {
                 views.setViewVisibility(R.id.widget_today_legend, View.GONE)
                 views.setViewVisibility(R.id.widget_today_empty_text, View.VISIBLE)
@@ -127,7 +126,7 @@ class FeloosyTodayWidgetProvider : AppWidgetProvider() {
             isEmpty: Boolean,
         ): Bitmap {
             val density = context.resources.displayMetrics.density
-            val heightPx = (8 * density).toInt().coerceAtLeast(4)
+            val heightPx = (5 * density).toInt().coerceAtLeast(3)
             val widthPx = (360 * density).toInt().coerceAtLeast(200)
 
             val bitmap = Bitmap.createBitmap(widthPx, heightPx, Bitmap.Config.ARGB_8888)
@@ -135,14 +134,12 @@ class FeloosyTodayWidgetProvider : AppWidgetProvider() {
             val paint = Paint(Paint.ANTI_ALIAS_FLAG)
 
             if (isEmpty || total <= 0.0 || categories.isEmpty()) {
-                // 1dp thin line at vertical center
-                val lineH = density.coerceAtLeast(1f)
                 paint.color = Color.argb(26, 246, 241, 227)
+                val lineH = density.coerceAtLeast(1f)
                 val top = (heightPx - lineH) / 2f
                 canvas.drawRect(0f, top, widthPx.toFloat(), top + lineH, paint)
             } else {
-                // Rounded rect clip then fill segments left-to-right
-                val cornerPx = 4 * density
+                val cornerPx = (heightPx / 2f)
                 val clipPath = Path()
                 clipPath.addRoundRect(
                     RectF(0f, 0f, widthPx.toFloat(), heightPx.toFloat()),
@@ -166,7 +163,7 @@ class FeloosyTodayWidgetProvider : AppWidgetProvider() {
 
         private fun createDotBitmap(context: Context, color: Int): Bitmap {
             val density = context.resources.displayMetrics.density
-            val sizePx = (7 * density).toInt().coerceAtLeast(7)
+            val sizePx = (5 * density).toInt().coerceAtLeast(5)
             val bitmap = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)
             val canvas = Canvas(bitmap)
             val paint = Paint(Paint.ANTI_ALIAS_FLAG)
