@@ -25,8 +25,13 @@ class FeloosyTodayWidgetProvider : AppWidgetProvider() {
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray,
     ) {
+        val views = buildViews(context)
         appWidgetIds.forEach { id ->
-            appWidgetManager.updateAppWidget(id, buildViews(context))
+            try {
+                appWidgetManager.updateAppWidget(id, views)
+            } catch (e: Exception) {
+                // ignore — widget will refresh on next periodic update
+            }
         }
     }
 
