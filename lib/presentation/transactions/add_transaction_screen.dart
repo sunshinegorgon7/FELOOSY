@@ -36,6 +36,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   bool _descInitialized = false;
 
   final _amountController = TextEditingController();
+  final _amountFocusNode = FocusNode();
   DateTime _date = DateTime.now();
   String? _selectedCategoryUuid;
   bool _saving = false;
@@ -68,12 +69,21 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     }
 
     if (_isEditing) _amountController.addListener(_onFieldChanged);
+
+    // autofocus: true alone doesn't show the keyboard when the screen is
+    // opened via a deep link (widget tap), because the window may not have
+    // focus yet when the first frame is built. Explicitly requesting focus
+    // in a postFrameCallback covers both paths reliably.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _amountFocusNode.requestFocus();
+    });
   }
 
   @override
   void dispose() {
     _amountController.removeListener(_onFieldChanged);
     _amountController.dispose();
+    _amountFocusNode.dispose();
     super.dispose();
   }
 
@@ -273,6 +283,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                   // Amount hero input
                   TextField(
                     controller: _amountController,
+                    focusNode: _amountFocusNode,
                     keyboardType: const TextInputType.numberWithOptions(
                         decimal: true),
                     inputFormatters: [
