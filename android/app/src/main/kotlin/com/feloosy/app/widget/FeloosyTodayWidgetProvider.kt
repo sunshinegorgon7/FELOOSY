@@ -35,6 +35,16 @@ class FeloosyTodayWidgetProvider : AppWidgetProvider() {
         private data class CategoryData(val name: String, val amount: Double, val color: Int)
 
         fun buildViews(context: Context): RemoteViews {
+            return try {
+                buildViewsInternal(context)
+            } catch (e: Exception) {
+                // Fallback: show the initial layout unchanged so the widget
+                // can at least be placed; data will populate on next update.
+                RemoteViews(context.packageName, R.layout.feloosy_today_widget)
+            }
+        }
+
+        private fun buildViewsInternal(context: Context): RemoteViews {
             val prefs = HomeWidgetPlugin.getData(context)
             val accountName = prefs.getString("widget_spend_account_name", "Wallet") ?: "Wallet"
             val totalStr = prefs.getString("widget_spend_available", "0") ?: "0"
@@ -100,7 +110,7 @@ class FeloosyTodayWidgetProvider : AppWidgetProvider() {
                         color = parseHexColor(obj.getString("color")),
                     )
                 }
-            } catch (_: Exception) {
+            } catch (e: Exception) {
                 emptyList()
             }
         }
@@ -108,7 +118,7 @@ class FeloosyTodayWidgetProvider : AppWidgetProvider() {
         private fun parseHexColor(hex: String): Int {
             return try {
                 Color.parseColor(hex)
-            } catch (_: Exception) {
+            } catch (e: Exception) {
                 Color.argb(102, 246, 241, 227)
             }
         }
