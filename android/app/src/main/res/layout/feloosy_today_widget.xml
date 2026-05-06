@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_today_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/widget_today_bg"
+    android:padding="18dp">
+
+    <!-- Header row -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <!-- Left: account label + total amount -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/widget_today_account_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="WALLET"
+                android:textColor="#7fa890"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.10"
+                android:singleLine="true"
+                android:ellipsize="end" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="bottom">
+
+                <TextView
+                    android:id="@+id/widget_today_total"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0"
+                    android:textColor="#f6f1e3"
+                    android:textSize="24sp"
+                    android:fontFamily="monospace"
+                    android:includeFontPadding="false"
+                    android:singleLine="true" />
+
+                <TextView
+                    android:id="@+id/widget_today_currency"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=" AED"
+                    android:textColor="#f5a623"
+                    android:textSize="13sp"
+                    android:fontFamily="monospace"
+                    android:includeFontPadding="false"
+                    android:layout_marginStart="2dp"
+                    android:layout_marginBottom="3dp" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Right: add expense CTA -->
+        <TextView
+            android:id="@+id/widget_today_add_btn"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:gravity="center"
+            android:text="−"
+            android:textColor="#0d2818"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:background="@drawable/widget_today_amber_circle"
+            android:contentDescription="Add expense" />
+
+    </LinearLayout>
+
+    <!-- Stacked progress bar (bitmap drawn by provider) -->
+    <ImageView
+        android:id="@+id/widget_today_progress_bar"
+        android:layout_width="match_parent"
+        android:layout_height="8dp"
+        android:layout_marginTop="10dp"
+        android:scaleType="fitXY"
+        android:adjustViewBounds="false"
+        android:contentDescription="Today's spending bar" />
+
+    <!-- Legend row (normal state) -->
+    <LinearLayout
+        android:id="@+id/widget_today_legend"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <LinearLayout
+            android:id="@+id/widget_legend_item_1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:id="@+id/widget_legend_dot_1"
+                android:layout_width="7dp"
+                android:layout_height="7dp"
+                android:scaleType="fitXY" />
+
+            <TextView
+                android:id="@+id/widget_legend_label_1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:text="–"
+                android:textColor="#f6f1e3"
+                android:textSize="11sp"
+                android:singleLine="true"
+                android:ellipsize="end" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/widget_legend_item_2"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:id="@+id/widget_legend_dot_2"
+                android:layout_width="7dp"
+                android:layout_height="7dp"
+                android:scaleType="fitXY" />
+
+            <TextView
+                android:id="@+id/widget_legend_label_2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:text="–"
+                android:textColor="#f6f1e3"
+                android:textSize="11sp"
+                android:singleLine="true"
+                android:ellipsize="end" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/widget_legend_item_3"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:id="@+id/widget_legend_dot_3"
+                android:layout_width="7dp"
+                android:layout_height="7dp"
+                android:scaleType="fitXY" />
+
+            <TextView
+                android:id="@+id/widget_legend_label_3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:text="–"
+                android:textColor="#f6f1e3"
+                android:textSize="11sp"
+                android:singleLine="true"
+                android:ellipsize="end" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/widget_legend_item_4"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:id="@+id/widget_legend_dot_4"
+                android:layout_width="7dp"
+                android:layout_height="7dp"
+                android:scaleType="fitXY" />
+
+            <TextView
+                android:id="@+id/widget_legend_label_4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:text="–"
+                android:textColor="#f6f1e3"
+                android:textSize="11sp"
+                android:singleLine="true"
+                android:ellipsize="end" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Empty state: "No spending yet today" -->
+    <TextView
+        android:id="@+id/widget_today_empty_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="No spending yet today"
+        android:textColor="#7fa890"
+        android:textSize="11sp"
+        android:visibility="gone" />
+
+</LinearLayout>
