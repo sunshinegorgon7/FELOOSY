@@ -114,15 +114,15 @@ class FeloosyWidgetProvider : AppWidgetProvider() {
             )
             views.setOnClickPendingIntent(R.id.fw_add_btn, addIntent)
 
-            // ── Progress bar bitmap ────────────────────────────────────────
-            val barBitmap = buildBarBitmap(categories, categories.sumOf { it.amount }, todayEmpty)
-            views.setImageViewBitmap(R.id.fw_bar, barBitmap)
-
-            // ── Legend / empty state ───────────────────────────────────────
+            // ── Progress bar + legend (hidden when no today spending) ─────────
             if (todayEmpty || categories.isEmpty()) {
+                views.setViewVisibility(R.id.fw_bar, View.GONE)
                 views.setViewVisibility(R.id.fw_legend, View.GONE)
-                views.setViewVisibility(R.id.fw_empty_text, View.VISIBLE)
+                views.setViewVisibility(R.id.fw_empty_text, View.GONE)
             } else {
+                val barBitmap = buildBarBitmap(categories, categories.sumOf { it.amount })
+                views.setImageViewBitmap(R.id.fw_bar, barBitmap)
+                views.setViewVisibility(R.id.fw_bar, View.VISIBLE)
                 views.setViewVisibility(R.id.fw_legend, View.VISIBLE)
                 views.setViewVisibility(R.id.fw_empty_text, View.GONE)
                 bindLegend(context, views, categories)
@@ -136,7 +136,6 @@ class FeloosyWidgetProvider : AppWidgetProvider() {
         private fun buildBarBitmap(
             categories: List<CategoryData>,
             total: Double,
-            isEmpty: Boolean,
         ): Bitmap {
             val w = 240
             val h = 16
@@ -144,12 +143,7 @@ class FeloosyWidgetProvider : AppWidgetProvider() {
             val canvas = Canvas(bmp)
             val paint = Paint(Paint.ANTI_ALIAS_FLAG)
 
-            if (isEmpty || total <= 0.0) {
-                // 1dp-equivalent hairline for empty state
-                paint.color = Color.argb(26, 246, 241, 227)
-                canvas.drawRect(0f, 7f, w.toFloat(), 8f, paint)
-                return bmp
-            }
+            if (total <= 0.0) return bmp
 
             val path = Path()
             path.addRoundRect(

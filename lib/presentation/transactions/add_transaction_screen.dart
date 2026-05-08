@@ -70,17 +70,28 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
 
     if (_isEditing) _amountController.addListener(_onFieldChanged);
 
-    // autofocus: true alone doesn't show the keyboard when the screen is
-    // opened via a deep link (widget tap), because the window may not have
-    // focus yet when the first frame is built. Explicitly requesting focus
-    // in a postFrameCallback covers both paths reliably.
+    // Keyboard strategy for deep-link launches (widget tap):
+    // The Activity transition hides the IME while the window is gaining focus.
+    // A focus-node listener fires once the node actually receives OS-level
+    // focus (after the transition), which is the earliest safe moment to
+    // request the keyboard. The postFrameCallback handles normal push-nav.
+    _amountFocusNode.addListener(_onAmountFocusChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _amountFocusNode.requestFocus();
     });
   }
 
+  void _onAmountFocusChanged() {
+    // Fires when the node gains OS-level focus (after Activity transition).
+    // Re-requesting focus at this point triggers the keyboard reliably.
+    if (_amountFocusNode.hasFocus && mounted) {
+      _amountFocusNode.requestFocus();
+    }
+  }
+
   @override
   void dispose() {
+    _amountFocusNode.removeListener(_onAmountFocusChanged);
     _amountController.removeListener(_onFieldChanged);
     _amountController.dispose();
     _amountFocusNode.dispose();

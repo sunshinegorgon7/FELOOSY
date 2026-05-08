@@ -131,11 +131,9 @@ struct FeloosyWidgetEntryView: View {
         ZStack {
             bg.ignoresSafeArea()
             VStack(alignment: .leading, spacing: 0) {
-                headerRow.padding(.bottom, 10)
-                barView.padding(.bottom, 8)
-                if data.todayEmpty || data.categories.isEmpty {
-                    emptyLegend
-                } else {
+                headerRow.padding(.bottom, data.todayEmpty || data.categories.isEmpty ? 0 : 10)
+                if !data.todayEmpty && !data.categories.isEmpty {
+                    barView.padding(.bottom, 8)
                     legendRow
                 }
             }
@@ -243,12 +241,6 @@ struct FeloosyWidgetEntryView: View {
                 Spacer().frame(maxWidth: .infinity)
             }
         }
-    }
-
-    private var emptyLegend: some View {
-        Text("No spending yet today")
-            .font(.system(size: 11, weight: .regular))
-            .foregroundColor(muted)
     }
 
     private func fmtDouble(_ v: Double) -> String {
