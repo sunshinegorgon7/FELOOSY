@@ -19,8 +19,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginBottom="10dp">
+        android:gravity="center_vertical">
 
         <!-- Left: label + amount -->
         <LinearLayout
@@ -82,7 +81,7 @@
             android:layout_width="42dp"
             android:layout_height="42dp"
             android:layout_marginStart="8dp"
-            android:text="&#8722;"
+            android:text="+"
             android:textColor="#0d2818"
             android:textSize="22sp"
             android:gravity="center"
@@ -98,6 +97,7 @@
         android:layout_height="8dp"
         android:scaleType="fitXY"
         android:adjustViewBounds="false"
+        android:layout_marginTop="10dp"
         android:layout_marginBottom="8dp"
         android:contentDescription="Today&#8217;s spending" />
 

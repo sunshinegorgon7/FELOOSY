@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import '../../app/app_theme.dart';
 import '../../core/constants/app_info.dart';
 import '../../core/constants/currencies.dart';
 import '../../data/database/database_helper.dart';
@@ -70,43 +71,6 @@ class _SettingsBody extends ConsumerWidget {
 
     return ListView(
       children: [
-        const _SectionHeader('Appearance'),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Brightness',
-                style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-              ),
-              const Gap(6),
-              SegmentedButton<String>(
-                segments: const [
-                  ButtonSegment(
-                    value: 'light',
-                    icon: Icon(Icons.light_mode_outlined),
-                    label: Text('Light'),
-                  ),
-                  ButtonSegment(
-                    value: 'system',
-                    icon: Icon(Icons.brightness_auto_outlined),
-                    label: Text('System'),
-                  ),
-                  ButtonSegment(
-                    value: 'dark',
-                    icon: Icon(Icons.dark_mode_outlined),
-                    label: Text('Dark'),
-                  ),
-                ],
-                selected: {settings.themeMode},
-                onSelectionChanged: (s) =>
-                    _save(ref, settings.copyWith(themeMode: s.first)),
-              ),
-            ],
-          ),
-        ),
-
         const _SectionHeader('Budget'),
         _SettingsRow(
           title: 'Currency',
@@ -704,11 +668,30 @@ class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
               account.photoUrl != null
                   ? CircleAvatar(
                       backgroundImage: NetworkImage(account.photoUrl!),
-                      radius: 13,
+                      radius: 18,
                     )
-                  : const CircleAvatar(
-                      radius: 13,
-                      child: Icon(Icons.person_outline, size: 13),
+                  : Container(
+                      width: 36,
+                      height: 36,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [AppTheme.amber, AppTheme.amber2],
+                        ),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        account.email.isNotEmpty
+                            ? account.email[0].toUpperCase()
+                            : 'S',
+                        style: const TextStyle(
+                          color: AppTheme.forest,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                        ),
+                      ),
                     ),
               const SizedBox(width: 10),
               Expanded(
@@ -730,11 +713,13 @@ class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
                   : TextButton(
                       onPressed: anyBusy ? null : _signOut,
                       style: TextButton.styleFrom(
+                        foregroundColor: AppTheme.amber,
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 4),
                         visualDensity: VisualDensity.compact,
                       ),
-                      child: const Text('Sign out'),
+                      child: const Text('Sign out',
+                          style: TextStyle(fontWeight: FontWeight.w600)),
                     ),
             ],
           ),
@@ -953,10 +938,15 @@ class _SettingsRow extends StatelessWidget {
           if (value != null) ...[
             const SizedBox(width: 12),
             ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 150),
+              constraints: const BoxConstraints(maxWidth: 160),
               child: Text(
                 value!,
-                style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                style: tt.bodySmall?.copyWith(
+                  color: danger ? cs.error : AppTheme.amber,
+                  fontFamily: 'DM Mono',
+                  fontWeight: FontWeight.w500,
+                  fontSize: 13,
+                ),
                 overflow: TextOverflow.ellipsis,
                 maxLines: 1,
                 textAlign: TextAlign.right,
@@ -973,10 +963,10 @@ class _SettingsRow extends StatelessWidget {
           else
             Icon(
               Icons.chevron_right,
-              size: 18,
+              size: 14,
               color: danger
                   ? cs.error.withValues(alpha: 0.4)
-                  : cs.outlineVariant,
+                  : AppTheme.muted2,
             ),
         ],
       ),
@@ -1027,13 +1017,11 @@ class _SectionHeader extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 28, 16, 2),
       child: Text(
-        title,
+        title.toUpperCase(),
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: danger
-                  ? cs.error.withValues(alpha: 0.8)
-                  : cs.onSurfaceVariant,
-              fontWeight: FontWeight.w500,
-              letterSpacing: 0.3,
+              color: danger ? cs.error.withValues(alpha: 0.8) : AppTheme.amber,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.10 * 11,
             ),
       ),
     );

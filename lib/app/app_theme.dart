@@ -1,137 +1,93 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // Single fixed theme — no user selection.
-  // Light: Mint Mist bg · Almost Aqua surface · Fern accent · near-black text
-  // Dark:  Deep Nimbus bg · Nimbus Surface · Ice Glow accent · muted-blue text
+  // ── Forest dark palette ────────────────────────────────────────────────────
+  static const Color forest  = Color(0xFF0D2818);
+  static const Color forest2 = Color(0xFF143A23);
+  static const Color forest3 = Color(0xFF1C4A2E);
+  static const Color amber   = Color(0xFFF5A623);
+  static const Color amber2  = Color(0xFFE08A10);
+  static const Color cream   = Color(0xFFF6F1E3);
+  static const Color muted   = Color(0xFF7FA890);
+  static const Color muted2  = Color(0xFF5A7D6A);
+  static const Color border  = Color(0x14F6F1E3); // rgba(246,241,227,0.08)
+  static const Color income  = Color(0xFF4ADE80);
 
-  // Semantic transaction colors — theme-independent, used for expense/income
-  // amounts, FABs, type toggles, and budget stats across the whole app.
-  static const Color expenseColor = Color(0xFFD64545);
-  static const Color incomeColor = Color(0xFF4A9955);
-  static const Color warningColor = Color(0xFFCC8830);
+  // ── Semantic colors ────────────────────────────────────────────────────────
+  static const Color expenseColor     = amber;
+  static const Color incomeColor      = income;
+  static const Color warningColor     = amber2;
+  static const Color destructiveColor = Color(0xFFC44A4A);
 
-  static final ThemeData light = _build(
-    brightness: Brightness.light,
-    cs: const ColorScheme(
-      brightness: Brightness.light,
-      surfaceTint: Colors.transparent,
-      // Fern — primary actions, FAB, selected states
-      primary: Color(0xFF639922),
-      onPrimary: Colors.white,
-      primaryContainer: Color(0xFFD4EAB0),
-      onPrimaryContainer: Color(0xFF2C2C2C),
-      // Almost Aqua — secondary / chips
-      secondary: Color(0xFF7A9A7A),
-      onSecondary: Colors.white,
-      secondaryContainer: Color(0xFFC4D4C4),
-      onSecondaryContainer: Color(0xFF2C2C2C),
-      tertiary: Color(0xFF5A8A40),
-      onTertiary: Colors.white,
-      tertiaryContainer: Color(0xFFCCE4A8),
-      onTertiaryContainer: Color(0xFF2C2C2C),
-      error: Color(0xFFB3261E),
-      onError: Colors.white,
-      errorContainer: Color(0xFFF9DEDC),
-      onErrorContainer: Color(0xFF410E0B),
-      // Mint Mist — main surface / background
-      surface: Color(0xFFF4F7F1),
-      onSurface: Color(0xFF2C2C2C),
-      surfaceContainerLowest: Color(0xFFF8FAF6),
-      surfaceContainerLow: Color(0xFFECF1E7),
-      surfaceContainer: Color(0xFFE4EBDE),
-      // Almost Aqua tint — elevated containers, input fills
-      surfaceContainerHigh: Color(0xFFDCE4D5),
-      surfaceContainerHighest: Color(0xFFC4D4C4),
-      onSurfaceVariant: Color(0xFF4A5E40),
-      outline: Color(0xFF7A9A5A),
-      outlineVariant: Color(0xFFBED4A4),
-      inverseSurface: Color(0xFF2C2C2C),
-      onInverseSurface: Color(0xFFF4F7F1),
-      inversePrimary: Color(0xFF97C459),
-      scrim: Colors.black,
-      shadow: Colors.black,
-    ),
-    cardColor: const Color(0xFFC4D4C4),      // Almost Aqua
-    cardBorderColor: const Color(0xFFB8CABC),
-  );
+  // ── Single dark theme ──────────────────────────────────────────────────────
+  static final ThemeData dark = _build();
 
-  static final ThemeData dark = _build(
-    brightness: Brightness.dark,
-    cs: const ColorScheme(
-      brightness: Brightness.dark,
-      surfaceTint: Colors.transparent,
-      // Ice Glow — primary actions
-      primary: Color(0xFF4D7FA8),
-      onPrimary: Color(0xFF111922),
-      primaryContainer: Color(0xFF1E2E3D),
-      onPrimaryContainer: Color(0xFFC4D0DC),
-      secondary: Color(0xFF5A8FAA),
-      onSecondary: Color(0xFF111922),
-      secondaryContainer: Color(0xFF1E2E3D),
-      onSecondaryContainer: Color(0xFFC4D0DC),
-      tertiary: Color(0xFF6A9FBA),
-      onTertiary: Color(0xFF111922),
-      tertiaryContainer: Color(0xFF1A2A38),
-      onTertiaryContainer: Color(0xFFC4D0DC),
-      error: Color(0xFFCF6679),
-      onError: Color(0xFF111922),
-      errorContainer: Color(0xFF8C1D18),
-      onErrorContainer: Color(0xFFF9DEDC),
-      // Deep Nimbus — main background
-      surface: Color(0xFF111922),
-      onSurface: Color(0xFFC4D0DC),
-      surfaceContainerLowest: Color(0xFF0C1318),
-      // Nimbus Surface — cards, nav
-      surfaceContainerLow: Color(0xFF1E2E3D),
-      surfaceContainer: Color(0xFF243547),
-      surfaceContainerHigh: Color(0xFF2A3D52),
-      surfaceContainerHighest: Color(0xFF30455C),
-      onSurfaceVariant: Color(0xFF9AB0C4),
-      outline: Color(0xFF4D7FA8),
-      outlineVariant: Color(0xFF1E2E3D),
-      inverseSurface: Color(0xFFC4D0DC),
-      onInverseSurface: Color(0xFF111922),
-      inversePrimary: Color(0xFF639922),
-      scrim: Colors.black,
-      shadow: Colors.black,
-    ),
-    cardColor: const Color(0xFF1E2E3D),      // Nimbus Surface
-    cardBorderColor: const Color(0xFF2A3D52),
-  );
-
-  static ThemeData _build({
-    required Brightness brightness,
-    required ColorScheme cs,
-    required Color cardColor,
-    required Color cardBorderColor,
-  }) =>
-      ThemeData(
-        useMaterial3: true,
-        colorScheme: cs,
-        scaffoldBackgroundColor: cs.surface,
-        canvasColor: cs.surface,
-        appBarTheme: AppBarTheme(
-          centerTitle: false,
-          elevation: 0,
-          scrolledUnderElevation: 0,
-          backgroundColor: cs.surface,
-          foregroundColor: cs.onSurface,
+  static ThemeData _build() {
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: const ColorScheme(
+        brightness: Brightness.dark,
+        surfaceTint: Colors.transparent,
+        primary: amber,
+        onPrimary: forest,
+        primaryContainer: Color(0xFF3A2000),
+        onPrimaryContainer: cream,
+        secondary: muted,
+        onSecondary: forest,
+        secondaryContainer: forest2,
+        onSecondaryContainer: cream,
+        tertiary: income,
+        onTertiary: forest,
+        tertiaryContainer: forest2,
+        onTertiaryContainer: cream,
+        error: destructiveColor,
+        onError: cream,
+        errorContainer: Color(0xFF4A1515),
+        onErrorContainer: Color(0xFFFFB4AB),
+        surface: forest,
+        onSurface: cream,
+        surfaceContainerLowest: Color(0xFF081610),
+        surfaceContainerLow: forest2,
+        surfaceContainer: forest2,
+        surfaceContainerHigh: forest3,
+        surfaceContainerHighest: forest3,
+        onSurfaceVariant: muted,
+        outline: muted2,
+        outlineVariant: border,
+        inverseSurface: cream,
+        onInverseSurface: forest,
+        inversePrimary: amber2,
+        scrim: Colors.black,
+        shadow: Colors.black,
+      ),
+      scaffoldBackgroundColor: forest,
+      canvasColor: forest,
+      appBarTheme: const AppBarTheme(
+        centerTitle: false,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        backgroundColor: forest,
+        foregroundColor: cream,
+      ),
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
-        // Compact icon buttons — brings AppBar actions closer together
-        iconButtonTheme: IconButtonThemeData(
-          style: IconButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 6),
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          ),
+      ),
+      cardTheme: const CardThemeData(
+        elevation: 0,
+        color: forest2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(20)),
+          side: BorderSide(color: border),
         ),
-        cardTheme: CardThemeData(
-          elevation: 0,
-          color: cardColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: cardBorderColor),
-          ),
-        ),
-      );
+      ),
+      textTheme: GoogleFonts.geistTextTheme(ThemeData.dark().textTheme).apply(
+        bodyColor: cream,
+        displayColor: cream,
+      ),
+    );
+  }
 }

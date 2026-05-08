@@ -44,8 +44,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Set<int> _cachedPeriodOffsets = const {};
 
   bool _tutorialDismissed = false;
-  final _incomeFabKey = GlobalKey();
-  final _expenseFabKey = GlobalKey();
+  final _addFabKey = GlobalKey();
   final _settingsIconKey = GlobalKey();
   final _budgetHeroKey = GlobalKey();
   final _periodNavKey = GlobalKey();
@@ -176,39 +175,41 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 children: [
                   Text(
                     'FELOOSY',
-                    style: GoogleFonts.rajdhani(
+                    style: GoogleFonts.geist(
                       fontWeight: FontWeight.w700,
-                      fontSize: 26,
-                      letterSpacing: 3,
+                      fontSize: 18,
+                      letterSpacing: 1.8,
+                      color: AppTheme.cream,
                     ),
                   ),
                   Expanded(
                     child: Center(
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
+                          horizontal: 12,
+                          vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: cs.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(20),
+                          color: AppTheme.forest2,
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(color: AppTheme.border),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              Icons.wallet_outlined,
-                              size: 13,
-                              color: cs.onSurfaceVariant,
+                              Icons.bar_chart_rounded,
+                              size: 14,
+                              color: AppTheme.muted,
                             ),
-                            const SizedBox(width: 5),
+                            const SizedBox(width: 6),
                             Text(
                               isAllAccounts
                                   ? 'All wallets'
                                   : selectedAccountName ?? 'Unknown wallet',
                               style: tt.labelSmall?.copyWith(
-                                color: cs.onSurfaceVariant,
-                                letterSpacing: 0.3,
+                                color: AppTheme.cream,
+                                fontSize: 12,
                               ),
                             ),
                           ],
@@ -305,41 +306,47 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           if (!shouldHideBottomActions)
             Positioned(
-              bottom: 16 + MediaQuery.paddingOf(context).bottom,
-              left: 16,
-              child: FloatingActionButton(
-                key: _incomeFabKey,
-                heroTag: 'income_fab',
-                backgroundColor: AppTheme.incomeColor,
-                foregroundColor: Colors.white,
-                onPressed: () => context.push('/transactions/add?type=income'),
-                child: const Icon(Icons.add),
-              ),
-            ),
-          if (!shouldHideBottomActions)
-            Positioned(
-              bottom: 16 + MediaQuery.paddingOf(context).bottom,
-              right: 16,
-              child: FloatingActionButton(
-                key: _expenseFabKey,
-                heroTag: 'expense_fab',
-                backgroundColor: AppTheme.expenseColor,
-                foregroundColor: Colors.white,
-                onPressed: () => context.push('/transactions/add?type=expense'),
-                child: const Icon(Icons.remove),
-              ),
-            ),
-          // Available balance centered between the two FABs
-          if (!shouldHideBottomActions)
-            if (summaryAsync case AsyncData(:final value))
-              if (value.budgetAmount > 0 && !isAllAccounts)
-                Positioned(
-                  bottom: 16 + MediaQuery.paddingOf(context).bottom,
-                  left: 72,
-                  right: 72,
-                  height: 56,
-                  child: _BalancePill(summary: value),
+              bottom: 20 + MediaQuery.paddingOf(context).bottom,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(26),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppTheme.amber.withValues(alpha: 0.35),
+                        blurRadius: 28,
+                        offset: const Offset(0, 12),
+                      ),
+                      BoxShadow(
+                        color: AppTheme.forest.withValues(alpha: 0.6),
+                        spreadRadius: 4,
+                        blurRadius: 0,
+                      ),
+                    ],
+                  ),
+                  child: SizedBox(
+                    width: 64,
+                    height: 64,
+                    child: FloatingActionButton(
+                      key: _addFabKey,
+                      heroTag: 'add_fab',
+                      elevation: 0,
+                      highlightElevation: 0,
+                      backgroundColor: AppTheme.amber,
+                      foregroundColor: AppTheme.forest,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(22),
+                      ),
+                      onPressed: () =>
+                          context.push('/transactions/add?type=expense'),
+                      child: const Icon(Icons.add, size: 28),
+                    ),
+                  ),
                 ),
+              ),
+            ),
         ],
       ),
     );
@@ -510,9 +517,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     Text(
                       'TOP SPENDING',
                       style: tt.labelSmall?.copyWith(
-                        color: cs.primary,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1.1,
+                        color: AppTheme.amber,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.10 * 11,
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -541,9 +548,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             SliverList(
               delegate: SliverChildBuilderDelegate((context, index) {
                 final group = groups[index];
-                final netColor = group.dayNet <= 0
-                    ? AppTheme.expenseColor
-                    : AppTheme.incomeColor;
                 return InkWell(
                   onTap: () => _showDayOverlay(
                     context,
@@ -561,23 +565,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           child: Text(
                             group.label,
                             style: tt.bodyMedium?.copyWith(
+                              color: AppTheme.cream,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
                         ),
-                        Text(
-                          '${group.txs.length}',
-                          style: tt.labelSmall?.copyWith(
-                            color: cs.onSurfaceVariant,
+                        Container(
+                          width: 22,
+                          height: 22,
+                          decoration: BoxDecoration(
+                            color: const Color(0x1FF5A623),
+                            borderRadius: BorderRadius.circular(11),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            '${group.txs.length}',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.amber,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 12),
                         Text(
                           summary.formatAmount(group.dayNet.abs()),
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: netColor,
+                            fontWeight: FontWeight.w500,
+                            fontFamily: 'DM Mono',
+                            color: AppTheme.amber,
                           ),
                         ),
                       ],
@@ -687,16 +704,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           padding: 16,
         ),
         TutorialStep(
-          title: 'Log Income',
+          title: 'Add a Transaction',
           body:
-              'Tap the green + button to add money coming in — salary, freelance, gifts, and more.',
-          spotlightKey: _incomeFabKey,
-        ),
-        TutorialStep(
-          title: 'Track Expenses',
-          body:
-              'Tap the red − button to record a purchase or bill. Pick a category to see where your money goes.',
-          spotlightKey: _expenseFabKey,
+              'Tap the + button to record a purchase, bill, or income. Pick a category to see where your money goes.',
+          spotlightKey: _addFabKey,
         ),
         TutorialStep(
           title: 'Browse Past Months',
@@ -1004,12 +1015,8 @@ class _BudgetHero extends StatelessWidget {
 
     final isOver = summary.isOverBudget;
     final heroColor =
-        isOver ? AppTheme.expenseColor : AppTheme.incomeColor;
-    final barColor = isOver
-        ? AppTheme.expenseColor
-        : summary.spentPercentage > 0.8
-            ? AppTheme.warningColor
-            : cs.primary;
+        isOver ? AppTheme.destructiveColor : AppTheme.amber;
+    final pct = summary.spentPercentage.clamp(0.0, 1.0);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
@@ -1021,73 +1028,31 @@ class _BudgetHero extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 34,
+              fontSize: 44,
               fontWeight: FontWeight.w700,
+              fontFamily: 'DM Mono',
               color: heroColor,
               height: 1.0,
-              letterSpacing: -0.5,
+              letterSpacing: 44 * -0.02,
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 4),
           Text(
-            isOver ? 'over budget' : 'remaining this month',
-            style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+            isOver
+                ? 'over budget · ${(pct * 100).round()}% spent'
+                : 'remaining this month · ${(pct * 100).round()}% spent',
+            style: tt.bodySmall?.copyWith(color: AppTheme.muted),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 14),
           ClipRRect(
             borderRadius: BorderRadius.circular(2),
             child: LinearProgressIndicator(
-              value: summary.spentPercentage.clamp(0.0, 1.0),
-              minHeight: 3,
-              backgroundColor: cs.surfaceContainerHighest,
-              valueColor: AlwaysStoppedAnimation<Color>(barColor),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Balance pill shown between the two FABs
-// ---------------------------------------------------------------------------
-
-class _BalancePill extends StatelessWidget {
-  final BudgetSummary summary;
-  const _BalancePill({required this.summary});
-
-  @override
-  Widget build(BuildContext context) {
-    final isOver = summary.isOverBudget;
-    final color = isOver ? AppTheme.expenseColor : AppTheme.incomeColor;
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.symmetric(horizontal: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            summary.formatAmount(summary.remaining.abs()),
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: color,
-              height: 1.2,
-            ),
-          ),
-          Text(
-            isOver ? 'over budget' : 'available',
-            style: TextStyle(
-              fontSize: 11,
-              color: color.withValues(alpha: 0.8),
-              height: 1.2,
+              value: pct,
+              minHeight: 4,
+              backgroundColor: const Color(0x14F6F1E3),
+              valueColor: AlwaysStoppedAnimation<Color>(
+                isOver ? AppTheme.destructiveColor : AppTheme.amber,
+              ),
             ),
           ),
         ],
@@ -1114,7 +1079,7 @@ class _TopCategoriesChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const barAreaHeight = 80.0;
+    const barAreaHeight = 100.0;
     final maxAmount = stats.first.amount;
 
     return Row(
@@ -1129,32 +1094,22 @@ class _TopCategoriesChart extends StatelessWidget {
             children: [
               Text(
                 summary.formatAmount(stat.amount),
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: color,
+                  fontWeight: FontWeight.w500,
+                  fontFamily: 'DM Mono',
+                  color: AppTheme.muted,
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 4),
-              CircleAvatar(
-                radius: 14,
-                backgroundColor: color.withValues(alpha: 0.15),
-                child: Icon(
-                  IconData(stat.category.iconCodePoint,
-                      fontFamily: stat.category.iconFontFamily),
-                  size: 14,
-                  color: color,
-                ),
-              ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 6),
               SizedBox(
                 height: barAreaHeight,
                 child: Align(
                   alignment: Alignment.bottomCenter,
                   child: Container(
                     height: barH,
-                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    margin: const EdgeInsets.symmetric(horizontal: 10),
                     decoration: BoxDecoration(
                       color: color,
                       borderRadius: const BorderRadius.vertical(
@@ -1166,7 +1121,11 @@ class _TopCategoriesChart extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 stat.category.name,
-                style: const TextStyle(fontSize: 10),
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                  color: AppTheme.muted,
+                ),
                 textAlign: TextAlign.center,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,

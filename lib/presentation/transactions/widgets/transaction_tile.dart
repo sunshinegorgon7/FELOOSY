@@ -24,7 +24,6 @@ class TransactionTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final settingsAsync = ref.watch(settingsProvider);
     final settings = settingsAsync.value;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final isExpense = transaction.type == TransactionType.expense;
     final amountColor =
@@ -34,8 +33,8 @@ class TransactionTile extends ConsumerWidget {
         : transaction.amount.toStringAsFixed(2);
 
     final tileColor = isExpense
-        ? AppTheme.expenseColor.withValues(alpha: isDark ? 0.07 : 0.04)
-        : AppTheme.incomeColor.withValues(alpha: isDark ? 0.07 : 0.04);
+        ? AppTheme.expenseColor.withValues(alpha: 0.07)
+        : AppTheme.incomeColor.withValues(alpha: 0.07);
 
     final iconColor = category != null
         ? Color(category!.colorValue)
@@ -67,7 +66,8 @@ class TransactionTile extends ConsumerWidget {
         trailing: Text(
           amountText,
           style: TextStyle(
-            fontWeight: FontWeight.w600,
+            fontFamily: 'DM Mono',
+            fontWeight: FontWeight.w500,
             color: amountColor,
             fontSize: 13,
           ),
@@ -98,7 +98,8 @@ class TransactionTile extends ConsumerWidget {
       trailing: Text(
         amountText,
         style: TextStyle(
-          fontWeight: FontWeight.w600,
+          fontFamily: 'DM Mono',
+          fontWeight: FontWeight.w500,
           color: amountColor,
           fontSize: 14,
         ),

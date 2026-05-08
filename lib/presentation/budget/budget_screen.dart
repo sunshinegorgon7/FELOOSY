@@ -36,7 +36,6 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
     final txAsync = ref.watch(transactionsProvider);
     final catAsync = ref.watch(categoriesProvider);
 
-    final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
 
     return Scaffold(
@@ -58,19 +57,45 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.calendar_month,
-                              color: cs.primary, size: 20),
+                          Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              color: const Color(0x1FF5A623),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            alignment: Alignment.center,
+                            child: const Icon(Icons.calendar_month,
+                                color: AppTheme.amber, size: 16),
+                          ),
                           const Gap(8),
-                          Text('Current Period', style: tt.labelLarge),
+                          Text(
+                            'CURRENT PERIOD',
+                            style: tt.labelSmall?.copyWith(
+                              color: AppTheme.amber,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.10 * 11,
+                            ),
+                          ),
                         ],
                       ),
                       const Gap(8),
-                      Text(period.label, style: tt.titleLarge),
+                      Text(
+                        period.label,
+                        style: tt.titleLarge?.copyWith(
+                          color: AppTheme.cream,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 28,
+                          letterSpacing: 28 * -0.01,
+                        ),
+                      ),
                       Text(
                         '${DateFormat('MMM d').format(period.start)} – '
                         '${DateFormat('MMM d, y').format(period.end)}',
-                        style: tt.bodySmall
-                            ?.copyWith(color: cs.onSurfaceVariant),
+                        style: tt.bodySmall?.copyWith(
+                          color: AppTheme.muted,
+                          fontSize: 13,
+                        ),
                       ),
                       const Gap(16),
                       budgetAsync.when(
@@ -96,7 +121,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Divider(height: 1),
+                        const Divider(height: 1, color: AppTheme.border),
                         InkWell(
                           onTap: () => setState(
                               () => _cardExpanded = !_cardExpanded),
@@ -109,16 +134,18 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
                                   '${txs.length} transaction'
                                   '${txs.length == 1 ? '' : 's'}'
                                   ' this period',
-                                  style: tt.labelMedium
-                                      ?.copyWith(color: cs.primary),
+                                  style: tt.labelMedium?.copyWith(
+                                    color: AppTheme.amber,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
                                 const Spacer(),
                                 AnimatedRotation(
                                   turns: _cardExpanded ? 0.5 : 0,
                                   duration:
                                       const Duration(milliseconds: 200),
-                                  child: Icon(Icons.expand_more,
-                                      color: cs.primary, size: 20),
+                                  child: const Icon(Icons.expand_more,
+                                      color: AppTheme.amber, size: 20),
                                 ),
                               ],
                             ),
@@ -175,7 +202,6 @@ class _NoBudget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -184,7 +210,7 @@ class _NoBudget extends StatelessWidget {
           style: Theme.of(context)
               .textTheme
               .bodyMedium
-              ?.copyWith(color: cs.onSurfaceVariant),
+              ?.copyWith(color: AppTheme.muted),
         ),
         const Gap(12),
         FilledButton.icon(
@@ -211,7 +237,6 @@ class _BudgetInfo extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tt = Theme.of(context).textTheme;
-    final cs = Theme.of(context).colorScheme;
     final account = ref.watch(activeAccountProvider);
 
     return Column(
@@ -223,53 +248,134 @@ class _BudgetInfo extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Budget',
-                      style: tt.labelSmall
-                          ?.copyWith(color: cs.onSurfaceVariant)),
                   Text(
-                    account == null
-                        ? budget.amount.toStringAsFixed(2)
-                        : CurrencyFormatter.formatWith(
-                            amount: budget.amount,
-                            symbol: account.currencySymbol,
-                            symbolLeading: account.currencySymbolLeading,
+                    'BUDGET',
+                    style: tt.labelSmall?.copyWith(
+                      color: AppTheme.muted,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.10 * 11,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  RichText(
+                    text: TextSpan(
+                      style: const TextStyle(
+                        fontFamily: 'DM Mono',
+                        fontSize: 26,
+                        fontWeight: FontWeight.w500,
+                        color: AppTheme.cream,
+                      ),
+                      children: [
+                        TextSpan(
+                          text: account == null
+                              ? budget.amount.toStringAsFixed(2)
+                              : CurrencyFormatter.formatWith(
+                                  amount: budget.amount,
+                                  symbol: account.currencySymbol,
+                                  symbolLeading: account.currencySymbolLeading,
+                                ),
+                        ),
+                        const TextSpan(
+                          text: ' AED',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: AppTheme.amber,
                           ),
-                    style: tt.headlineSmall
-                        ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
             OutlinedButton.icon(
               onPressed: onEdit,
-              icon: const Icon(Icons.edit_outlined, size: 16),
-              label: const Text('Change'),
+              icon: const Icon(Icons.edit_outlined,
+                  size: 14, color: AppTheme.amber),
+              label: const Text('Change',
+                  style: TextStyle(color: AppTheme.amber, fontSize: 13)),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(
+                    color: Color(0x66F5A623), width: 1.5),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 8),
+                shape: const StadiumBorder(),
+              ),
             ),
           ],
         ),
         const Gap(12),
         summaryAsync.whenOrNull(data: (s) {
-              final progress = (s.spentPercentage as double).clamp(0.0, 1.0);
+              final budget = s as BudgetSummary;
+              final progress = budget.spentPercentage.clamp(0.0, 1.0);
               return Column(
                 children: [
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(3),
                     child: LinearProgressIndicator(
-                        value: progress, minHeight: 8),
+                      value: progress,
+                      minHeight: 6,
+                      backgroundColor: const Color(0x14F6F1E3),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        budget.isOverBudget
+                            ? AppTheme.destructiveColor
+                            : AppTheme.amber,
+                      ),
+                    ),
                   ),
-                  const Gap(4),
+                  const Gap(12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                          'Spent: ${(s as BudgetSummary).formatAmount(s.totalExpenses)}',
-                          style: tt.labelSmall),
-                      Text(
-                        'Remaining: ${s.formatAmount(s.remaining)}',
-                        style: tt.labelSmall?.copyWith(
-                            color: s.isOverBudget
-                                ? AppTheme.expenseColor
-                                : AppTheme.incomeColor),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'SPENT',
+                            style: tt.labelSmall?.copyWith(
+                              color: AppTheme.muted,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.10 * 11,
+                              fontSize: 11,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            budget.formatAmount(budget.totalExpenses),
+                            style: const TextStyle(
+                              fontFamily: 'DM Mono',
+                              fontSize: 14,
+                              color: AppTheme.cream,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            'REMAINING',
+                            style: tt.labelSmall?.copyWith(
+                              color: budget.isOverBudget
+                                  ? AppTheme.destructiveColor
+                                  : AppTheme.amber,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.10 * 11,
+                              fontSize: 11,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            budget.formatAmount(budget.remaining),
+                            style: TextStyle(
+                              fontFamily: 'DM Mono',
+                              fontSize: 14,
+                              color: budget.isOverBudget
+                                  ? AppTheme.destructiveColor
+                                  : AppTheme.amber,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -297,7 +403,6 @@ class _ExpandedContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
 
     // Compute top 5 expense categories
@@ -330,9 +435,9 @@ class _ExpandedContent extends StatelessWidget {
             child: Text(
               'TOP SPENDING',
               style: tt.labelSmall?.copyWith(
-                color: cs.primary,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1.1,
+                color: AppTheme.amber,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.10 * 11,
               ),
             ),
           ),
@@ -375,7 +480,7 @@ class _TopCategoriesChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const barAreaHeight = 80.0;
+    const barAreaHeight = 100.0;
     final maxAmount = stats.first.amount;
 
     return Row(
@@ -388,37 +493,24 @@ class _TopCategoriesChart extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Amount
               Text(
                 summary.formatAmount(stat.amount),
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: color,
+                  fontWeight: FontWeight.w500,
+                  fontFamily: 'DM Mono',
+                  color: AppTheme.muted,
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 4),
-              // Category icon
-              CircleAvatar(
-                radius: 14,
-                backgroundColor: color.withValues(alpha: 0.15),
-                child: Icon(
-                  IconData(stat.category.iconCodePoint,
-                      fontFamily: stat.category.iconFontFamily),
-                  size: 14,
-                  color: color,
-                ),
-              ),
-              const SizedBox(height: 4),
-              // Bar (fixed-height area, bar anchored to bottom)
+              const SizedBox(height: 6),
               SizedBox(
                 height: barAreaHeight,
                 child: Align(
                   alignment: Alignment.bottomCenter,
                   child: Container(
                     height: barH,
-                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    margin: const EdgeInsets.symmetric(horizontal: 10),
                     decoration: BoxDecoration(
                       color: color,
                       borderRadius: const BorderRadius.vertical(
@@ -428,10 +520,13 @@ class _TopCategoriesChart extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 6),
-              // Category name
               Text(
                 stat.category.name,
-                style: const TextStyle(fontSize: 10),
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                  color: AppTheme.muted,
+                ),
                 textAlign: TextAlign.center,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,

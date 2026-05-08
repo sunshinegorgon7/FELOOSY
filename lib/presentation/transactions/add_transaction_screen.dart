@@ -14,6 +14,8 @@ import '../../providers/database_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/transactions_provider.dart';
 
+const _windowChannel = MethodChannel('com.feloosy/window');
+
 class AddTransactionScreen extends ConsumerStatefulWidget {
   final String type; // 'expense' | 'income'
   final Transaction? initialTransaction;
@@ -70,28 +72,29 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
 
     if (_isEditing) _amountController.addListener(_onFieldChanged);
 
-    // Keyboard strategy for deep-link launches (widget tap):
-    // The Activity transition hides the IME while the window is gaining focus.
-    // A focus-node listener fires once the node actually receives OS-level
-    // focus (after the transition), which is the earliest safe moment to
-    // request the keyboard. The postFrameCallback handles normal push-nav.
-    _amountFocusNode.addListener(_onAmountFocusChanged);
+    // Normal push-nav: keyboard via postFrameCallback.
+    // Deep-link / widget-tap: Android suppresses the IME until the window has
+    // OS-level focus (hasWindowFocus=true). MainActivity fires a MethodChannel
+    // event the moment focus arrives; that's the only reliable trigger.
+    _windowChannel.setMethodCallHandler(_onWindowFocused);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _amountFocusNode.requestFocus();
     });
   }
 
-  void _onAmountFocusChanged() {
-    // Fires when the node gains OS-level focus (after Activity transition).
-    // Re-requesting focus at this point triggers the keyboard reliably.
-    if (_amountFocusNode.hasFocus && mounted) {
-      _amountFocusNode.requestFocus();
-    }
+  Future<dynamic> _onWindowFocused(MethodCall call) async {
+    if (!mounted) return;
+    // requestFocus() is a no-op when the node already has Flutter-level focus
+    // (set during postFrameCallback while hasWindowFocus was still false).
+    // Calling TextInput.show directly re-issues showSoftInput() to Android now
+    // that the window actually has focus, bypassing the "already focused" guard.
+    _amountFocusNode.requestFocus();
+    await SystemChannels.textInput.invokeMethod<void>('TextInput.show');
   }
 
   @override
   void dispose() {
-    _amountFocusNode.removeListener(_onAmountFocusChanged);
+    _windowChannel.setMethodCallHandler(null);
     _amountController.removeListener(_onFieldChanged);
     _amountController.dispose();
     _amountFocusNode.dispose();
@@ -291,50 +294,62 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Amount hero input
-                  TextField(
-                    controller: _amountController,
-                    focusNode: _amountFocusNode,
-                    keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(
-                          RegExp(r'[\d.]')),
+                  // Amount row: currency label left, DM Mono number right
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        symbol,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.amber,
+                          letterSpacing: 14 * 0.08,
+                        ),
+                      ),
+                      Expanded(
+                        child: TextField(
+                          controller: _amountController,
+                          focusNode: _amountFocusNode,
+                          keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(
+                                RegExp(r'[\d.]')),
+                          ],
+                          autofocus: true,
+                          textAlign: TextAlign.right,
+                          style: TextStyle(
+                            fontSize: 56,
+                            fontWeight: FontWeight.w400,
+                            fontFamily: 'DM Mono',
+                            color: amountColor,
+                            letterSpacing: 56 * -0.02,
+                            height: 1.1,
+                          ),
+                          decoration: InputDecoration(
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            hintText: '0.00',
+                            hintStyle: TextStyle(
+                              fontSize: 56,
+                              fontWeight: FontWeight.w400,
+                              fontFamily: 'DM Mono',
+                              color: AppTheme.cream.withValues(alpha: 0.4),
+                              letterSpacing: 56 * -0.02,
+                              height: 1.1,
+                            ),
+                            isDense: true,
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                          onEditingComplete: () {
+                            FocusScope.of(context).nextFocus();
+                            _tryAutoSave();
+                          },
+                        ),
+                      ),
                     ],
-                    autofocus: true,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 52,
-                      fontWeight: FontWeight.w300,
-                      color: amountColor,
-                      letterSpacing: -1,
-                      height: 1.1,
-                    ),
-                    decoration: InputDecoration(
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
-                      hintText: '0.00',
-                      hintStyle: TextStyle(
-                        fontSize: 52,
-                        fontWeight: FontWeight.w300,
-                        color: cs.onSurface.withValues(alpha: 0.18),
-                        letterSpacing: -1,
-                        height: 1.1,
-                      ),
-                      prefixText: '$symbol  ',
-                      prefixStyle: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w300,
-                        color: amountColor.withValues(alpha: 0.7),
-                      ),
-                      isDense: true,
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                    onEditingComplete: () {
-                      FocusScope.of(context).nextFocus();
-                      _tryAutoSave();
-                    },
                   ),
                   const SizedBox(height: 16),
 
@@ -365,12 +380,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
               ),
             ),
 
-            Divider(
-              height: 1,
-              indent: 20,
-              endIndent: 20,
-              color: cs.outlineVariant,
-            ),
+            const Divider(height: 1, color: AppTheme.border),
 
             // ── Scrollable: categories ───────────────────────────────
             Expanded(
@@ -536,32 +546,29 @@ class _Chip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 9),
         decoration: BoxDecoration(
           color: selected
-              ? selectedColor.withValues(alpha: 0.15)
-              : cs.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(20),
+              ? selectedColor.withValues(alpha: 0.08)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(999),
           border: Border.all(
             color: selected
-                ? selectedColor.withValues(alpha: 0.6)
-                : Colors.transparent,
-            width: 1.5,
+                ? selectedColor
+                : const Color(0x1AF6F1E3), // cream at 0.1 alpha
+            width: 1.0,
           ),
         ),
         child: Text(
           label,
           style: TextStyle(
             fontSize: 13,
-            fontWeight:
-                selected ? FontWeight.w600 : FontWeight.normal,
-            color: selected ? selectedColor : cs.onSurfaceVariant,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+            color: selected ? selectedColor : AppTheme.muted,
           ),
         ),
       ),
@@ -689,16 +696,16 @@ class _DescriptionAutocomplete extends ConsumerWidget {
             prefixIcon:
                 Icon(Icons.edit_outlined, size: 18, color: cs.onSurfaceVariant),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide.none,
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: AppTheme.border),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide.none,
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: AppTheme.border),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(color: cs.primary, width: 2),
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: AppTheme.amber, width: 1.5),
             ),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -728,9 +735,6 @@ class _CategoryGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-
     final mostUsed = mostUsedUuids
         .map((uuid) =>
             categories.where((c) => c.uuid == uuid).firstOrNull)
@@ -746,9 +750,16 @@ class _CategoryGrid extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (mostUsed.isNotEmpty) ...[
-          Text('Frequent',
-              style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant)),
-          const SizedBox(height: 6),
+          const Text(
+            'FREQUENT',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.10 * 11,
+              color: AppTheme.muted,
+            ),
+          ),
+          const SizedBox(height: 8),
           SizedBox(
             height: 76,
             child: Row(
@@ -767,7 +778,7 @@ class _CategoryGrid extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          Divider(height: 1, color: cs.outlineVariant),
+          const Divider(height: 1, color: AppTheme.border),
           const SizedBox(height: 12),
         ],
         GridView.builder(
@@ -813,12 +824,25 @@ class _CategoryCell extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         decoration: BoxDecoration(
-          color: isSelected ? color : color.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(12),
+          color: isSelected
+              ? const Color(0x1FF5A623)       // rgba(245,166,35,0.12)
+              : const Color(0x80143A23),       // rgba(20,58,35,0.5)
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isSelected ? color : color.withValues(alpha: 0.3),
-            width: isSelected ? 1.5 : 1,
+            color: isSelected
+                ? AppTheme.amber
+                : color.withValues(alpha: 0.2),
+            width: 1.5,
           ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppTheme.amber.withValues(alpha: 0.25),
+                    blurRadius: 8,
+                    spreadRadius: 0,
+                  ),
+                ]
+              : null,
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -826,20 +850,17 @@ class _CategoryCell extends StatelessWidget {
             Icon(
               IconData(cat.iconCodePoint, fontFamily: cat.iconFontFamily),
               size: 20,
-              color: isSelected ? Colors.white : color,
+              color: color,
             ),
             const SizedBox(height: 4),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
               child: Text(
                 cat.name,
-                style: TextStyle(
-                  fontSize: 10,
-                  color: isSelected
-                      ? Colors.white
-                      : Theme.of(context).colorScheme.onSurface,
-                  fontWeight:
-                      isSelected ? FontWeight.w600 : FontWeight.normal,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppTheme.cream,
+                  fontWeight: FontWeight.w500,
                 ),
                 textAlign: TextAlign.center,
                 maxLines: 2,

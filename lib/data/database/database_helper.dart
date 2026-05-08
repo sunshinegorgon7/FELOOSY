@@ -26,7 +26,7 @@ class DatabaseHelper {
     final dbPath = p.join(docDir.path, AppFlavor.databaseName);
     return openDatabase(
       dbPath,
-      version: 10,
+      version: 11,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -213,6 +213,34 @@ class DatabaseHelper {
       await db.execute(
         'ALTER TABLE app_settings ADD COLUMN tutorial_completed INTEGER NOT NULL DEFAULT 0',
       );
+    }
+    if (oldVersion < 11) {
+      // Migrate default category colors to the harmonized forest palette.
+      // Values are Color(0xFFRRGGBB).toARGB32() integer equivalents.
+      const colorUpdates = <(String, int)>[
+        ('00000000-0000-0000-0000-000000000001', 0xFF5FB574), // Groceries
+        ('00000000-0000-0000-0000-000000000002', 0xFFF5A623), // Dining Out
+        ('00000000-0000-0000-0000-000000000003', 0xFFC4821A), // Coffee
+        ('00000000-0000-0000-0000-000000000004', 0xFF7FA890), // Transport
+        ('00000000-0000-0000-0000-000000000005', 0xFFA89070), // Fuel
+        ('00000000-0000-0000-0000-000000000006', 0xFFF5D623), // Utilities
+        ('00000000-0000-0000-0000-000000000007', 0xFF9A7FB0), // Rent / Housing
+        ('00000000-0000-0000-0000-000000000008', 0xFFE58040), // Healthcare
+        ('00000000-0000-0000-0000-000000000009', 0xFFD96A8A), // Pharmacy
+        ('00000000-0000-0000-0000-000000000010', 0xFFE08A10), // Shopping
+        ('00000000-0000-0000-0000-000000000011', 0xFFA87FC4), // Entertainment
+        ('00000000-0000-0000-0000-000000000012', 0xFF5FB5A8), // Sports / Gym
+        ('00000000-0000-0000-0000-000000000013', 0xFF7FB5D9), // Travel
+        ('00000000-0000-0000-0000-000000000014', 0xFF5FB574), // Salary
+        ('00000000-0000-0000-0000-000000000015', 0xFFB5D95F), // Cashback
+        ('00000000-0000-0000-0000-000000000016', 0xFF5FB5D9), // Refund
+      ];
+      for (final (uuid, colorValue) in colorUpdates) {
+        await db.rawUpdate(
+          'UPDATE categories SET color_value = ? WHERE uuid = ? AND is_custom = 0',
+          [colorValue, uuid],
+        );
+      }
     }
   }
 

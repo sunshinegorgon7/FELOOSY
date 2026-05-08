@@ -4,7 +4,6 @@ import '../providers/accounts_provider.dart';
 import '../providers/budget_provider.dart';
 import '../providers/drive_backup_provider.dart';
 import '../providers/google_auth_provider.dart';
-import '../providers/settings_provider.dart';
 import '../providers/transactions_provider.dart';
 import '../services/home_widget_sync_service.dart';
 import 'app_flavor.dart';
@@ -49,19 +48,10 @@ class _FeloosyAppState extends ConsumerState<FeloosyApp>
 
   @override
   Widget build(BuildContext context) {
-    final settingsAsync = ref.watch(settingsProvider);
-    final themeMode = switch (settingsAsync.value?.themeMode) {
-      'light' => ThemeMode.light,
-      'dark' => ThemeMode.dark,
-      _ => ThemeMode.system,
-    };
-
     return MaterialApp.router(
       title: 'FELOOSY',
       debugShowCheckedModeBanner: !AppFlavor.isProd,
-      theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
-      themeMode: themeMode,
+      theme: AppTheme.dark,
       routerConfig: appRouter,
     );
   }
