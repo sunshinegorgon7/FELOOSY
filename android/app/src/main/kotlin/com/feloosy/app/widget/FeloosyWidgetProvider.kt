@@ -12,6 +12,7 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
 import android.net.Uri
+import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
 import com.feloosy.app.R
@@ -20,29 +21,53 @@ import org.json.JSONArray
 
 class FeloosyWidgetProvider : AppWidgetProvider() {
 
+    override fun onReceive(context: Context, intent: Intent) {
+        Log.d(TAG, "onReceive action=${intent.action}")
+        super.onReceive(context, intent)
+    }
+
+    override fun onEnabled(context: Context) {
+        Log.i(TAG, "onEnabled: first instance added")
+    }
+
+    override fun onDisabled(context: Context) {
+        Log.i(TAG, "onDisabled: last instance removed")
+    }
+
+    override fun onDeleted(context: Context, appWidgetIds: IntArray) {
+        Log.i(TAG, "onDeleted: ids=${appWidgetIds.toList()}")
+    }
+
     override fun onUpdate(
         context: Context,
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray,
     ) {
+        Log.i(TAG, "onUpdate: ids=${appWidgetIds.toList()} pkg=${context.packageName}")
         val views = buildViews(context)
         appWidgetIds.forEach { id ->
             try {
                 appWidgetManager.updateAppWidget(id, views)
+                Log.i(TAG, "onUpdate: updateAppWidget OK id=$id")
             } catch (e: Exception) {
-                // will refresh on next periodic update
+                Log.e(TAG, "onUpdate: updateAppWidget FAILED id=$id", e)
             }
         }
     }
 
     companion object {
 
+        private const val TAG = "FeloosyWidget"
+
         private data class CategoryData(val name: String, val amount: Double, val color: Int)
 
         fun buildViews(context: Context): RemoteViews {
             return try {
-                buildViewsInternal(context)
+                buildViewsInternal(context).also {
+                    Log.d(TAG, "buildViews: built successfully")
+                }
             } catch (e: Exception) {
+                Log.e(TAG, "buildViews: exception — returning bare fallback layout", e)
                 RemoteViews(context.packageName, R.layout.feloosy_widget)
             }
         }
