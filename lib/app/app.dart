@@ -24,10 +24,10 @@ class _FeloosyAppState extends ConsumerState<FeloosyApp>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    Future<void>.microtask(() => syncSpendingWidget(ref));
-    ref.listenManual(accountsProvider, (_, _) => syncSpendingWidget(ref));
-    ref.listenManual(transactionsProvider, (_, _) => syncSpendingWidget(ref));
-    ref.listenManual(currentBudgetProvider, (_, _) => syncSpendingWidget(ref));
+    Future<void>.microtask(() => syncWidget(ref));
+    ref.listenManual(accountsProvider, (_, _) => syncWidget(ref));
+    ref.listenManual(transactionsProvider, (_, _) => syncWidget(ref));
+    ref.listenManual(currentBudgetProvider, (_, _) => syncWidget(ref));
   }
 
   @override
@@ -39,7 +39,7 @@ class _FeloosyAppState extends ConsumerState<FeloosyApp>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      syncSpendingWidget(ref).ignore();
+      syncWidget(ref).ignore();
     }
     if (state == AppLifecycleState.paused &&
         ref.read(googleAccountProvider) != null) {

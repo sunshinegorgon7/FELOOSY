@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="widget_description">Spending overview for the current budget period</string>
+    <string name="widget_description">Available budget and today\'s spending</string>
 </resources>

@@ -8,20 +8,26 @@ import '../providers/accounts_provider.dart';
 import '../providers/budget_period_provider.dart';
 import '../providers/database_provider.dart';
 
-const _spendWidgetProvider =
-    'com.feloosy.app.widget.FeloosyTodayWidgetProvider';
+const _androidProvider = 'com.feloosy.app.widget.FeloosyWidgetProvider';
+const _iOSKind = 'FeloosyWidget';
+const _appGroup = 'group.com.feloosy.feloosy';
 
-/// Syncs the spending widget with current-period data for the favourite account.
-///
-/// Shows: available budget (budget − expenses + income) as the headline number,
-/// top-3 expense categories for the period + "Other" collapsed remainder,
-/// all as a stacked progress bar and colour-coded legend.
-Future<void> syncSpendingWidget(WidgetRef ref) async {
+/// Syncs widget data for the favourite account.
+/// Header: available = monthlyBudget − totalSpentThisMonth.
+/// Bar/legend: today's expenses only, top-3 categories + Other.
+Future<void> syncWidget(WidgetRef ref) async {
+  try {
+    await HomeWidget.setAppGroupId(_appGroup);
+    await _sync(ref);
+  } catch (_) {}
+}
+
+Future<void> _sync(WidgetRef ref) async {
   final accounts = ref.read(accountsProvider).value ?? const [];
-  final favorite =
+  final account =
       accounts.where((a) => a.isFavorite).firstOrNull ?? accounts.firstOrNull;
 
-  if (favorite?.id == null) {
+  if (account?.id == null) {
     await _writeEmpty('Wallet', 'AED');
     return;
   }
@@ -31,54 +37,59 @@ Future<void> syncSpendingWidget(WidgetRef ref) async {
   final budgetRepo = ref.read(budgetRepositoryProvider);
   final categoryRepo = ref.read(categoryRepositoryProvider);
 
-  final txs = await txRepo.getForPeriod(
+  // --- Header: month-to-date available balance ---
+  final monthTxs = await txRepo.getForPeriod(
     period.start,
     period.end,
-    accountId: favorite!.id,
+    accountId: account!.id,
   );
-
-  double expenses = 0;
-  double income = 0;
-  final Map<String, double> byExpenseCategory = {};
-
-  for (final tx in txs) {
-    if (tx.type == TransactionType.expense) {
-      expenses += tx.amount;
-      byExpenseCategory[tx.categoryUuid] =
-          (byExpenseCategory[tx.categoryUuid] ?? 0) + tx.amount;
-    } else {
-      income += tx.amount;
-    }
+  double spentThisMonth = 0;
+  for (final tx in monthTxs) {
+    if (tx.type == TransactionType.expense) spentThisMonth += tx.amount;
   }
-
   final budget = await budgetRepo.getForPeriod(
     period.budgetYear,
     period.budgetMonth,
-    accountId: favorite.id!,
+    accountId: account.id!,
   );
-  final budgetAmount = budget?.amount ?? favorite.defaultMonthlyBudget ?? 0;
-  final available = budgetAmount - expenses + income;
+  final monthlyBudget = budget?.amount ?? account.defaultMonthlyBudget ?? 0;
+  final available = monthlyBudget - spentThisMonth;
 
-  if (byExpenseCategory.isEmpty) {
-    await _writeEmpty(favorite.name, favorite.currencyCode,
-        available: available);
-    return;
+  // --- Bar/legend: today's expenses by category ---
+  final now = DateTime.now();
+  final todayStart = DateTime(now.year, now.month, now.day);
+  final todayEnd = todayStart.add(const Duration(days: 1));
+  final todayTxs = await txRepo.getForPeriod(
+    todayStart,
+    todayEnd,
+    accountId: account.id,
+  );
+
+  final Map<String, double> byCategory = {};
+  for (final tx in todayTxs) {
+    if (tx.type == TransactionType.expense) {
+      byCategory[tx.categoryUuid] =
+          (byCategory[tx.categoryUuid] ?? 0) + tx.amount;
+    }
   }
 
-  // Sort expense categories descending; top 3 named, rest collapsed.
-  final sorted = byExpenseCategory.entries.toList()
+  final todayEmpty = byCategory.isEmpty;
+  final todayTotal =
+      byCategory.values.fold(0.0, (sum, v) => sum + v);
+
+  final sorted = byCategory.entries.toList()
     ..sort((a, b) => b.value.compareTo(a.value));
 
-  final List<Map<String, dynamic>> categories = [];
+  final List<Map<String, dynamic>> catList = [];
   double otherAmount = 0;
 
   for (int i = 0; i < sorted.length; i++) {
     if (i < 3) {
       final cat = await categoryRepo.getByUuid(sorted[i].key);
-      // colorValue is Flutter ARGB int; encode as #AARRGGBB for Android.
+      // Flutter ARGB int → #AARRGGBB for Android Color.parseColor
       final colorHex =
           '#${(cat?.colorValue ?? 0xFFFFFFFF).toRadixString(16).padLeft(8, '0').toUpperCase()}';
-      categories.add({
+      catList.add({
         'name': cat?.name ?? 'Other',
         'amount': sorted[i].value,
         'color': colorHex,
@@ -87,40 +98,37 @@ Future<void> syncSpendingWidget(WidgetRef ref) async {
       otherAmount += sorted[i].value;
     }
   }
-
   if (otherAmount > 0) {
-    // rgba(246,241,227,0.4) → ARGB #66F6F1E3
-    categories.add({
-      'name': 'Other',
-      'amount': otherAmount,
-      'color': '#66F6F1E3',
-    });
+    catList.add({'name': 'Other', 'amount': otherAmount, 'color': '#66F6F1E3'});
   }
 
+  await HomeWidget.saveWidgetData<String>('fw_account_name', account.name);
   await HomeWidget.saveWidgetData<String>(
-      'widget_spend_account_name', favorite.name);
+      'fw_currency_code', account.currencyCode);
+  await HomeWidget.saveWidgetData<String>('fw_available', available.toString());
+  await HomeWidget.saveWidgetData<bool>('fw_is_over_budget', available < 0);
+  await HomeWidget.saveWidgetData<bool>('fw_today_empty', todayEmpty);
   await HomeWidget.saveWidgetData<String>(
-      'widget_spend_available', available.toString());
+      'fw_today_total', todayTotal.toString());
   await HomeWidget.saveWidgetData<String>(
-      'widget_spend_currency_code', favorite.currencyCode);
-  await HomeWidget.saveWidgetData<String>(
-      'widget_spend_categories_json', jsonEncode(categories));
-  await HomeWidget.saveWidgetData<bool>('widget_spend_is_empty', false);
-  await HomeWidget.updateWidget(qualifiedAndroidName: _spendWidgetProvider);
+      'fw_categories_json', jsonEncode(catList));
+
+  await HomeWidget.updateWidget(
+    qualifiedAndroidName: _androidProvider,
+    iOSName: _iOSKind,
+  );
 }
 
-Future<void> _writeEmpty(
-  String accountName,
-  String currencyCode, {
-  double available = 0,
-}) async {
-  await HomeWidget.saveWidgetData<String>(
-      'widget_spend_account_name', accountName);
-  await HomeWidget.saveWidgetData<String>(
-      'widget_spend_available', available.toString());
-  await HomeWidget.saveWidgetData<String>(
-      'widget_spend_currency_code', currencyCode);
-  await HomeWidget.saveWidgetData<String>('widget_spend_categories_json', '[]');
-  await HomeWidget.saveWidgetData<bool>('widget_spend_is_empty', true);
-  await HomeWidget.updateWidget(qualifiedAndroidName: _spendWidgetProvider);
+Future<void> _writeEmpty(String accountName, String currencyCode) async {
+  await HomeWidget.saveWidgetData<String>('fw_account_name', accountName);
+  await HomeWidget.saveWidgetData<String>('fw_currency_code', currencyCode);
+  await HomeWidget.saveWidgetData<String>('fw_available', '0');
+  await HomeWidget.saveWidgetData<bool>('fw_is_over_budget', false);
+  await HomeWidget.saveWidgetData<bool>('fw_today_empty', true);
+  await HomeWidget.saveWidgetData<String>('fw_today_total', '0');
+  await HomeWidget.saveWidgetData<String>('fw_categories_json', '[]');
+  await HomeWidget.updateWidget(
+    qualifiedAndroidName: _androidProvider,
+    iOSName: _iOSKind,
+  );
 }

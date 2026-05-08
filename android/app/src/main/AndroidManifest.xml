@@ -37,14 +37,14 @@
             android:name="flutterEmbedding"
             android:value="2" />
         <receiver
-            android:name=".widget.FeloosyTodayWidgetProvider"
+            android:name=".widget.FeloosyWidgetProvider"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/feloosy_today_widget_info" />
+                android:resource="@xml/feloosy_widget_info" />
         </receiver>
     </application>
     <!-- Required to query activities that can process text, see:

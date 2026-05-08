@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 3×1 spending widget: [label + available amount] [stacked bar] [category legend] -->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/fw_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/fw_bg"
+    android:paddingStart="14dp"
+    android:paddingEnd="14dp"
+    android:paddingTop="14dp"
+    android:paddingBottom="14dp"
+    android:gravity="center_vertical">
+
+    <!-- ── Header row ── -->
+    <LinearLayout
+        android:id="@+id/fw_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="10dp">
+
+        <!-- Left: label + amount -->
+        <LinearLayout
+            android:id="@+id/fw_header_left"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/fw_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="AVAILABLE TO SPEND"
+                android:textColor="#7fa890"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.10"
+                android:includeFontPadding="false"
+                android:singleLine="true"
+                android:ellipsize="end" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="bottom"
+                android:layout_marginTop="2dp">
+
+                <TextView
+                    android:id="@+id/fw_amount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0"
+                    android:textColor="#f6f1e3"
+                    android:textSize="24sp"
+                    android:fontFamily="monospace"
+                    android:includeFontPadding="false"
+                    android:singleLine="true" />
+
+                <TextView
+                    android:id="@+id/fw_currency"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=" AED"
+                    android:textColor="#f5a623"
+                    android:textSize="13sp"
+                    android:fontFamily="monospace"
+                    android:includeFontPadding="false"
+                    android:layout_marginBottom="3dp" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Right: add-expense button -->
+        <TextView
+            android:id="@+id/fw_add_btn"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:layout_marginStart="8dp"
+            android:text="&#8722;"
+            android:textColor="#0d2818"
+            android:textSize="22sp"
+            android:gravity="center"
+            android:background="@drawable/fw_btn"
+            android:contentDescription="Add expense" />
+
+    </LinearLayout>
+
+    <!-- ── Stacked progress bar ── -->
+    <ImageView
+        android:id="@+id/fw_bar"
+        android:layout_width="match_parent"
+        android:layout_height="8dp"
+        android:scaleType="fitXY"
+        android:adjustViewBounds="false"
+        android:layout_marginBottom="8dp"
+        android:contentDescription="Today&#8217;s spending" />
+
+    <!-- ── Category legend (normal state) ── -->
+    <LinearLayout
+        android:id="@+id/fw_legend"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:id="@+id/fw_item_1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+            <ImageView
+                android:id="@+id/fw_dot_1"
+                android:layout_width="7dp"
+                android:layout_height="7dp"
+                android:scaleType="fitXY" />
+            <TextView
+                android:id="@+id/fw_label_1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:text="&#8211;"
+                android:textColor="#f6f1e3"
+                android:textSize="11sp"
+                android:includeFontPadding="false"
+                android:singleLine="true"
+                android:ellipsize="end" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/fw_item_2"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+            <ImageView
+                android:id="@+id/fw_dot_2"
+                android:layout_width="7dp"
+                android:layout_height="7dp"
+                android:scaleType="fitXY" />
+            <TextView
+                android:id="@+id/fw_label_2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:text="&#8211;"
+                android:textColor="#f6f1e3"
+                android:textSize="11sp"
+                android:includeFontPadding="false"
+                android:singleLine="true"
+                android:ellipsize="end" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/fw_item_3"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+            <ImageView
+                android:id="@+id/fw_dot_3"
+                android:layout_width="7dp"
+                android:layout_height="7dp"
+                android:scaleType="fitXY" />
+            <TextView
+                android:id="@+id/fw_label_3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:text="&#8211;"
+                android:textColor="#f6f1e3"
+                android:textSize="11sp"
+                android:includeFontPadding="false"
+                android:singleLine="true"
+                android:ellipsize="end" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/fw_item_4"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+            <ImageView
+                android:id="@+id/fw_dot_4"
+                android:layout_width="7dp"
+                android:layout_height="7dp"
+                android:scaleType="fitXY" />
+            <TextView
+                android:id="@+id/fw_label_4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:text="&#8211;"
+                android:textColor="#f6f1e3"
+                android:textSize="11sp"
+                android:includeFontPadding="false"
+                android:singleLine="true"
+                android:ellipsize="end" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- ── Empty state ── -->
+    <TextView
+        android:id="@+id/fw_empty_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="No spending yet today"
+        android:textColor="#7fa890"
+        android:textSize="11sp"
+        android:includeFontPadding="false"
+        android:visibility="gone" />
+
+</LinearLayout>
