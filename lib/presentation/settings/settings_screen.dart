@@ -482,13 +482,23 @@ class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
   Future<void> _backup() async {
     setState(() => _backingUp = true);
     try {
-      await ref.read(googleDriveBackupProvider).backup();
-      final t = await ref.read(googleDriveBackupProvider).lastBackupTime();
+      final result = await ref.read(googleDriveBackupProvider).backup();
       if (mounted) {
-        setState(() => _lastBackupTime = t);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Backup saved to Google Drive.')),
-        );
+        switch (result) {
+          case BackupCreated():
+            final t =
+                await ref.read(googleDriveBackupProvider).lastBackupTime();
+            if (!mounted) break;
+            setState(() => _lastBackupTime = t);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Backup saved to Google Drive.')),
+            );
+          case BackupSkipped():
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                  content: Text('No changes since last backup — skipped.')),
+            );
+        }
       }
     } catch (e) {
       if (mounted) {
