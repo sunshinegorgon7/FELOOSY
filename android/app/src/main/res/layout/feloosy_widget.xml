@@ -78,35 +78,25 @@
         <!-- Right: add-expense button -->
         <TextView
             android:id="@+id/fw_add_btn"
-            android:layout_width="42dp"
-            android:layout_height="42dp"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
             android:layout_marginStart="8dp"
             android:text="+"
             android:textColor="#0d2818"
-            android:textSize="22sp"
+            android:textSize="20sp"
             android:gravity="center"
             android:background="@drawable/fw_btn"
             android:contentDescription="Add expense" />
 
     </LinearLayout>
 
-    <!-- ── Stacked progress bar ── -->
-    <ImageView
-        android:id="@+id/fw_bar"
-        android:layout_width="match_parent"
-        android:layout_height="8dp"
-        android:scaleType="fitXY"
-        android:adjustViewBounds="false"
-        android:layout_marginTop="10dp"
-        android:layout_marginBottom="8dp"
-        android:contentDescription="Today&#8217;s spending" />
-
     <!-- ── Category legend (normal state) ── -->
     <LinearLayout
         android:id="@+id/fw_legend"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:layout_marginTop="8dp">
 
         <LinearLayout
             android:id="@+id/fw_item_1"
@@ -209,6 +199,16 @@
         </LinearLayout>
 
     </LinearLayout>
+
+    <!-- ── Stacked progress bar ── -->
+    <ImageView
+        android:id="@+id/fw_bar"
+        android:layout_width="match_parent"
+        android:layout_height="8dp"
+        android:scaleType="fitXY"
+        android:adjustViewBounds="false"
+        android:layout_marginTop="6dp"
+        android:contentDescription="Today&#8217;s spending" />
 
     <!-- ── Empty state (always hidden — kept for RemoteViews binding) ── -->
     <TextView
