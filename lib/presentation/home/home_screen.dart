@@ -198,7 +198,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.bar_chart_rounded,
                               size: 14,
                               color: AppTheme.muted,
