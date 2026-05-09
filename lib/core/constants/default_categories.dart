@@ -20,33 +20,36 @@ const kDefaultCategoryUuids = [
   '00000000-0000-0000-0000-000000000014', // Salary
   '00000000-0000-0000-0000-000000000015', // Cashback
   '00000000-0000-0000-0000-000000000016', // Refund
+  '00000000-0000-0000-0000-000000000017', // Reimbursement
+  '00000000-0000-0000-0000-000000000018', // Insurance
 ];
 
-// Parallel list of (name, icon, color) — index must match kDefaultCategoryUuids.
-// Colors use the harmonized forest palette (updated in DB migration v11).
+// (name, icon, color, transactionType)
 const kDefaultCategoryData = [
-  ('Groceries',     Icons.shopping_cart,          Color(0xFF5FB574)),
-  ('Dining Out',    Icons.restaurant,              Color(0xFFF5A623)),
-  ('Coffee',        Icons.coffee,                  Color(0xFFC4821A)),
-  ('Transport',     Icons.directions_car,          Color(0xFF7FA890)),
-  ('Fuel',          Icons.local_gas_station,       Color(0xFFA89070)),
-  ('Utilities',     Icons.bolt,                    Color(0xFFF5D623)),
-  ('Rent / Housing',Icons.home,                    Color(0xFF9A7FB0)),
-  ('Healthcare',    Icons.local_hospital,          Color(0xFFE58040)),
-  ('Pharmacy',      Icons.medication,              Color(0xFFD96A8A)),
-  ('Shopping',      Icons.shopping_bag,            Color(0xFFE08A10)),
-  ('Entertainment', Icons.movie,                   Color(0xFFA87FC4)),
-  ('Sports / Gym',  Icons.fitness_center,          Color(0xFF5FB5A8)),
-  ('Travel',        Icons.flight,                  Color(0xFF7FB5D9)),
-  ('Salary',        Icons.account_balance_wallet,  Color(0xFF5FB574)),
-  ('Cashback',      Icons.card_giftcard,           Color(0xFFB5D95F)),
-  ('Refund',        Icons.replay,                  Color(0xFF5FB5D9)),
+  ('Groceries',      Icons.shopping_cart,          Color(0xFF5FB574), 'expense'),
+  ('Dining Out',     Icons.restaurant,              Color(0xFFF5A623), 'expense'),
+  ('Coffee',         Icons.coffee,                  Color(0xFFC4821A), 'expense'),
+  ('Transport',      Icons.directions_car,          Color(0xFF7FA890), 'expense'),
+  ('Fuel',           Icons.local_gas_station,       Color(0xFFA89070), 'expense'),
+  ('Utilities',      Icons.bolt,                    Color(0xFFF5D623), 'expense'),
+  ('Rent / Housing', Icons.home,                    Color(0xFF9A7FB0), 'expense'),
+  ('Healthcare',     Icons.thermostat,              Color(0xFFE58040), 'expense'),
+  ('Pharmacy',       Icons.medication,              Color(0xFFD96A8A), 'expense'),
+  ('Shopping',       Icons.shopping_bag,            Color(0xFFE08A10), 'expense'),
+  ('Entertainment',  Icons.movie,                   Color(0xFFA87FC4), 'expense'),
+  ('Sports / Gym',   Icons.fitness_center,          Color(0xFF5FB5A8), 'expense'),
+  ('Travel',         Icons.flight,                  Color(0xFF7FB5D9), 'expense'),
+  ('Salary',         Icons.account_balance_wallet,  Color(0xFF5FB574), 'income'),
+  ('Cashback',       Icons.card_giftcard,           Color(0xFFB5D95F), 'income'),
+  ('Refund',         Icons.replay,                  Color(0xFF5FB5D9), 'income'),
+  ('Reimbursement',  Icons.receipt_long,            Color(0xFF7FB5A8), 'income'),
+  ('Insurance',      Icons.health_and_safety,       Color(0xFF6BA8D9), 'income'),
 ];
 
 List<Category> buildDefaultCategories() {
   final now = DateTime.now();
   return kDefaultCategoryData.indexed.map((entry) {
-    final (index, (name, icon, color)) = entry;
+    final (index, (name, icon, color, type)) = entry;
     return Category(
       uuid: kDefaultCategoryUuids[index],
       name: name,
@@ -56,6 +59,7 @@ List<Category> buildDefaultCategories() {
       isCustom: false,
       isActive: true,
       sortOrder: index,
+      transactionType: type,
       createdAt: now,
     );
   }).toList();

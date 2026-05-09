@@ -10,7 +10,8 @@ import '../../providers/categories_provider.dart';
 
 class EditCategoryScreen extends ConsumerStatefulWidget {
   final Category? category;
-  const EditCategoryScreen({super.key, this.category});
+  final String? defaultType; // 'expense' or 'income' — used when creating new
+  const EditCategoryScreen({super.key, this.category, this.defaultType});
 
   @override
   ConsumerState<EditCategoryScreen> createState() =>
@@ -82,6 +83,7 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
         isCustom: true,
         isActive: true,
         sortOrder: maxSort + 1,
+        transactionType: widget.defaultType,
         createdAt: now,
       );
       await ref.read(categoriesProvider.notifier).add(newCat);

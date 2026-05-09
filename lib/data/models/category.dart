@@ -9,6 +9,8 @@ class Category {
   final bool isActive;
   final int sortOrder;
   final DateTime createdAt;
+  // 'expense', 'income', or null for custom categories that appear in both tabs
+  final String? transactionType;
 
   const Category({
     this.id,
@@ -21,6 +23,7 @@ class Category {
     this.isActive = true,
     required this.sortOrder,
     required this.createdAt,
+    this.transactionType,
   });
 
   Category copyWith({
@@ -29,6 +32,7 @@ class Category {
     int? iconCodePoint,
     bool? isActive,
     int? sortOrder,
+    String? transactionType,
   }) {
     return Category(
       id: id,
@@ -41,6 +45,7 @@ class Category {
       isActive: isActive ?? this.isActive,
       sortOrder: sortOrder ?? this.sortOrder,
       createdAt: createdAt,
+      transactionType: transactionType ?? this.transactionType,
     );
   }
 
@@ -57,6 +62,7 @@ class Category {
       sortOrder: map['sort_order'] as int,
       createdAt:
           DateTime.fromMillisecondsSinceEpoch(map['created_at'] as int),
+      transactionType: map['transaction_type'] as String?,
     );
   }
 
@@ -71,6 +77,7 @@ class Category {
       'is_active': isActive ? 1 : 0,
       'sort_order': sortOrder,
       'created_at': createdAt.millisecondsSinceEpoch,
+      'transaction_type': transactionType,
     };
     if (id != null) m['id'] = id;
     return m;

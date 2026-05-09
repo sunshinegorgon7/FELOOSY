@@ -389,24 +389,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                 keyboardDismissBehavior:
                     ScrollViewKeyboardDismissBehavior.onDrag,
                 children: [
-                  // Category header
-                  Row(
-                    children: [
-                      Text('Category', style: tt.titleSmall),
-                      const Spacer(),
-                      TextButton.icon(
-                        icon: const Icon(Icons.add, size: 14),
-                        label: const Text('New'),
-                        onPressed: () =>
-                            context.push('/categories/edit'),
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8),
-                          visualDensity: VisualDensity.compact,
-                        ),
-                      ),
-                    ],
-                  ),
+                  Text('Category', style: tt.titleSmall),
 
                   // Hint when nothing selected yet
                   _SelectionHint(
@@ -423,8 +406,13 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                             child: CircularProgressIndicator()),
                         error: (e, _) => Text('$e'),
                         data: (cats) {
+                          final typeKey = isExpense ? 'expense' : 'income';
                           final active =
-                              (cats.where((c) => c.isActive).toList()
+                              (cats.where((c) =>
+                                      c.isActive &&
+                                      (c.transactionType == typeKey ||
+                                          c.transactionType == null))
+                                  .toList()
                                     ..sort((a, b) => a.sortOrder
                                         .compareTo(b.sortOrder)))
                                   .toList();
@@ -437,6 +425,10 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                               _tryAutoSave();
                             },
                             mostUsedUuids: mostUsedUuids,
+                            onAddCategory: () => context.push(
+                              '/categories/edit',
+                              extra: {'defaultType': typeKey},
+                            ),
                           );
                         },
                       ),
@@ -515,7 +507,7 @@ class _TypeToggle extends StatelessWidget {
       children: [
         _Chip(
           label: 'Expense',
-          icon: Icons.arrow_downward_rounded,
+          symbol: '−',
           selected: isExpense,
           selectedColor: AppTheme.expenseColor,
           onTap: onExpense,
@@ -523,7 +515,7 @@ class _TypeToggle extends StatelessWidget {
         const SizedBox(width: 8),
         _Chip(
           label: 'Income',
-          icon: Icons.arrow_upward_rounded,
+          symbol: '+',
           selected: !isExpense,
           selectedColor: AppTheme.incomeColor,
           onTap: onIncome,
@@ -535,14 +527,14 @@ class _TypeToggle extends StatelessWidget {
 
 class _Chip extends StatelessWidget {
   final String label;
-  final IconData icon;
+  final String symbol;
   final bool selected;
   final Color selectedColor;
   final VoidCallback onTap;
 
   const _Chip({
     required this.label,
-    required this.icon,
+    required this.symbol,
     required this.selected,
     required this.selectedColor,
     required this.onTap,
@@ -581,7 +573,17 @@ class _Chip extends StatelessWidget {
                     : const Color(0x0FF6F1E3),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, size: 11, color: color),
+              child: Center(
+                child: Text(
+                  symbol,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: color,
+                    height: 1.0,
+                  ),
+                ),
+              ),
             ),
             const SizedBox(width: 7),
             Text(
@@ -748,12 +750,14 @@ class _CategoryGrid extends StatelessWidget {
   final String? selected;
   final ValueChanged<String> onSelect;
   final List<String> mostUsedUuids;
+  final VoidCallback? onAddCategory;
 
   const _CategoryGrid({
     required this.categories,
     required this.selected,
     required this.onSelect,
     this.mostUsedUuids = const [],
+    this.onAddCategory,
   });
 
   @override
@@ -813,8 +817,11 @@ class _CategoryGrid extends StatelessWidget {
             mainAxisSpacing: 8,
             mainAxisExtent: 76,
           ),
-          itemCount: remainingCategories.length,
+          itemCount: remainingCategories.length + 1,
           itemBuilder: (context, index) {
+            if (index == remainingCategories.length) {
+              return _AddCategoryCell(onTap: onAddCategory);
+            }
             final cat = remainingCategories[index];
             return _CategoryCell(
               cat: cat,
@@ -889,6 +896,44 @@ class _CategoryCell extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AddCategoryCell extends StatelessWidget {
+  final VoidCallback? onTap;
+  const _AddCategoryCell({this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0x80143A23),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: AppTheme.muted.withValues(alpha: 0.25),
+            width: 1.5,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.add_rounded, size: 22, color: AppTheme.muted),
+            const SizedBox(height: 4),
+            const Text(
+              'New',
+              style: TextStyle(
+                fontSize: 12,
+                color: AppTheme.muted,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
