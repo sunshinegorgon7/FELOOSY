@@ -42,7 +42,8 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(title: const Text('Budget')),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.fromLTRB(
+            16, 16, 16, 16 + MediaQuery.paddingOf(context).bottom + 80),
         children: [
           Card(
             clipBehavior: Clip.antiAlias,
@@ -493,30 +494,40 @@ class _TopCategoriesChart extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                summary.formatAmount(stat.amount),
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                  fontFamily: 'DM Mono',
-                  color: AppTheme.muted,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 6),
               SizedBox(
-                height: barAreaHeight,
-                child: Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Container(
-                    height: barH,
-                    margin: const EdgeInsets.symmetric(horizontal: 10),
-                    decoration: BoxDecoration(
-                      color: color,
-                      borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(6)),
+                height: barAreaHeight + 26,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Positioned(
+                      bottom: barH + 4,
+                      left: 0,
+                      right: 0,
+                      child: Text(
+                        summary.formatAmount(stat.amount),
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500,
+                          fontFamily: 'DM Mono',
+                          color: AppTheme.muted,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
                     ),
-                  ),
+                    Positioned(
+                      bottom: 0,
+                      left: 10,
+                      right: 10,
+                      height: barH,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: color,
+                          borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(6)),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 6),

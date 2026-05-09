@@ -70,6 +70,7 @@ class _SettingsBody extends ConsumerWidget {
     final cs = Theme.of(context).colorScheme;
 
     return ListView(
+      padding: EdgeInsets.only(bottom: MediaQuery.paddingOf(context).bottom + 16),
       children: [
         const _SectionHeader('Budget'),
         _SettingsRow(

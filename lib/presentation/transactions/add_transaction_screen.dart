@@ -515,6 +515,7 @@ class _TypeToggle extends StatelessWidget {
       children: [
         _Chip(
           label: 'Expense',
+          icon: Icons.arrow_downward_rounded,
           selected: isExpense,
           selectedColor: AppTheme.expenseColor,
           onTap: onExpense,
@@ -522,6 +523,7 @@ class _TypeToggle extends StatelessWidget {
         const SizedBox(width: 8),
         _Chip(
           label: 'Income',
+          icon: Icons.arrow_upward_rounded,
           selected: !isExpense,
           selectedColor: AppTheme.incomeColor,
           onTap: onIncome,
@@ -533,12 +535,14 @@ class _TypeToggle extends StatelessWidget {
 
 class _Chip extends StatelessWidget {
   final String label;
+  final IconData icon;
   final bool selected;
   final Color selectedColor;
   final VoidCallback onTap;
 
   const _Chip({
     required this.label,
+    required this.icon,
     required this.selected,
     required this.selectedColor,
     required this.onTap,
@@ -546,30 +550,49 @@ class _Chip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final color = selected ? selectedColor : AppTheme.muted;
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 9),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
         decoration: BoxDecoration(
           color: selected
-              ? selectedColor.withValues(alpha: 0.08)
+              ? selectedColor.withValues(alpha: 0.12)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
             color: selected
                 ? selectedColor
-                : const Color(0x1AF6F1E3), // cream at 0.1 alpha
-            width: 1.0,
+                : const Color(0x1AF6F1E3),
+            width: selected ? 1.5 : 1.0,
           ),
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-            color: selected ? selectedColor : AppTheme.muted,
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              width: 18,
+              height: 18,
+              decoration: BoxDecoration(
+                color: selected
+                    ? selectedColor.withValues(alpha: 0.18)
+                    : const Color(0x0FF6F1E3),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 11, color: color),
+            ),
+            const SizedBox(width: 7),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                color: color,
+              ),
+            ),
+          ],
         ),
       ),
     );

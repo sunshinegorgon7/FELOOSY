@@ -661,14 +661,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Text(
-                          summary.formatAmount(group.dayNet.abs()),
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            fontFamily: 'DM Mono',
-                            color: AppTheme.amber,
+                        const SizedBox(width: 10),
+                        SizedBox(
+                          width: 88,
+                          child: Text(
+                            summary.formatAmount(group.dayNet.abs()),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'DM Mono',
+                              color: AppTheme.amber,
+                            ),
+                            textAlign: TextAlign.right,
                           ),
                         ),
                       ],
@@ -1183,40 +1187,51 @@ class _TopCategoriesChart extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    summary.formatAmount(stat.amount),
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w500,
-                      fontFamily: 'DM Mono',
-                      color: AppTheme.muted,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 6),
                   SizedBox(
-                    height: barAreaHeight,
-                    child: Align(
-                      alignment: Alignment.bottomCenter,
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 180),
-                        height: barH,
-                        margin: const EdgeInsets.symmetric(horizontal: 10),
-                        decoration: BoxDecoration(
-                          color: color,
-                          borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(6)),
-                          boxShadow: isSelected
-                              ? [
-                                  BoxShadow(
-                                    color: color.withValues(alpha: 0.55),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 3),
-                                  ),
-                                ]
-                              : null,
+                    height: barAreaHeight + 26,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        AnimatedPositioned(
+                          duration: const Duration(milliseconds: 180),
+                          bottom: barH + 4,
+                          left: 0,
+                          right: 0,
+                          child: Text(
+                            summary.formatAmount(stat.amount),
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'DM Mono',
+                              color: AppTheme.muted,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
                         ),
-                      ),
+                        AnimatedPositioned(
+                          duration: const Duration(milliseconds: 180),
+                          bottom: 0,
+                          left: 10,
+                          right: 10,
+                          height: barH,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: color,
+                              borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(6)),
+                              boxShadow: isSelected
+                                  ? [
+                                      BoxShadow(
+                                        color: color.withValues(alpha: 0.55),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 3),
+                                      ),
+                                    ]
+                                  : null,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 6),
