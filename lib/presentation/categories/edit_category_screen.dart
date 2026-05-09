@@ -10,7 +10,8 @@ import '../../providers/categories_provider.dart';
 
 class EditCategoryScreen extends ConsumerStatefulWidget {
   final Category? category;
-  const EditCategoryScreen({super.key, this.category});
+  final String? defaultType;
+  const EditCategoryScreen({super.key, this.category, this.defaultType});
 
   @override
   ConsumerState<EditCategoryScreen> createState() =>
@@ -21,6 +22,7 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
   late TextEditingController _nameCtrl;
   late IconData _icon;
   late Color _color;
+  late String? _transactionType;
 
   bool get _isEdit => widget.category != null;
 
@@ -33,6 +35,7 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
         ? IconData(cat.iconCodePoint, fontFamily: cat.iconFontFamily)
         : kPickableIcons.first;
     _color = cat != null ? Color(cat.colorValue) : kPickableColors.first;
+    _transactionType = cat?.transactionType ?? widget.defaultType;
   }
 
   @override
@@ -64,6 +67,7 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
         isCustom: existing.isCustom,
         isActive: existing.isActive,
         sortOrder: existing.sortOrder,
+        transactionType: _transactionType,
         createdAt: existing.createdAt,
       );
       await ref.read(categoriesProvider.notifier).saveCategory(updated);
@@ -82,6 +86,7 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
         isCustom: true,
         isActive: true,
         sortOrder: maxSort + 1,
+        transactionType: _transactionType,
         createdAt: now,
       );
       await ref.read(categoriesProvider.notifier).add(newCat);
@@ -146,6 +151,35 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
                 border: OutlineInputBorder(),
               ),
               onChanged: (_) => setState(() {}),
+            ),
+            const SizedBox(height: 24),
+
+            // Type selector
+            Text('Used for', style: tt.titleSmall),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                _TypeChip(
+                  label: '− Expense',
+                  selected: _transactionType == 'expense',
+                  color: cs.error,
+                  onTap: () => setState(() => _transactionType = 'expense'),
+                ),
+                const SizedBox(width: 8),
+                _TypeChip(
+                  label: '+ Income',
+                  selected: _transactionType == 'income',
+                  color: Colors.green,
+                  onTap: () => setState(() => _transactionType = 'income'),
+                ),
+                const SizedBox(width: 8),
+                _TypeChip(
+                  label: 'Both',
+                  selected: _transactionType == null,
+                  color: cs.primary,
+                  onTap: () => setState(() => _transactionType = null),
+                ),
+              ],
             ),
             const SizedBox(height: 24),
 
@@ -225,6 +259,49 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
             ),
             const SizedBox(height: 32),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TypeChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _TypeChip({
+    required this.label,
+    required this.selected,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? color.withValues(alpha: 0.15) : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected ? color : Theme.of(context).colorScheme.outline,
+            width: selected ? 1.5 : 1,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+            color: selected
+                ? color
+                : Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
       ),
     );
