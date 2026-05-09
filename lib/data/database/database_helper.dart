@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart' show Color, IconData;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
@@ -26,7 +27,7 @@ class DatabaseHelper {
     final dbPath = p.join(docDir.path, AppFlavor.databaseName);
     return openDatabase(
       dbPath,
-      version: 11,
+      version: 12,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -96,7 +97,8 @@ class DatabaseHelper {
         is_custom INTEGER NOT NULL DEFAULT 0,
         is_active INTEGER NOT NULL DEFAULT 1,
         sort_order INTEGER NOT NULL,
-        created_at INTEGER NOT NULL
+        created_at INTEGER NOT NULL,
+        transaction_type TEXT
       )
     ''');
 
@@ -138,7 +140,7 @@ class DatabaseHelper {
       );
     }
     if (oldVersion < 5) {
-      for (final (index, (name, _, _)) in kDefaultCategoryData.indexed) {
+      for (final (index, (name, _, _, _)) in kDefaultCategoryData.indexed) {
         final stableUuid = kDefaultCategoryUuids[index];
         final rows = await db.query(
           'categories',
@@ -240,6 +242,81 @@ class DatabaseHelper {
           'UPDATE categories SET color_value = ? WHERE uuid = ? AND is_custom = 0',
           [colorValue, uuid],
         );
+      }
+    }
+    if (oldVersion < 12) {
+      await db.execute(
+        'ALTER TABLE categories ADD COLUMN transaction_type TEXT',
+      );
+      // Tag all default expense categories
+      const expenseUuids = [
+        '00000000-0000-0000-0000-000000000001',
+        '00000000-0000-0000-0000-000000000002',
+        '00000000-0000-0000-0000-000000000003',
+        '00000000-0000-0000-0000-000000000004',
+        '00000000-0000-0000-0000-000000000005',
+        '00000000-0000-0000-0000-000000000006',
+        '00000000-0000-0000-0000-000000000007',
+        '00000000-0000-0000-0000-000000000008',
+        '00000000-0000-0000-0000-000000000009',
+        '00000000-0000-0000-0000-000000000010',
+        '00000000-0000-0000-0000-000000000011',
+        '00000000-0000-0000-0000-000000000012',
+        '00000000-0000-0000-0000-000000000013',
+      ];
+      const incomeUuids = [
+        '00000000-0000-0000-0000-000000000014',
+        '00000000-0000-0000-0000-000000000015',
+        '00000000-0000-0000-0000-000000000016',
+      ];
+      for (final uuid in expenseUuids) {
+        await db.rawUpdate(
+          "UPDATE categories SET transaction_type = 'expense' WHERE uuid = ? AND is_custom = 0",
+          [uuid],
+        );
+      }
+      for (final uuid in incomeUuids) {
+        await db.rawUpdate(
+          "UPDATE categories SET transaction_type = 'income' WHERE uuid = ? AND is_custom = 0",
+          [uuid],
+        );
+      }
+      // Update Healthcare icon to thermostat
+      final (_, healthcareIcon, _, _) = kDefaultCategoryData[7];
+      await db.rawUpdate(
+        'UPDATE categories SET icon_code_point = ? WHERE uuid = ? AND is_custom = 0',
+        [healthcareIcon.codePoint, '00000000-0000-0000-0000-000000000008'],
+      );
+      // Insert new income categories if not already present
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final existingCount = (await db.rawQuery(
+        'SELECT COUNT(*) as c FROM categories',
+      )).first['c'] as int;
+      final newCats = [
+        kDefaultCategoryData[16], // Reimbursement
+        kDefaultCategoryData[17], // Insurance
+      ];
+      for (final (i, (name, icon, color, type)) in newCats.indexed) {
+        final uuid = kDefaultCategoryUuids[16 + i];
+        final exists = (await db.query(
+          'categories',
+          where: 'uuid = ?',
+          whereArgs: [uuid],
+        )).isNotEmpty;
+        if (!exists) {
+          await db.insert('categories', {
+            'uuid': uuid,
+            'name': name,
+            'color_value': color.toARGB32(),
+            'icon_code_point': icon.codePoint,
+            'icon_font_family': icon.fontFamily ?? 'MaterialIcons',
+            'is_custom': 0,
+            'is_active': 1,
+            'sort_order': existingCount + i,
+            'transaction_type': type,
+            'created_at': now,
+          });
+        }
       }
     }
   }

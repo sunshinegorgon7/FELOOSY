@@ -71,8 +71,15 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/categories/edit',
       builder: (context, state) {
-        final category = state.extra as Category?;
-        return EditCategoryScreen(category: category);
+        final extra = state.extra;
+        if (extra is Category) return EditCategoryScreen(category: extra);
+        if (extra is Map<String, dynamic>) {
+          return EditCategoryScreen(
+            category: extra['category'] as Category?,
+            defaultType: extra['defaultType'] as String?,
+          );
+        }
+        return const EditCategoryScreen();
       },
     ),
   ],

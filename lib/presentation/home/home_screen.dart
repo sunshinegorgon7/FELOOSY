@@ -1149,7 +1149,7 @@ class _CatStat {
   const _CatStat(this.category, this.amount);
 }
 
-class _TopCategoriesChart extends StatelessWidget {
+class _TopCategoriesChart extends StatefulWidget {
   final List<_CatStat> stats;
   final BudgetSummary summary;
   final String? selectedCategoryUuid;
@@ -1163,24 +1163,40 @@ class _TopCategoriesChart extends StatelessWidget {
   });
 
   @override
+  State<_TopCategoriesChart> createState() => _TopCategoriesChartState();
+}
+
+class _TopCategoriesChartState extends State<_TopCategoriesChart> {
+  bool _entered = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() => _entered = true);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     const barAreaHeight = 100.0;
-    final maxAmount = stats.first.amount;
-    final hasSelection = selectedCategoryUuid != null;
+    final maxAmount = widget.stats.first.amount;
+    final hasSelection = widget.selectedCategoryUuid != null;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
-      children: stats.map((stat) {
+      children: widget.stats.map((stat) {
         final color = Color(stat.category.colorValue);
-        final barH =
+        final targetH =
             (barAreaHeight * (stat.amount / maxAmount)).clamp(4.0, barAreaHeight);
-        final isSelected = stat.category.uuid == selectedCategoryUuid;
+        final barH = _entered ? targetH : 0.0;
+        final isSelected = stat.category.uuid == widget.selectedCategoryUuid;
         final isDeselected = hasSelection && !isSelected;
 
         return Expanded(
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
-            onTap: () => onTap?.call(stat.category.uuid),
+            onTap: () => widget.onTap?.call(stat.category.uuid),
             child: AnimatedOpacity(
               duration: const Duration(milliseconds: 180),
               opacity: isDeselected ? 0.3 : 1.0,
@@ -1193,12 +1209,12 @@ class _TopCategoriesChart extends StatelessWidget {
                       clipBehavior: Clip.none,
                       children: [
                         AnimatedPositioned(
-                          duration: const Duration(milliseconds: 180),
+                          duration: const Duration(milliseconds: 500),
                           bottom: barH + 4,
                           left: 0,
                           right: 0,
                           child: Text(
-                            summary.formatAmount(stat.amount),
+                            widget.summary.formatAmount(stat.amount),
                             style: const TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w500,
@@ -1209,7 +1225,7 @@ class _TopCategoriesChart extends StatelessWidget {
                           ),
                         ),
                         AnimatedPositioned(
-                          duration: const Duration(milliseconds: 180),
+                          duration: const Duration(milliseconds: 500),
                           bottom: 0,
                           left: 10,
                           right: 10,
