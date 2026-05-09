@@ -613,7 +613,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             SliverList(
               delegate: SliverChildBuilderDelegate((context, index) {
                 final group = groups[index];
-                if (_selectedCategoryFilter != null) {
+                if (_selectedCategoryFilter != null || _isSearching) {
                   return _ExpandableDayGroup(
                     key: ValueKey(group.day),
                     group: group,
