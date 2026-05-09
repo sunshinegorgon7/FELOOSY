@@ -33,7 +33,7 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen>
       _tabController.index == 0 ? 'expense' : 'income';
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final catsAsync = ref.watch(categoriesProvider);
 
     return Scaffold(
