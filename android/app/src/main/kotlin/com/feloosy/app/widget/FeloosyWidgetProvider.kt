@@ -114,7 +114,7 @@ class FeloosyWidgetProvider : AppWidgetProvider() {
             // ── Accessibility ──────────────────────────────────────────────
             val availableDesc = "$displayAmt $currencyCode available to spend this month"
             views.setContentDescription(R.id.fw_header_left, availableDesc)
-            val barDesc = "Today’s spending: ${formatAmount(todayTotal)} $currencyCode" +
+            val barDesc = "This month’s spending: ${formatAmount(todayTotal)} $currencyCode" +
                 " across ${categories.size} categories"
             views.setContentDescription(R.id.fw_bar, barDesc)
 

@@ -217,7 +217,7 @@ struct FeloosyWidgetEntryView: View {
         }
         .frame(height: 8)
         .accessibilityLabel(
-            "Today's spending: \(fmtDouble(data.todayTotal)) \(data.currencyCode)" +
+            "This month's spending: \(fmtDouble(data.todayTotal)) \(data.currencyCode)" +
             " across \(data.categories.count) categories"
         )
     }
@@ -258,7 +258,7 @@ struct FeloosyWidget: Widget {
             FeloosyWidgetEntryView(entry: entry)
         }
         .configurationDisplayName("Feloosy")
-        .description("Available budget and today's spending.")
+        .description("Available budget and top spending categories this month.")
         .supportedFamilies([.systemMedium])
     }
 }
