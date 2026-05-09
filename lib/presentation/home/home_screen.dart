@@ -43,6 +43,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   List<_DayGroup> _visibleGroups = const [];
   Set<int> _cachedPeriodOffsets = const {};
 
+  String? _selectedCategoryFilter;
   bool _tutorialDismissed = false;
   final _addFabKey = GlobalKey();
   final _settingsIconKey = GlobalKey();
@@ -385,7 +386,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               )
               .toList();
 
-    final groups = _groupByDate(filteredTxs);
+    final categoryFilteredTxs = _selectedCategoryFilter == null
+        ? filteredTxs
+        : filteredTxs
+              .where((tx) => tx.categoryUuid == _selectedCategoryFilter)
+              .toList();
+
+    final groups = _groupByDate(categoryFilteredTxs);
     _visibleGroups = groups;
 
     // Compute top 5 expense categories for the current period
@@ -523,21 +530,79 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    _TopCategoriesChart(stats: top5, summary: summary),
+                    _TopCategoriesChart(
+                      stats: top5,
+                      summary: summary,
+                      selectedCategoryUuid: _selectedCategoryFilter,
+                      onTap: (uuid) => setState(() {
+                        _selectedCategoryFilter =
+                            _selectedCategoryFilter == uuid ? null : uuid;
+                      }),
+                    ),
+                    if (_selectedCategoryFilter != null) ...[
+                      const SizedBox(height: 10),
+                      Builder(builder: (ctx) {
+                        final selStat = top5
+                            .where(
+                              (s) => s.category.uuid == _selectedCategoryFilter,
+                            )
+                            .firstOrNull;
+                        final catColor = selStat != null
+                            ? Color(selStat.category.colorValue)
+                            : AppTheme.amber;
+                        return Row(
+                          children: [
+                            GestureDetector(
+                              onTap: () => setState(
+                                  () => _selectedCategoryFilter = null),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 5),
+                                decoration: BoxDecoration(
+                                  color: catColor.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(
+                                    color: catColor.withValues(alpha: 0.4),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      selStat?.category.name ?? '',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: catColor,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 5),
+                                    Icon(Icons.close,
+                                        size: 13, color: catColor),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      }),
+                    ],
                     const SizedBox(height: 16),
                   ],
                 ),
               ),
             ),
 
-          if (filteredTxs.isEmpty)
+          if (categoryFilteredTxs.isEmpty)
             SliverFillRemaining(
               hasScrollBody: false,
               child: Padding(
                 padding: const EdgeInsets.all(32),
                 child: Center(
                   child: Text(
-                    'No transactions yet.\nTap + to add one.',
+                    _selectedCategoryFilter != null
+                        ? 'No transactions in this\ncategory for this period.'
+                        : 'No transactions yet.\nTap + to add one.',
                     textAlign: TextAlign.center,
                     style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
                   ),
@@ -548,6 +613,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             SliverList(
               delegate: SliverChildBuilderDelegate((context, index) {
                 final group = groups[index];
+                if (_selectedCategoryFilter != null) {
+                  return _ExpandableDayGroup(
+                    key: ValueKey(group.day),
+                    group: group,
+                    cats: cats,
+                    summary: summary,
+                  );
+                }
                 return InkWell(
                   onTap: () => _showDayOverlay(
                     context,
@@ -1074,13 +1147,21 @@ class _CatStat {
 class _TopCategoriesChart extends StatelessWidget {
   final List<_CatStat> stats;
   final BudgetSummary summary;
+  final String? selectedCategoryUuid;
+  final void Function(String categoryUuid)? onTap;
 
-  const _TopCategoriesChart({required this.stats, required this.summary});
+  const _TopCategoriesChart({
+    required this.stats,
+    required this.summary,
+    this.selectedCategoryUuid,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     const barAreaHeight = 100.0;
     final maxAmount = stats.first.amount;
+    final hasSelection = selectedCategoryUuid != null;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
@@ -1088,52 +1169,300 @@ class _TopCategoriesChart extends StatelessWidget {
         final color = Color(stat.category.colorValue);
         final barH =
             (barAreaHeight * (stat.amount / maxAmount)).clamp(4.0, barAreaHeight);
+        final isSelected = stat.category.uuid == selectedCategoryUuid;
+        final isDeselected = hasSelection && !isSelected;
+
         return Expanded(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                summary.formatAmount(stat.amount),
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                  fontFamily: 'DM Mono',
-                  color: AppTheme.muted,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 6),
-              SizedBox(
-                height: barAreaHeight,
-                child: Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Container(
-                    height: barH,
-                    margin: const EdgeInsets.symmetric(horizontal: 10),
-                    decoration: BoxDecoration(
-                      color: color,
-                      borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(6)),
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => onTap?.call(stat.category.uuid),
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 180),
+              opacity: isDeselected ? 0.3 : 1.0,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    summary.formatAmount(stat.amount),
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                      fontFamily: 'DM Mono',
+                      color: AppTheme.muted,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 6),
+                  SizedBox(
+                    height: barAreaHeight,
+                    child: Align(
+                      alignment: Alignment.bottomCenter,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        height: barH,
+                        margin: const EdgeInsets.symmetric(horizontal: 10),
+                        decoration: BoxDecoration(
+                          color: color,
+                          borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(6)),
+                          boxShadow: isSelected
+                              ? [
+                                  BoxShadow(
+                                    color: color.withValues(alpha: 0.55),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ]
+                              : null,
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                  const SizedBox(height: 6),
+                  Text(
+                    stat.category.name,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight:
+                          isSelected ? FontWeight.w700 : FontWeight.w500,
+                      color: isSelected ? AppTheme.cream : AppTheme.muted,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
-              const SizedBox(height: 6),
-              Text(
-                stat.category.name,
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                  color: AppTheme.muted,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+            ),
           ),
         );
       }).toList(),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Expandable day group — shown when a category filter is active
+// ---------------------------------------------------------------------------
+
+class _ExpandableDayGroup extends StatefulWidget {
+  final _DayGroup group;
+  final List<Category> cats;
+  final BudgetSummary summary;
+
+  const _ExpandableDayGroup({
+    super.key,
+    required this.group,
+    required this.cats,
+    required this.summary,
+  });
+
+  @override
+  State<_ExpandableDayGroup> createState() => _ExpandableDayGroupState();
+}
+
+class _ExpandableDayGroupState extends State<_ExpandableDayGroup> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
+    final group = widget.group;
+    final firstCat = group.txs.isNotEmpty
+        ? widget.cats
+            .where((c) => c.uuid == group.txs.first.categoryUuid)
+            .firstOrNull
+        : null;
+    final lineColor = firstCat != null
+        ? Color(firstCat.colorValue).withValues(alpha: 0.45)
+        : AppTheme.amber.withValues(alpha: 0.3);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        InkWell(
+          onTap: () => setState(() => _expanded = !_expanded),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
+            child: Row(
+              children: [
+                AnimatedRotation(
+                  turns: _expanded ? 0.25 : 0,
+                  duration: const Duration(milliseconds: 180),
+                  child: const Icon(
+                    Icons.chevron_right,
+                    size: 16,
+                    color: AppTheme.muted,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    group.label,
+                    style: tt.bodyMedium?.copyWith(
+                      color: AppTheme.cream,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                Container(
+                  width: 22,
+                  height: 22,
+                  decoration: BoxDecoration(
+                    color: const Color(0x1FF5A623),
+                    borderRadius: BorderRadius.circular(11),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    '${group.txs.length}',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.amber,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  widget.summary.formatAmount(group.dayNet.abs()),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'DM Mono',
+                    color: AppTheme.amber,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        AnimatedSize(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          child: _expanded
+              ? Padding(
+                  padding:
+                      const EdgeInsets.only(left: 32, right: 16, bottom: 8),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border(
+                        left: BorderSide(color: lineColor, width: 2),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: group.txs
+                          .map(
+                            (tx) => _InlineTransactionRow(
+                              tx: tx,
+                              cat: widget.cats
+                                  .where((c) => c.uuid == tx.categoryUuid)
+                                  .firstOrNull,
+                              summary: widget.summary,
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ),
+                )
+              : const SizedBox.shrink(),
+        ),
+      ],
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Single inline transaction row (YAML-indented, shown inside expanded day)
+// ---------------------------------------------------------------------------
+
+class _InlineTransactionRow extends StatelessWidget {
+  final Transaction tx;
+  final Category? cat;
+  final BudgetSummary summary;
+
+  const _InlineTransactionRow({
+    required this.tx,
+    required this.cat,
+    required this.summary,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isExpense = tx.type == TransactionType.expense;
+    final catColor = cat != null ? Color(cat!.colorValue) : AppTheme.muted;
+    final amountPrefix = isExpense ? '-' : '+';
+    final amountColor = isExpense
+        ? AppTheme.cream.withValues(alpha: 0.85)
+        : const Color(0xFF81C784);
+
+    final label =
+        tx.description.isEmpty ? (cat?.name ?? 'Transaction') : tx.description;
+    final sublabel = tx.description.isNotEmpty ? cat?.name : null;
+
+    return InkWell(
+      onTap: () => context.push('/transactions/edit', extra: tx),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 7, 8, 7),
+        child: Row(
+          children: [
+            Container(
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                color: catColor.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              alignment: Alignment.center,
+              child: Icon(
+                IconData(
+                  cat?.iconCodePoint ?? 0xe25a,
+                  fontFamily: cat?.iconFontFamily ?? 'MaterialIcons',
+                ),
+                size: 15,
+                color: catColor,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: AppTheme.cream,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (sublabel != null)
+                    Text(
+                      sublabel,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppTheme.muted,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              '$amountPrefix${summary.formatAmount(tx.amount)}',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                fontFamily: 'DM Mono',
+                color: amountColor,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
