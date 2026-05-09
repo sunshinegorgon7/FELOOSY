@@ -619,6 +619,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     group: group,
                     cats: cats,
                     summary: summary,
+                    initiallyExpanded: true,
                   );
                 }
                 return InkWell(
@@ -1249,12 +1250,14 @@ class _ExpandableDayGroup extends StatefulWidget {
   final _DayGroup group;
   final List<Category> cats;
   final BudgetSummary summary;
+  final bool initiallyExpanded;
 
   const _ExpandableDayGroup({
     super.key,
     required this.group,
     required this.cats,
     required this.summary,
+    this.initiallyExpanded = false,
   });
 
   @override
@@ -1262,7 +1265,13 @@ class _ExpandableDayGroup extends StatefulWidget {
 }
 
 class _ExpandableDayGroupState extends State<_ExpandableDayGroup> {
-  bool _expanded = false;
+  late bool _expanded;
+
+  @override
+  void initState() {
+    super.initState();
+    _expanded = widget.initiallyExpanded;
+  }
 
   @override
   Widget build(BuildContext context) {
