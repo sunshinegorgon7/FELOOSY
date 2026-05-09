@@ -14,7 +14,7 @@ const _appGroup = 'group.com.feloosy.feloosy';
 
 /// Syncs widget data for the favourite account.
 /// Header: available = monthlyBudget − totalSpentThisMonth.
-/// Bar/legend: today's expenses only, top-3 categories + Other.
+/// Bar/legend: top-3 expense categories for the current budget month + Other.
 Future<void> syncWidget(WidgetRef ref) async {
   try {
     await HomeWidget.setAppGroupId(_appGroup);
@@ -55,18 +55,9 @@ Future<void> _sync(WidgetRef ref) async {
   final monthlyBudget = budget?.amount ?? account.defaultMonthlyBudget ?? 0;
   final available = monthlyBudget - spentThisMonth;
 
-  // --- Bar/legend: today's expenses by category ---
-  final now = DateTime.now();
-  final todayStart = DateTime(now.year, now.month, now.day);
-  final todayEnd = todayStart.add(const Duration(days: 1));
-  final todayTxs = await txRepo.getForPeriod(
-    todayStart,
-    todayEnd,
-    accountId: account.id,
-  );
-
+  // --- Bar/legend: this month's expenses by category ---
   final Map<String, double> byCategory = {};
-  for (final tx in todayTxs) {
+  for (final tx in monthTxs) {
     if (tx.type == TransactionType.expense) {
       byCategory[tx.categoryUuid] =
           (byCategory[tx.categoryUuid] ?? 0) + tx.amount;
