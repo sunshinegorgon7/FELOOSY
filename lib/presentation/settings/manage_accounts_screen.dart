@@ -20,6 +20,7 @@ class ManageAccountsScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
         data: (accounts) => ListView.builder(
+          padding: EdgeInsets.only(bottom: MediaQuery.paddingOf(context).bottom + 80),
           itemCount: accounts.length,
           itemBuilder: (context, i) {
             final a = accounts[i];
