@@ -22,6 +22,7 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
   late TextEditingController _nameCtrl;
   late IconData _icon;
   late Color _color;
+  late String? _transactionType; // 'expense', 'income', or null (both)
 
   bool get _isEdit => widget.category != null;
 
@@ -34,6 +35,7 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
         ? IconData(cat.iconCodePoint, fontFamily: cat.iconFontFamily)
         : kPickableIcons.first;
     _color = cat != null ? Color(cat.colorValue) : kPickableColors.first;
+    _transactionType = cat?.transactionType ?? widget.defaultType;
   }
 
   @override
@@ -66,6 +68,7 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
         isActive: existing.isActive,
         sortOrder: existing.sortOrder,
         createdAt: existing.createdAt,
+        transactionType: _transactionType,
       );
       await ref.read(categoriesProvider.notifier).saveCategory(updated);
     } else {
@@ -83,7 +86,7 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
         isCustom: true,
         isActive: true,
         sortOrder: maxSort + 1,
-        transactionType: widget.defaultType,
+        transactionType: _transactionType,
         createdAt: now,
       );
       await ref.read(categoriesProvider.notifier).add(newCat);
@@ -148,6 +151,38 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
                 border: OutlineInputBorder(),
               ),
               onChanged: (_) => setState(() {}),
+            ),
+            const SizedBox(height: 24),
+
+            // Type selector
+            Text('Used for', style: tt.titleSmall),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                _TypeChip(
+                  label: 'Expense',
+                  symbol: '−',
+                  color: const Color(0xFFE05C5C),
+                  selected: _transactionType == 'expense',
+                  onTap: () => setState(() => _transactionType = 'expense'),
+                ),
+                const SizedBox(width: 8),
+                _TypeChip(
+                  label: 'Income',
+                  symbol: '+',
+                  color: const Color(0xFF81C784),
+                  selected: _transactionType == 'income',
+                  onTap: () => setState(() => _transactionType = 'income'),
+                ),
+                const SizedBox(width: 8),
+                _TypeChip(
+                  label: 'Both',
+                  symbol: '±',
+                  color: cs.onSurfaceVariant,
+                  selected: _transactionType == null,
+                  onTap: () => setState(() => _transactionType = null),
+                ),
+              ],
             ),
             const SizedBox(height: 24),
 
@@ -226,6 +261,64 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
               },
             ),
             const SizedBox(height: 32),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TypeChip extends StatelessWidget {
+  final String label;
+  final String symbol;
+  final Color color;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _TypeChip({
+    required this.label,
+    required this.symbol,
+    required this.color,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? color.withValues(alpha: 0.12) : Colors.transparent,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: selected ? color : color.withValues(alpha: 0.25),
+            width: selected ? 1.5 : 1.0,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              symbol,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: selected ? color : color.withValues(alpha: 0.5),
+                height: 1.0,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                color: selected ? color : color.withValues(alpha: 0.5),
+              ),
+            ),
           ],
         ),
       ),
