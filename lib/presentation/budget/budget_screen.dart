@@ -371,7 +371,7 @@ class _BudgetInfo extends ConsumerWidget {
 
 // ── Expanded card content ─────────────────────────────────────────────────
 
-class _ExpandedContent extends StatelessWidget {
+class _ExpandedContent extends StatefulWidget {
   final List<Transaction> txs;
   final List<Category> cats;
   final BudgetSummary summary;
@@ -383,13 +383,21 @@ class _ExpandedContent extends StatelessWidget {
   });
 
   @override
+  State<_ExpandedContent> createState() => _ExpandedContentState();
+}
+
+class _ExpandedContentState extends State<_ExpandedContent> {
+  String? _selectedCategoryFilter;
+
+  @override
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
 
     // Compute top 5 expense categories
     final totals = <String, double>{};
     for (final tx
-        in txs.where((t) => t.type == TransactionType.expense)) {
+        in widget.txs.where((t) => t.type == TransactionType.expense)) {
       totals[tx.categoryUuid] =
           (totals[tx.categoryUuid] ?? 0) + tx.amount;
     }
@@ -399,11 +407,17 @@ class _ExpandedContent extends StatelessWidget {
         .take(5)
         .map((e) {
           final cat =
-              cats.where((c) => c.uuid == e.key).firstOrNull;
+              widget.cats.where((c) => c.uuid == e.key).firstOrNull;
           return cat != null ? _CatStat(cat, e.value) : null;
         })
         .whereType<_CatStat>()
         .toList();
+
+    final displayedTxs = _selectedCategoryFilter == null
+        ? widget.txs
+        : widget.txs
+            .where((tx) => tx.categoryUuid == _selectedCategoryFilter)
+            .toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -416,28 +430,93 @@ class _ExpandedContent extends StatelessWidget {
             child: Text(
               'TOP SPENDING',
               style: tt.labelSmall?.copyWith(
-                color: Theme.of(context).colorScheme.primary,
+                color: cs.primary,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 0.10 * 11,
               ),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-            child: _TopCategoriesChart(stats: top5, summary: summary),
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+            child: _TopCategoriesChart(
+              stats: top5,
+              summary: widget.summary,
+              selectedCategoryUuid: _selectedCategoryFilter,
+              onTap: (uuid) => setState(() {
+                _selectedCategoryFilter =
+                    _selectedCategoryFilter == uuid ? null : uuid;
+              }),
+            ),
           ),
+          if (_selectedCategoryFilter != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+              child: Row(
+                children: [
+                  Builder(builder: (ctx) {
+                    final selStat = top5
+                        .where(
+                          (s) => s.category.uuid == _selectedCategoryFilter,
+                        )
+                        .firstOrNull;
+                    final catColor = selStat != null
+                        ? Color(selStat.category.colorValue)
+                        : cs.primary;
+                    return GestureDetector(
+                      onTap: () =>
+                          setState(() => _selectedCategoryFilter = null),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: catColor.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(
+                              color: catColor.withValues(alpha: 0.4)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              selStat?.category.name ?? '',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: catColor,
+                              ),
+                            ),
+                            const SizedBox(width: 5),
+                            Icon(Icons.close, size: 13, color: catColor),
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
+                ],
+              ),
+            ),
+          const SizedBox(height: 16),
         ],
 
         // ── Transaction list ─────────────────────────────────────────
         const Divider(height: 1),
-        for (final tx in txs) ...[
+        for (final tx in displayedTxs)
           TransactionTile(
             transaction: tx,
-            category:
-                cats.where((c) => c.uuid == tx.categoryUuid).firstOrNull,
+            category: widget.cats
+                .where((c) => c.uuid == tx.categoryUuid)
+                .firstOrNull,
             onTap: () => context.push('/transactions/edit', extra: tx),
           ),
-        ],
+        if (displayedTxs.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            child: Text(
+              'No transactions in this category.',
+              style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+              textAlign: TextAlign.center,
+            ),
+          ),
         const SizedBox(height: 8),
       ],
     );
@@ -455,15 +534,22 @@ class _CatStat {
 class _TopCategoriesChart extends StatelessWidget {
   final List<_CatStat> stats;
   final BudgetSummary summary;
+  final String? selectedCategoryUuid;
+  final void Function(String categoryUuid)? onTap;
 
-  const _TopCategoriesChart(
-      {required this.stats, required this.summary});
+  const _TopCategoriesChart({
+    required this.stats,
+    required this.summary,
+    this.selectedCategoryUuid,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     const barAreaHeight = 100.0;
     final maxAmount = stats.first.amount;
     final cs = Theme.of(context).colorScheme;
+    final hasSelection = selectedCategoryUuid != null;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
@@ -471,59 +557,81 @@ class _TopCategoriesChart extends StatelessWidget {
         final color = Color(stat.category.colorValue);
         final barH =
             (barAreaHeight * (stat.amount / maxAmount)).clamp(4.0, barAreaHeight);
+        final isSelected = stat.category.uuid == selectedCategoryUuid;
+        final isDeselected = hasSelection && !isSelected;
+
         return Expanded(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(
-                height: barAreaHeight + 26,
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Positioned(
-                      bottom: barH + 4,
-                      left: 0,
-                      right: 0,
-                      child: Text(
-                        summary.formatAmount(stat.amount),
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w500,
-                          fontFamily: 'DM Mono',
-                          color: cs.onSurfaceVariant,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => onTap?.call(stat.category.uuid),
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 180),
+              opacity: isDeselected ? 0.3 : 1.0,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    height: barAreaHeight + 26,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Positioned(
+                          bottom: barH + 4,
+                          left: 0,
+                          right: 0,
+                          child: Text(
+                            summary.formatAmount(stat.amount),
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'DM Mono',
+                              color: cs.onSurfaceVariant,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
                         ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      left: 10,
-                      right: 10,
-                      height: barH,
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: color,
-                          borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(6)),
+                        Positioned(
+                          bottom: 0,
+                          left: 10,
+                          right: 10,
+                          height: barH,
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 180),
+                            decoration: BoxDecoration(
+                              color: color,
+                              borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(6)),
+                              boxShadow: isSelected
+                                  ? [
+                                      BoxShadow(
+                                        color: color.withValues(alpha: 0.55),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 3),
+                                      ),
+                                    ]
+                                  : null,
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    stat.category.name,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight:
+                          isSelected ? FontWeight.w700 : FontWeight.w500,
+                      color: isSelected ? cs.onSurface : cs.onSurfaceVariant,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
-              const SizedBox(height: 6),
-              Text(
-                stat.category.name,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                  color: cs.onSurfaceVariant,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+            ),
           ),
         );
       }).toList(),
