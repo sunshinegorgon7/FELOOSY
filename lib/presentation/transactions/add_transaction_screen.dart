@@ -239,9 +239,22 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
               ),
             )
           else if (_isEditing)
-            TextButton(
-              onPressed: _canSave ? _manualSave : null,
-              child: const Text('Save'),
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: FilledButton(
+                onPressed: _canSave ? _manualSave : null,
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  minimumSize: const Size(0, 36),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: const StadiumBorder(),
+                  textStyle: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                child: const Text('Save'),
+              ),
             ),
         ],
       ),
