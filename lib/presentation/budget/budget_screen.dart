@@ -37,9 +37,10 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
     final catAsync = ref.watch(categoriesProvider);
 
     final tt = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: cs.surface,
       appBar: AppBar(title: const Text('Budget')),
       body: ListView(
         padding: EdgeInsets.fromLTRB(
@@ -62,18 +63,18 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
                             width: 28,
                             height: 28,
                             decoration: BoxDecoration(
-                              color: const Color(0x1FF5A623),
+                              color: cs.primary.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             alignment: Alignment.center,
-                            child: const Icon(Icons.calendar_month,
-                                color: AppTheme.amber, size: 16),
+                            child: Icon(Icons.calendar_month,
+                                color: cs.primary, size: 16),
                           ),
                           const Gap(8),
                           Text(
                             'CURRENT PERIOD',
                             style: tt.labelSmall?.copyWith(
-                              color: AppTheme.amber,
+                              color: cs.primary,
                               fontWeight: FontWeight.w600,
                               letterSpacing: 0.10 * 11,
                             ),
@@ -84,7 +85,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
                       Text(
                         period.label,
                         style: tt.titleLarge?.copyWith(
-                          color: AppTheme.cream,
+                          color: cs.onSurface,
                           fontWeight: FontWeight.w700,
                           fontSize: 28,
                           letterSpacing: 28 * -0.01,
@@ -94,7 +95,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
                         '${DateFormat('MMM d').format(period.start)} – '
                         '${DateFormat('MMM d, y').format(period.end)}',
                         style: tt.bodySmall?.copyWith(
-                          color: AppTheme.muted,
+                          color: cs.onSurfaceVariant,
                           fontSize: 13,
                         ),
                       ),
@@ -122,7 +123,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Divider(height: 1, color: AppTheme.border),
+                        const Divider(height: 1),
                         InkWell(
                           onTap: () => setState(
                               () => _cardExpanded = !_cardExpanded),
@@ -136,7 +137,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
                                   '${txs.length == 1 ? '' : 's'}'
                                   ' this period',
                                   style: tt.labelMedium?.copyWith(
-                                    color: AppTheme.amber,
+                                    color: cs.primary,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
@@ -145,8 +146,8 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
                                   turns: _cardExpanded ? 0.5 : 0,
                                   duration:
                                       const Duration(milliseconds: 200),
-                                  child: const Icon(Icons.expand_more,
-                                      color: AppTheme.amber, size: 20),
+                                  child: Icon(Icons.expand_more,
+                                      color: cs.primary, size: 20),
                                 ),
                               ],
                             ),
@@ -211,7 +212,7 @@ class _NoBudget extends StatelessWidget {
           style: Theme.of(context)
               .textTheme
               .bodyMedium
-              ?.copyWith(color: AppTheme.muted),
+              ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
         const Gap(12),
         FilledButton.icon(
@@ -238,6 +239,7 @@ class _BudgetInfo extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tt = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
     final account = ref.watch(activeAccountProvider);
 
     return Column(
@@ -252,38 +254,25 @@ class _BudgetInfo extends ConsumerWidget {
                   Text(
                     'BUDGET',
                     style: tt.labelSmall?.copyWith(
-                      color: AppTheme.muted,
+                      color: cs.onSurfaceVariant,
                       fontWeight: FontWeight.w600,
                       letterSpacing: 0.10 * 11,
                     ),
                   ),
                   const SizedBox(height: 4),
-                  RichText(
-                    text: TextSpan(
-                      style: const TextStyle(
-                        fontFamily: 'DM Mono',
-                        fontSize: 26,
-                        fontWeight: FontWeight.w500,
-                        color: AppTheme.cream,
-                      ),
-                      children: [
-                        TextSpan(
-                          text: account == null
-                              ? budget.amount.toStringAsFixed(2)
-                              : CurrencyFormatter.formatWith(
-                                  amount: budget.amount,
-                                  symbol: account.currencySymbol,
-                                  symbolLeading: account.currencySymbolLeading,
-                                ),
-                        ),
-                        const TextSpan(
-                          text: ' AED',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: AppTheme.amber,
+                  Text(
+                    account == null
+                        ? budget.amount.toStringAsFixed(2)
+                        : CurrencyFormatter.formatWith(
+                            amount: budget.amount,
+                            symbol: account.currencySymbol,
+                            symbolLeading: account.currencySymbolLeading,
                           ),
-                        ),
-                      ],
+                    style: TextStyle(
+                      fontFamily: 'DM Mono',
+                      fontSize: 26,
+                      fontWeight: FontWeight.w500,
+                      color: cs.onSurface,
                     ),
                   ),
                 ],
@@ -291,15 +280,12 @@ class _BudgetInfo extends ConsumerWidget {
             ),
             OutlinedButton.icon(
               onPressed: onEdit,
-              icon: const Icon(Icons.edit_outlined,
-                  size: 14, color: AppTheme.amber),
-              label: const Text('Change',
-                  style: TextStyle(color: AppTheme.amber, fontSize: 13)),
+              icon: Icon(Icons.edit_outlined, size: 14, color: cs.primary),
+              label: Text('Change',
+                  style: TextStyle(color: cs.primary, fontSize: 13)),
               style: OutlinedButton.styleFrom(
-                side: const BorderSide(
-                    color: Color(0x66F5A623), width: 1.5),
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 8),
+                side: BorderSide(color: cs.primary.withValues(alpha: 0.4), width: 1.5),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 shape: const StadiumBorder(),
               ),
             ),
@@ -316,11 +302,9 @@ class _BudgetInfo extends ConsumerWidget {
                     child: LinearProgressIndicator(
                       value: progress,
                       minHeight: 6,
-                      backgroundColor: const Color(0x14F6F1E3),
+                      backgroundColor: cs.outlineVariant,
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        budget.isOverBudget
-                            ? AppTheme.destructiveColor
-                            : AppTheme.amber,
+                        budget.isOverBudget ? cs.error : cs.primary,
                       ),
                     ),
                   ),
@@ -334,7 +318,7 @@ class _BudgetInfo extends ConsumerWidget {
                           Text(
                             'SPENT',
                             style: tt.labelSmall?.copyWith(
-                              color: AppTheme.muted,
+                              color: cs.onSurfaceVariant,
                               fontWeight: FontWeight.w600,
                               letterSpacing: 0.10 * 11,
                               fontSize: 11,
@@ -343,10 +327,10 @@ class _BudgetInfo extends ConsumerWidget {
                           const SizedBox(height: 2),
                           Text(
                             budget.formatAmount(budget.totalExpenses),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontFamily: 'DM Mono',
                               fontSize: 14,
-                              color: AppTheme.cream,
+                              color: cs.onSurface,
                             ),
                           ),
                         ],
@@ -357,9 +341,7 @@ class _BudgetInfo extends ConsumerWidget {
                           Text(
                             'REMAINING',
                             style: tt.labelSmall?.copyWith(
-                              color: budget.isOverBudget
-                                  ? AppTheme.destructiveColor
-                                  : AppTheme.amber,
+                              color: budget.isOverBudget ? cs.error : cs.primary,
                               fontWeight: FontWeight.w600,
                               letterSpacing: 0.10 * 11,
                               fontSize: 11,
@@ -371,9 +353,7 @@ class _BudgetInfo extends ConsumerWidget {
                             style: TextStyle(
                               fontFamily: 'DM Mono',
                               fontSize: 14,
-                              color: budget.isOverBudget
-                                  ? AppTheme.destructiveColor
-                                  : AppTheme.amber,
+                              color: budget.isOverBudget ? cs.error : cs.primary,
                             ),
                           ),
                         ],
@@ -436,7 +416,7 @@ class _ExpandedContent extends StatelessWidget {
             child: Text(
               'TOP SPENDING',
               style: tt.labelSmall?.copyWith(
-                color: AppTheme.amber,
+                color: Theme.of(context).colorScheme.primary,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 0.10 * 11,
               ),
@@ -483,6 +463,7 @@ class _TopCategoriesChart extends StatelessWidget {
   Widget build(BuildContext context) {
     const barAreaHeight = 100.0;
     final maxAmount = stats.first.amount;
+    final cs = Theme.of(context).colorScheme;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
@@ -505,11 +486,11 @@ class _TopCategoriesChart extends StatelessWidget {
                       right: 0,
                       child: Text(
                         summary.formatAmount(stat.amount),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w500,
                           fontFamily: 'DM Mono',
-                          color: AppTheme.muted,
+                          color: cs.onSurfaceVariant,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -533,10 +514,10 @@ class _TopCategoriesChart extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 stat.category.name,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w500,
-                  color: AppTheme.muted,
+                  color: cs.onSurfaceVariant,
                 ),
                 textAlign: TextAlign.center,
                 maxLines: 1,
