@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FELOOSY — App Redesign</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<style>
+  body { margin:0; font-family:'Geist',sans-serif; background:#1a1a1a; }
+
+  /* ── Default / fallback tokens (dark) ───────────────────────────────────── */
+  :root {
+    --c-bg:            #0d2818;
+    --c-surface:       #143a23;
+    --c-surface-2:     #1c4a2e;
+    --c-text:          #f6f1e3;
+    --c-muted:         #7fa890;
+    --c-muted-2:       #5a7d6a;
+    --c-amber:         #f5a623;
+    --c-amber-2:       #e08a10;
+    --c-amber-tint:    rgba(245,166,35,0.12);
+    --c-amber-soft:    rgba(245,166,35,0.08);
+    --c-border:        rgba(246,241,227,0.08);
+    --c-border-soft:   rgba(246,241,227,0.06);
+    --c-border-strong: rgba(246,241,227,0.10);
+    --c-placeholder:   rgba(246,241,227,0.40);
+    --c-tile:          rgba(20,58,35,0.50);
+    --c-shadow:        0 0 0 1px rgba(245,166,35,0.08), 0 30px 80px rgba(0,0,0,0.5);
+    --c-fab-ring:      rgba(13,40,24,0.6);
+    --c-fab-glow:      rgba(245,166,35,0.35);
+  }
+
+  /* ── DARK theme (unchanged) ─────────────────────────────────────────────── */
+  [data-theme="dark"] {
+    --c-bg:            #0d2818;
+    --c-surface:       #143a23;
+    --c-surface-2:     #1c4a2e;
+    --c-text:          #f6f1e3;
+    --c-muted:         #7fa890;
+    --c-muted-2:       #5a7d6a;
+    --c-amber:         #f5a623;
+    --c-amber-2:       #e08a10;
+    --c-amber-tint:    rgba(245,166,35,0.12);
+    --c-amber-soft:    rgba(245,166,35,0.08);
+    --c-border:        rgba(246,241,227,0.08);
+    --c-border-soft:   rgba(246,241,227,0.06);
+    --c-border-strong: rgba(246,241,227,0.10);
+    --c-placeholder:   rgba(246,241,227,0.40);
+    --c-tile:          rgba(20,58,35,0.50);
+    --c-shadow:        0 0 0 1px rgba(245,166,35,0.08), 0 30px 80px rgba(0,0,0,0.5);
+    --c-fab-ring:      rgba(13,40,24,0.6);
+    --c-fab-glow:      rgba(245,166,35,0.35);
+  }
+
+  /* ── LIGHT theme — warm cream paper ────────────────────────────────────── */
+  /*
+     Design intent: cream card surfaces lifted off warm sand bg.
+     Deep forest ink (#0d2818) as primary text.
+     Deep amber (#a85f08) — 4.5:1 on cream, reads as warm caramel-amber.
+     All borders/tiles use forest-ink alpha so they scale correctly.
+  */
+  [data-theme="light"] {
+    --c-bg:            #ece2c5;   /* warm sand page canvas          */
+    --c-surface:       #faf6ea;   /* cream paper cards — visibly lifted */
+    --c-surface-2:     #e0d8be;   /* pressed / hover fill           */
+    --c-text:          #0d2818;   /* deep forest ink                */
+    --c-muted:         #4e7060;   /* sage green — AA on cream       */
+    --c-muted-2:       #7c7860;   /* warm gray tertiary             */
+    --c-amber:         #a85f08;   /* deep amber — 4.5:1 on cream    */
+    --c-amber-2:       #844808;
+    --c-amber-tint:    rgba(168,95,8,0.14);
+    --c-amber-soft:    rgba(168,95,8,0.10);
+    --c-border:        rgba(13,40,24,0.12);
+    --c-border-soft:   rgba(13,40,24,0.07);
+    --c-border-strong: rgba(13,40,24,0.20);
+    --c-placeholder:   rgba(13,40,24,0.38);
+    --c-tile:          rgba(13,40,24,0.07); /* enough body to see tiles     */
+    --c-shadow:        0 0 0 1px rgba(13,40,24,0.08), 0 20px 50px rgba(13,40,24,0.16);
+    --c-fab-ring:      rgba(13,40,24,0.12);
+    --c-fab-glow:      rgba(168,95,8,0.28); /* amber-tinted glow on light   */
+  }
+
+  .feloosy { font-family:'Geist',sans-serif; color:var(--c-text); }
+  .mono    { font-family:'DM Mono',monospace; }
+  .caps    { font-size:11px; font-weight:600; letter-spacing:0.10em; text-transform:uppercase; color:var(--c-muted); }
+
+  /* Phone shell */
+  .phone {
+    width: 393px; height: 852px;
+    background: var(--c-bg);
+    border-radius: 44px;
+    padding: 12px 0 0;
+    overflow: hidden;
+    box-shadow: var(--c-shadow);
+    position: relative;
+    display: flex; flex-direction: column;
+  }
+  .status-bar {
+    height: 44px; padding: 0 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    color: var(--c-text); font-family:'DM Mono',monospace; font-size: 14px;
+    flex-shrink: 0;
+  }
+  /* Uses var(--c-text) so it's cream-on-dark in dark, ink-on-cream in light */
+  .home-indicator {
+    position:absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+    width: 134px; height: 5px; border-radius: 3px;
+    background: var(--c-text);
+    opacity: 0.28;
+  }
+
+  .top-bar {
+    height: 56px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 16px;
+    flex-shrink: 0;
+  }
+  .logo {
+    font-family:'Geist',sans-serif; font-weight:700;
+    font-size: 18px; letter-spacing: 0.10em; color: var(--c-text);
+  }
+  .pocket-pill {
+    display:flex; align-items:center; gap:6px;
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 12px; color: var(--c-text);
+  }
+  .icon-btn {
+    width: 36px; height: 36px;
+    border-radius: 12px;
+    background: transparent;
+    display:flex; align-items:center; justify-content:center;
+    cursor: pointer; color: var(--c-muted);
+  }
+  .icon-btn:hover { color: var(--c-text); }
+  .icon-btn svg { width: 18px; height: 18px; }
+  .icon-row { display:flex; gap:2px; }
+
+  .scroll { overflow-y: auto; flex: 1; }
+  .scroll::-webkit-scrollbar { display: none; }
+
+  /* FAB — glow uses --c-fab-glow so it's amber in dark, caramel in light */
+  .fab {
+    position: absolute;
+    bottom: 26px; left: 50%; transform: translateX(-50%);
+    width: 64px; height: 64px;
+    border-radius: 22px;
+    background: var(--c-amber);
+    color: var(--c-bg);
+    display:flex; align-items:center; justify-content:center;
+    font-size: 32px; font-weight: 300;
+    box-shadow: 0 12px 28px var(--c-fab-glow), 0 0 0 4px var(--c-fab-ring);
+    cursor: pointer; z-index: 5;
+    line-height: 1;
+  }
+  .fab:active { transform: translateX(-50%) scale(0.94); }
+
+  /* Home — month nav */
+  .month-nav {
+    display:flex; align-items:center; justify-content:center;
+    gap: 24px; padding: 4px 0 12px;
+    flex-shrink: 0;
+  }
+  .month-nav button {
+    background: transparent; border:none; cursor:pointer;
+    width: 28px; height: 28px; color: var(--c-muted);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .month-name { font-size: 14px; color: var(--c-text); font-weight: 500; }
+
+  /* Hero remaining */
+  .hero {
+    padding: 0 20px 16px;
+    flex-shrink: 0;
+  }
+  .hero-amount {
+    font-family:'Geist',sans-serif;
+    font-size: 44px; font-weight: 700; letter-spacing: -0.02em;
+    color: var(--c-amber);
+    line-height: 1.1;
+  }
+  .hero-amount .unit { font-size: 22px; color: var(--c-amber); opacity: 0.85; margin-left: 4px; }
+  .hero-sub { font-size: 13px; color: var(--c-muted); margin-top: 4px; }
+  .hero-progress {
+    height: 4px; border-radius: 2px;
+    background: var(--c-border);
+    overflow: hidden; margin-top: 14px;
+    display: flex;
+  }
+  .hero-progress-fill {
+    background: var(--c-amber);
+    height: 100%; border-radius: 2px;
+  }
+  .hero-progress-rest { flex: 1; }
+
+  /* Top spending */
+  .top-spending {
+    padding: 8px 16px 0;
+  }
+  .ts-label { padding: 0 4px 8px; }
+  .ts-bars {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    align-items: end;
+    height: 130px;
+  }
+  .ts-col {
+    display: flex; flex-direction: column;
+    align-items: center; gap: 6px;
+    height: 100%;
+    justify-content: flex-end;
+  }
+  .ts-amount { font-family:'DM Mono',monospace; font-size: 10px; color: var(--c-muted); }
+  .ts-bar-wrap { flex: 1; width: 100%; display:flex; align-items:flex-end; }
+  .ts-bar {
+    width: 100%;
+    border-radius: 6px 6px 0 0;
+    transition: height 0.5s cubic-bezier(0.4,0,0.2,1);
+  }
+  .ts-name { font-size: 10px; color: var(--c-muted); font-weight: 500; }
+
+  /* Transaction list */
+  .tx-section { padding: 16px 16px 0; }
+  .tx-row {
+    display:flex; align-items:center; gap: 12px;
+    padding: 14px 4px;
+    border-bottom: 1px solid var(--c-border);
+  }
+  .tx-row:last-child { border-bottom: none; }
+  .tx-day { flex: 1; }
+  .tx-day-name { font-size: 14px; color: var(--c-text); font-weight: 500; }
+  .tx-day-meta { font-size: 11px; color: var(--c-muted); margin-top: 2px; }
+  .tx-count {
+    width: 22px; height: 22px; border-radius: 11px;
+    background: var(--c-amber-tint); color: var(--c-amber);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 600;
+  }
+  .tx-amount { font-family:'DM Mono',monospace; font-size: 14px; color: var(--c-amber); font-weight: 500; }
+
+  /* Budget page */
+  .page-head {
+    padding: 8px 16px 16px;
+    display:flex; align-items:center; gap: 14px;
+    flex-shrink: 0;
+  }
+  .back-btn {
+    width: 36px; height: 36px; border-radius: 12px;
+    background: transparent; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    color: var(--c-text);
+  }
+  .page-title { font-size: 22px; font-weight: 700; color: var(--c-text); letter-spacing: -0.01em; }
+
+  .budget-card {
+    margin: 0 16px 16px;
+    background: var(--c-surface);
+    border: 1px solid var(--c-border-soft);
+    border-radius: 20px;
+    padding: 20px;
+  }
+  .budget-card-head {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 16px;
+  }
+  .period-icon {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    background: var(--c-amber-tint);
+    color: var(--c-amber);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .period-icon svg { width: 16px; height: 16px; }
+
+  /* change-btn border now uses var(--c-amber) instead of hardcoded dark amber */
+  .change-btn {
+    border: 1px solid var(--c-amber);
+    color: var(--c-amber); background: transparent;
+    border-radius: 999px;
+    padding: 8px 16px;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+    font-family: 'Geist', sans-serif;
+  }
+  .change-btn:hover { background: var(--c-amber-soft); }
+
+  /* Transaction screen */
+  .new-tx-head {
+    padding: 14px 16px 12px;
+    display: flex; align-items: center; gap: 16px;
+    flex-shrink: 0;
+  }
+  .new-tx-title {
+    font-size: 20px; font-weight: 600; color: var(--c-text);
+  }
+  .type-toggle {
+    display: flex; gap: 8px;
+    padding: 0 16px 12px;
+    flex-shrink: 0;
+  }
+  .type-pill {
+    padding: 9px 22px;
+    border-radius: 999px;
+    font-size: 13px; font-weight: 600;
+    border: 1px solid var(--c-border-strong);
+    background: transparent;
+    color: var(--c-muted);
+    cursor: pointer;
+    font-family: 'Geist', sans-serif;
+  }
+  .type-pill.active.exp {
+    border-color: var(--c-amber); color: var(--c-amber);
+    background: var(--c-amber-soft);
+  }
+  .type-pill.active.inc {
+    border-color: #4ade80; color: #4ade80;
+    background: rgba(74,222,128,0.08);
+  }
+  .today-pill {
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    color: var(--c-text);
+    font-size: 12px; font-weight: 500;
+    display: flex; align-items: center; gap: 6px;
+    cursor: pointer;
+    margin-left: auto;
+  }
+
+  .amount-row {
+    padding: 24px 24px 18px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .amount-currency {
+    font-size: 14px; font-weight: 700; color: var(--c-amber);
+    letter-spacing: 0.08em;
+  }
+  .amount-display {
+    font-family: 'DM Mono', monospace;
+    font-size: 56px; font-weight: 400;
+    color: var(--c-placeholder);
+    letter-spacing: -0.02em;
+    display: flex; align-items: center;
+  }
+  .amount-cursor {
+    width: 2px; height: 56px;
+    background: var(--c-amber); border-radius: 1px;
+    margin-left: 1px;
+    animation: blink 1s step-end infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  .desc-row {
+    margin: 0 16px 16px;
+    background: var(--c-surface);
+    border: 1px solid var(--c-border-soft);
+    border-radius: 16px;
+    padding: 14px 16px;
+    display: flex; align-items: center; gap: 12px;
+    flex-shrink: 0;
+  }
+  .desc-input {
+    background: none; border: none; outline: none;
+    color: var(--c-text);
+    font-family: 'Geist', sans-serif;
+    font-size: 14px; flex: 1;
+  }
+  .desc-input::placeholder { color: var(--c-muted); }
+
+  .cat-section { padding: 0 16px; }
+  .cat-head {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 0 4px;
+  }
+  .cat-help {
+    font-size: 12px; color: var(--c-muted); font-style: italic;
+    margin-bottom: 12px;
+  }
+  .cat-new {
+    color: var(--c-amber); font-size: 13px; font-weight: 600;
+    display: flex; align-items: center; gap: 4px; cursor: pointer;
+  }
+
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .cat-tile {
+    aspect-ratio: 1.05;
+    border-radius: 14px;
+    background: var(--c-tile);
+    border: 1.5px solid var(--cat-border, var(--c-border));
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--c-text);
+  }
+  .cat-tile:active { transform: scale(0.96); }
+  /* box-shadow uses var(--c-amber) — adapts to both themes automatically */
+  .cat-tile.selected {
+    background: var(--c-amber-tint);
+    border-color: var(--c-amber);
+    box-shadow: 0 0 0 1px var(--c-amber);
+  }
+  .cat-tile svg { width: 22px; height: 22px; color: var(--cat-color, #f5a623); }
+  .cat-name { font-size: 12px; font-weight: 500; color: var(--c-text); }
+
+  .label-frequent { padding: 14px 0 8px; color: var(--c-muted); font-size: 11px; font-weight: 600; letter-spacing: 0.10em; text-transform: uppercase; }
+
+  /* Settings */
+  .settings-head {
+    padding: 16px 16px 14px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .settings-section { padding: 18px 16px 0; }
+  .settings-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 4px;
+    border-top: 1px solid var(--c-border);
+    cursor: pointer;
+  }
+  .settings-row:hover .settings-value { color: var(--c-text); }
+  .settings-info { flex: 1; }
+  .settings-row-label { font-size: 14px; font-weight: 500; color: var(--c-text); }
+  .settings-row-sub { font-size: 12px; color: var(--c-muted); margin-top: 2px; }
+  .settings-value {
+    font-size: 13px; color: var(--c-amber); font-weight: 500;
+    font-family: 'DM Mono', monospace;
+  }
+  .settings-chevron { color: var(--c-muted-2); }
+  .settings-chevron svg { width: 14px; height: 14px; }
+
+  .avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: linear-gradient(135deg, #f5a623, #e08a10);
+    color: var(--c-bg);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 14px;
+  }
+
+  .signout-btn {
+    color: var(--c-amber); font-size: 13px; font-weight: 600; cursor: pointer;
+    padding: 6px 12px; border-radius: 8px;
+  }
+  .signout-btn:hover { background: var(--c-amber-soft); }
+
+  /* Bar-chart F mini icon */
+  .icon-f {
+    width: 22px; height: 22px;
+    border-radius: 5px;
+    overflow: hidden;
+    background: var(--c-surface);
+  }
+
+</style>
+</head>
+<body>
+<script type="text/babel">
+const { useState } = React;
+
+// ─── ICONS ───────────────────────────────────────────────────────────────────
+const Ic = {
+  search:  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>,
+  book:    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20V3H6.5A2.5 2.5 0 004 5.5v14z"/><path d="M4 19.5A2.5 2.5 0 016.5 22H20"/></svg>,
+  cog:     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6 1.65 1.65 0 0010 3.09V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>,
+  wallet:  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="6" width="20" height="14" rx="3"/><path d="M16 14h2"/></svg>,
+  chevR:   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>,
+  chevL:   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M15 18l-6-6 6-6"/></svg>,
+  arrowL:  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>,
+  close:   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>,
+  edit:    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>,
+  cal:     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>,
+  plus:    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>,
+  cart:    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 002 1.6h9.7a2 2 0 002-1.6L23 6H6"/></svg>,
+  fork:    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M8 2v8a3 3 0 006 0V2M11 14v8M16 2v6a2 2 0 002 2v12"/></svg>,
+  car:     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 17h14l1-7H4l1 7zM5 17v2M19 17v2M7 13h.01M17 13h.01"/><path d="M3 10l2-5h14l2 5"/></svg>,
+  bag:     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M6 7h12l-1 13H7L6 7zM9 7V5a3 3 0 016 0v2"/></svg>,
+  coffee:  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8h1a3 3 0 010 6h-1M2 8h16v9a3 3 0 01-3 3H5a3 3 0 01-3-3V8zM6 1v3M10 1v3M14 1v3"/></svg>,
+  fuel:    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 22V4a2 2 0 012-2h7a2 2 0 012 2v18M3 22h11M14 9h2a2 2 0 012 2v6a1.5 1.5 0 003 0V8l-3-3"/></svg>,
+  bolt:    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg>,
+  home:    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/></svg>,
+  cross:   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>,
+  pill:    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="6" width="18" height="12" rx="3"/><path d="M3 12h18"/></svg>,
+  film:    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="3"/><path d="M7 2v20M17 2v20M2 12h20M2 7h5M2 17h5M17 7h5M17 17h5"/></svg>,
+  dumb:    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M6 4v16M2 6v12M18 4v16M22 6v12M6 12h12"/></svg>,
+  plane:   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16l-9-4V4l-2 2v6L2 16v2l9-2v5l-2 1v1l3-1 3 1v-1l-2-1v-5l9 2z"/></svg>,
+  cash:    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1v22M17 6H9.5a3.5 3.5 0 100 7h5a3.5 3.5 0 110 7H6"/></svg>,
+  gift:    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="8" width="18" height="4"/><path d="M12 22V8M19 12v10H5V12M7.5 8a2.5 2.5 0 010-5C9.5 3 12 8 12 8s2.5-5 4.5-5a2.5 2.5 0 010 5"/></svg>,
+  refund:  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1015-6.7L21 8M21 3v5h-5"/></svg>,
+  baby:    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9 10h.01M15 10h.01M9 16s1 2 3 2 3-2 3-2"/></svg>,
+  shield:  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l9 4v6c0 5-4 9-9 11-5-2-9-6-9-11V6l9-4z"/><path d="M12 9v6M9 12h6"/></svg>,
+};
+
+// Bar-chart F (mini, used in pocket pill)
+function BarChartF({ size=22 }) {
+  return (
+    <svg viewBox="0 0 200 200" width={size} height={size}>
+      <rect width="200" height="200" fill="#143a23"/>
+      <rect x="56"  y="48" width="32" height="104" rx="6" fill="#f5a623"/>
+      <rect x="96"  y="48" width="32" height="60"  rx="6" fill="#f6f1e3"/>
+      <rect x="136" y="48" width="32" height="32"  rx="6" fill="#f5a623"/>
+    </svg>
+  );
+}
+
+// ─── CATEGORIES (forest+amber palette) ───────────────────────────────────────
+const CATS = [
+  // Frequent
+  { id:'groceries', name:'Groceries',  icon:Ic.cart,   color:'#5fb574', tint:'rgba(95,181,116,0.2)' },
+  { id:'dining',    name:'Dining Out', icon:Ic.fork,   color:'var(--c-amber)', tint:'var(--c-amber-tint)' },
+  { id:'transport', name:'Transport',  icon:Ic.car,    color:'var(--c-muted)', tint:'var(--c-border)' },
+  { id:'shopping',  name:'Shopping',   icon:Ic.bag,    color:'#e08a10', tint:'rgba(224,138,16,0.2)' },
+  // Rest
+  { id:'coffee',    name:'Coffee',     icon:Ic.coffee, color:'#c4821a', tint:'rgba(196,130,26,0.2)' },
+  { id:'fuel',      name:'Fuel',       icon:Ic.fuel,   color:'#a89070', tint:'rgba(168,144,112,0.2)' },
+  { id:'utilities', name:'Utilities',  icon:Ic.bolt,   color:'#f5d623', tint:'rgba(245,214,35,0.18)' },
+  { id:'rent',      name:'Rent',       icon:Ic.home,   color:'#9a7fb0', tint:'rgba(154,127,176,0.2)' },
+  { id:'health',    name:'Healthcare', icon:Ic.cross,  color:'#e58040', tint:'rgba(229,128,64,0.2)' },
+  { id:'pharmacy',  name:'Pharmacy',   icon:Ic.pill,   color:'#d96a8a', tint:'rgba(217,106,138,0.2)' },
+  { id:'enter',     name:'Entertain.', icon:Ic.film,   color:'#a87fc4', tint:'rgba(168,127,196,0.2)' },
+  { id:'gym',       name:'Sports',     icon:Ic.dumb,   color:'#5fb5a8', tint:'rgba(95,181,168,0.2)' },
+  { id:'travel',    name:'Travel',     icon:Ic.plane,  color:'#7fb5d9', tint:'rgba(127,181,217,0.2)' },
+  { id:'salary',    name:'Salary',     icon:Ic.cash,   color:'#5fb574', tint:'rgba(95,181,116,0.2)' },
+  { id:'cashback',  name:'Cashback',   icon:Ic.gift,   color:'#b5d95f', tint:'rgba(181,217,95,0.2)' },
+  { id:'refund',    name:'Refund',     icon:Ic.refund, color:'#5fb5d9', tint:'rgba(95,181,217,0.2)' },
+  { id:'bills',     name:'Bills',      icon:Ic.cash,   color:'var(--c-amber)', tint:'var(--c-amber-tint)' },
+  { id:'baby',      name:'Baby',       icon:Ic.baby,   color:'#d96a8a', tint:'rgba(217,106,138,0.2)' },
+  { id:'health2',   name:'Health',     icon:Ic.shield, color:'#7fb5d9', tint:'rgba(127,181,217,0.2)' },
+];
+
+// ─── COMMON CHROME ────────────────────────────────────────────────────────────
+function StatusBar() {
+  return (
+    <div className="status-bar">
+      <span>9:41</span>
+      <div style={{display:'flex',gap:5,alignItems:'center'}}>
+        <span style={{fontSize:11}}>●●●●</span>
+        <svg width="14" height="11" viewBox="0 0 14 11" fill="currentColor"><path d="M0 8h2v3H0V8zm4-2h2v5H4V6zm4-3h2v8H8V3zm4-3h2v11h-2V0z"/></svg>
+        <svg width="22" height="11" viewBox="0 0 22 11" fill="none" stroke="currentColor" strokeWidth="1"><rect x="0.5" y="0.5" width="18" height="10" rx="2"/><rect x="2" y="2" width="13" height="7" fill="currentColor"/><rect x="20" y="3.5" width="1.5" height="4" fill="currentColor"/></svg>
+      </div>
+    </div>
+  );
+}
+
+function TopBar({ onSettings, showPocket=true }) {
+  return (
+    <div className="top-bar">
+      <div className="logo">FELOOSY</div>
+      {showPocket && (
+        <div className="pocket-pill">
+          <BarChartF size={16}/>
+          Pocket Money
+        </div>
+      )}
+      <div className="icon-row">
+        <div className="icon-btn">{Ic.search}</div>
+        <div className="icon-btn">{Ic.book}</div>
+        <div className="icon-btn" onClick={onSettings}>{Ic.cog}</div>
+      </div>
+    </div>
+  );
+}
+
+// ─── HOME SCREEN ─────────────────────────────────────────────────────────────
+function HomeScreen({ onAdd, onSettings }) {
+  const remaining = 2109.55;
+  const budget = 5000;
+  const spent = budget - remaining;
+  const pct = spent / budget;
+
+  const top = [
+    { name:'Groceries', amount:1256.45, color:'#5fb574' },
+    { name:'Transport', amount:427.00,  color:'var(--c-muted)' },
+    { name:'Bills',     amount:363.00,  color:'var(--c-amber)' },
+    { name:'Baby',      amount:341.00,  color:'#d96a8a' },
+    { name:'Dining',    amount:230.00,  color:'#e08a10' },
+  ];
+  const maxTop = Math.max(...top.map(t=>t.amount));
+
+  const days = [
+    { name:'Yesterday',     count:1, total: 30 },
+    { name:'Wed, May 6',    count:2, total: 240 },
+    { name:'Tue, May 5',    count:5, total: 349 },
+    { name:'Mon, May 4',    count:5, total: 737.45 },
+    { name:'Sun, May 3',    count:2, total: 362 },
+    { name:'Sat, May 2',    count:2, total: 190 },
+    { name:'Fri, May 1',    count:5, total: 982 },
+  ];
+
+  return (
+    <div className="phone feloosy">
+      <StatusBar/>
+      <TopBar onSettings={onSettings}/>
+      <div className="month-nav">
+        <button>{Ic.chevL}</button>
+        <span className="month-name">May 2026</span>
+        <button>{Ic.chevR}</button>
+      </div>
+      <div className="scroll">
+        <div className="hero">
+          <div className="hero-amount">2,109.55<span className="unit"> AED</span></div>
+          <div className="hero-sub">remaining this month · {Math.round(pct*100)}% spent</div>
+          <div className="hero-progress">
+            <div className="hero-progress-fill" style={{width:`${pct*100}%`}}/>
+            <div className="hero-progress-rest"/>
+          </div>
+        </div>
+
+        <div className="top-spending">
+          <div className="caps ts-label">Top spending</div>
+          <div className="ts-bars">
+            {top.map(t => (
+              <div key={t.name} className="ts-col">
+                <div className="ts-amount">{t.amount.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+                <div className="ts-bar-wrap">
+                  <div className="ts-bar" style={{
+                    height:`${(t.amount/maxTop)*100}%`,
+                    background:t.color,
+                  }}/>
+                </div>
+                <div className="ts-name">{t.name}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="tx-section">
+          {days.map(d => (
+            <div key={d.name} className="tx-row">
+              <div className="tx-day">
+                <div className="tx-day-name">{d.name}</div>
+              </div>
+              <div className="tx-count">{d.count}</div>
+              <div className="tx-amount">{d.total.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})} AED</div>
+            </div>
+          ))}
+          <div style={{height:120}}/>
+        </div>
+      </div>
+      <div className="fab" onClick={onAdd}>+</div>
+      <div className="home-indicator"/>
+    </div>
+  );
+}
+
+// ─── BUDGET SCREEN ────────────────────────────────────────────────────────────
+function BudgetScreen({ onBack }) {
+  const budget = 5000, spent = 2890.45, remaining = budget - spent;
+  const pct = spent / budget;
+  return (
+    <div className="phone feloosy">
+      <StatusBar/>
+      <div className="page-head">
+        <div className="back-btn" onClick={onBack}>{Ic.arrowL}</div>
+        <div className="page-title">Budget</div>
+      </div>
+      <div className="scroll">
+        <div className="budget-card">
+          <div className="budget-card-head">
+            <div className="period-icon">{Ic.cal}</div>
+            <span className="caps" style={{color:'var(--c-amber)'}}>Current Period</span>
+          </div>
+          <div style={{fontSize:28,fontWeight:700,color:'var(--c-text)',letterSpacing:'-0.01em'}}>May 2026</div>
+          <div style={{fontSize:13,color:'var(--c-muted)',marginTop:2}}>May 1 – May 31, 2026</div>
+
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end',marginTop:24}}>
+            <div>
+              <div className="caps" style={{marginBottom:6}}>Budget</div>
+              <div className="mono" style={{fontSize:26,fontWeight:500,color:'var(--c-text)'}}>5,000.00 <span style={{color:'var(--c-amber)',fontSize:18}}>AED</span></div>
+            </div>
+            <button className="change-btn">{Ic.edit} Change</button>
+          </div>
+
+          <div style={{height:6,background:'var(--c-border)',borderRadius:3,overflow:'hidden',marginTop:18}}>
+            <div style={{height:'100%',width:`${pct*100}%`,background:'var(--c-amber)',borderRadius:3}}/>
+          </div>
+
+          <div style={{display:'flex',justifyContent:'space-between',marginTop:12}}>
+            <div>
+              <div style={{fontSize:11,color:'var(--c-muted)',fontWeight:600,letterSpacing:'0.06em',textTransform:'uppercase'}}>Spent</div>
+              <div className="mono" style={{fontSize:14,color:'var(--c-text)',marginTop:2}}>2,890.45 AED</div>
+            </div>
+            <div style={{textAlign:'right'}}>
+              <div style={{fontSize:11,color:'var(--c-amber)',fontWeight:600,letterSpacing:'0.06em',textTransform:'uppercase'}}>Remaining</div>
+              <div className="mono" style={{fontSize:14,color:'var(--c-amber)',marginTop:2}}>2,109.55 AED</div>
+            </div>
+          </div>
+
+          <div style={{borderTop:'1px solid var(--c-border-soft)',marginTop:18,paddingTop:14,
+            display:'flex',justifyContent:'space-between',alignItems:'center',cursor:'pointer'}}>
+            <div style={{fontSize:13,color:'var(--c-amber)',fontWeight:500}}>22 transactions this period</div>
+            <div style={{color:'var(--c-amber)'}}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="home-indicator"/>
+    </div>
+  );
+}
+
+// ─── NEW TRANSACTION SCREEN ───────────────────────────────────────────────────
+function NewTxScreen({ onClose }) {
+  const [type, setType] = useState('exp');
+  const [selected, setSelected] = useState(null);
+  const freq = CATS.slice(0,4);
+  const rest = CATS.slice(4);
+  return (
+    <div className="phone feloosy">
+      <StatusBar/>
+      <div className="new-tx-head">
+        <div className="back-btn" onClick={onClose}>{Ic.close}</div>
+        <div className="new-tx-title">New Transaction</div>
+      </div>
+      <div className="type-toggle">
+        <div className={`type-pill exp ${type==='exp'?'active':''}`} onClick={()=>setType('exp')}>Expense</div>
+        <div className={`type-pill inc ${type==='inc'?'active':''}`} onClick={()=>setType('inc')}>Income</div>
+        <div className="today-pill">{Ic.cal} Today</div>
+      </div>
+
+      <div className="amount-row">
+        <span className="amount-currency">AED</span>
+        <div className="amount-display">
+          <span style={{color:'var(--c-placeholder)'}}>0.</span>
+          <span className="amount-cursor"></span>
+          <span style={{color:'var(--c-placeholder)'}}>00</span>
+        </div>
+      </div>
+
+      <div className="desc-row">
+        {Ic.edit}
+        <input className="desc-input" placeholder="Description"/>
+      </div>
+
+      <div className="scroll cat-section">
+        <div className="cat-head">
+          <div style={{fontSize:16,fontWeight:600,color:'var(--c-text)'}}>Category</div>
+          <div className="cat-new">{Ic.plus} New</div>
+        </div>
+        <div className="cat-help">Add amount &amp; category to continue</div>
+
+        <div className="caps" style={{padding:'0 0 10px'}}>Frequent</div>
+        <div className="cat-grid">
+          {freq.map(c => (
+            <div key={c.id}
+              className={`cat-tile ${selected===c.id?'selected':''}`}
+              style={{'--cat-color':c.color, '--cat-border':c.tint}}
+              onClick={()=>setSelected(c.id)}>
+              <span style={{color:c.color}}>{c.icon}</span>
+              <span className="cat-name">{c.name}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="caps" style={{padding:'18px 0 10px'}}>All Categories</div>
+        <div className="cat-grid">
+          {rest.map(c => (
+            <div key={c.id}
+              className={`cat-tile ${selected===c.id?'selected':''}`}
+              style={{'--cat-color':c.color, '--cat-border':c.tint}}
+              onClick={()=>setSelected(c.id)}>
+              <span style={{color:c.color}}>{c.icon}</span>
+              <span className="cat-name">{c.name}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{height:60}}/>
+      </div>
+      <div className="home-indicator"/>
+    </div>
+  );
+}
+
+// ─── SETTINGS SCREEN ──────────────────────────────────────────────────────────
+function SettingsScreen({ onClose, theme='dark', setTheme=()=>{} }) {
+  return (
+    <div className="phone feloosy">
+      <StatusBar/>
+      <TopBar onSettings={()=>{}}/>
+      <div className="settings-head" style={{padding:'8px 16px 0'}}>
+        <div style={{fontSize:22,fontWeight:700,color:'var(--c-text)',letterSpacing:'-0.01em'}}>Settings</div>
+        <div className="back-btn" onClick={onClose}>{Ic.close}</div>
+      </div>
+      <div className="scroll">
+        <div className="settings-section">
+          <div className="caps" style={{padding:'0 4px 8px',color:'var(--c-amber)'}}>Appearance</div>
+          <div className="settings-row" style={{flexDirection:'column',alignItems:'stretch',gap:10}}>
+            <div className="settings-row-label">Theme</div>
+            <div style={{display:'flex',gap:6,padding:4,background:'var(--c-bg)',borderRadius:12,border:'1px solid var(--c-border)'}}>
+              {['Light','System','Dark'].map(t=>{
+                const v=t.toLowerCase();
+                const active = theme===v;
+                return (
+                  <div key={v} onClick={()=>setTheme(v)}
+                    style={{flex:1,textAlign:'center',padding:'10px 0',borderRadius:8,
+                      fontSize:13,fontWeight:600,cursor:'pointer',transition:'all 0.15s',
+                      background: active?'var(--c-amber)':'transparent',
+                      color: active?'#0d2818':'var(--c-muted)'}}>{t}</div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        <div className="settings-section">
+          <div className="caps" style={{padding:'0 4px 8px',color:'var(--c-amber)'}}>Budget</div>
+          <div className="settings-row">
+            <div className="settings-info">
+              <div className="settings-row-label">Currency</div>
+            </div>
+            <div className="settings-value">AED · UAE Dirham</div>
+            <div className="settings-chevron">{Ic.chevR}</div>
+          </div>
+          <div className="settings-row" style={{flexWrap:'wrap'}}>
+            <div className="settings-info" style={{flex:'0 0 100%',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <div>
+                <div className="settings-row-label">Month starts on</div>
+                <div className="settings-row-sub">Days 29–31 unavailable to ensure February compatibility</div>
+              </div>
+              <div style={{display:'flex',alignItems:'center',gap:10}}>
+                <div className="settings-value">Day 1st</div>
+                <div className="settings-chevron">{Ic.chevR}</div>
+              </div>
+            </div>
+          </div>
+          <div className="settings-row">
+            <div className="settings-info">
+              <div className="settings-row-label">Default monthly budget</div>
+            </div>
+            <div className="settings-value">5,000 AED</div>
+            <div className="settings-chevron">{Ic.chevR}</div>
+          </div>
+        </div>
+
+        <div className="settings-section">
+          <div className="caps" style={{padding:'0 4px 8px',color:'var(--c-amber)'}}>Categories</div>
+          <div className="settings-row">
+            <div className="settings-info">
+              <div className="settings-row-label">Manage categories</div>
+              <div className="settings-row-sub">Edit, add or hide spending categories</div>
+            </div>
+            <div className="settings-chevron">{Ic.chevR}</div>
+          </div>
+        </div>
+
+        <div className="settings-section">
+          <div className="caps" style={{padding:'0 4px 8px',color:'var(--c-amber)'}}>Wallets</div>
+          <div className="settings-row">
+            <div className="settings-info">
+              <div className="settings-row-label">Manage wallets</div>
+              <div className="settings-row-sub">Pocket Money · Savings · Cards</div>
+            </div>
+            <div className="settings-chevron">{Ic.chevR}</div>
+          </div>
+        </div>
+
+        <div className="settings-section">
+          <div className="caps" style={{padding:'0 4px 8px',color:'var(--c-amber)'}}>Data</div>
+          <div className="settings-row">
+            <div className="avatar">S</div>
+            <div className="settings-info">
+              <div className="settings-row-label">sherif.elella@gmail.com</div>
+              <div className="settings-row-sub">Signed in</div>
+            </div>
+            <div className="signout-btn">Sign out</div>
+          </div>
+          <div className="settings-row">
+            <div className="settings-info">
+              <div className="settings-row-label">Back up now</div>
+              <div className="settings-row-sub">Last backup: 2m ago</div>
+            </div>
+            <div className="settings-chevron">{Ic.chevR}</div>
+          </div>
+        </div>
+
+        <div className="settings-section">
+          <div className="caps" style={{padding:'0 4px 8px',color:'var(--c-amber)'}}>About</div>
+          <div className="settings-row">
+            <div className="settings-info">
+              <div className="settings-row-label">App version</div>
+              <div className="settings-row-sub">1.0.0-dev (1)</div>
+            </div>
+            <div className="settings-value">1.0.0</div>
+          </div>
+        </div>
+        <div style={{height:60}}/>
+      </div>
+      <div className="home-indicator"/>
+    </div>
+  );
+}
+
+// ─── LIGHT STAGE BG — notably darker than --c-bg so the phone reads as a card
+const STAGE_LIGHT = '#c8bea0';
+const STAGE_DARK  = '#0a1f12';
+
+// ─── APP ─────────────────────────────────────────────────────────────────────
+function App() {
+  const [theme, setTheme] = useState('dark');
+  const stageBg = theme === 'light' ? STAGE_LIGHT : STAGE_DARK;
+  return (
+    <DesignCanvas title="FELOOSY — App Redesign" defaultZoom={0.55}>
+      <DCSection id="screens" title="Main screens · current theme">
+        <DCArtboard id="theme-toggle" label="Theme · toggle (click)" width={433} height={120}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,width:'100%',height:'100%',background:'#1a1a1a',padding:20}}>
+            {['light','system','dark'].map(t => (
+              <button key={t} onClick={()=>setTheme(t)}
+                style={{flex:1,padding:'14px 0',borderRadius:12,border:'1px solid #333',
+                  background: theme===t?'#f5a623':'#222',
+                  color: theme===t?'#0d2818':'#aaa',
+                  fontFamily:'Geist',fontWeight:700,fontSize:13,letterSpacing:'0.04em',
+                  textTransform:'uppercase',cursor:'pointer'}}>{t}</button>
+            ))}
+          </div>
+        </DCArtboard>
+        <DCArtboard id="home" label="Home" width={433} height={892}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'center',width:'100%',height:'100%',background:stageBg}}>
+            <div data-theme={theme} style={{display:'contents'}}><HomeScreen/></div>
+          </div>
+        </DCArtboard>
+        <DCArtboard id="budget" label="Budget" width={433} height={892}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'center',width:'100%',height:'100%',background:stageBg}}>
+            <div data-theme={theme} style={{display:'contents'}}><BudgetScreen/></div>
+          </div>
+        </DCArtboard>
+        <DCArtboard id="newtx" label="New Transaction" width={433} height={892}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'center',width:'100%',height:'100%',background:stageBg}}>
+            <div data-theme={theme} style={{display:'contents'}}><NewTxScreen/></div>
+          </div>
+        </DCArtboard>
+        <DCArtboard id="settings" label="Settings" width={433} height={892}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'center',width:'100%',height:'100%',background:stageBg}}>
+            <div data-theme={theme} style={{display:'contents'}}><SettingsScreen theme={theme} setTheme={setTheme}/></div>
+          </div>
+        </DCArtboard>
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+<div id="root"></div>
+</body>
+</html>
