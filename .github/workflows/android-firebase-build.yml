@@ -1,11 +1,5 @@
 name: Build Android and Send to Firebase
 
-on:
-  workflow_dispatch:
-  push:
-    branches:
-      - main
-
 jobs:
   build-and-distribute:
     runs-on: ubuntu-latest
