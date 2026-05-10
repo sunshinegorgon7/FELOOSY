@@ -10,9 +10,8 @@ FELOOSY is a Flutter personal budgeting app targeting iOS and Android. It uses S
 
 ```bash
 # Run by flavor
-flutter run -t lib/main_dev.dart
-flutter run -t lib/main_uat.dart
-flutter run -t lib/main_prod.dart
+flutter run -t lib/main_dev.dart   # dev  → feloosy_dev.db
+flutter run -t lib/main.dart       # prod → feloosy.db
 
 # Build
 flutter build apk
@@ -55,7 +54,11 @@ The app follows a three-layer architecture:
 
 **Categories**: The 16 default categories have stable hardcoded UUIDs in [core/constants/default_categories.dart](lib/core/constants/default_categories.dart). Never change these UUIDs — they're used as foreign keys in existing user databases.
 
-**Flavors**: `AppFlavor` (set at startup) controls the SQLite database filename and debug banner. Dev uses `feloosy_dev.db`, prod uses `feloosy.db`.
+**Flavors**: `AppFlavor` (set at startup) controls the SQLite database filename and debug banner. Dev uses `feloosy_dev.db`, prod uses `feloosy.db`. Entry points: `lib/main_dev.dart` (dev) and `lib/main.dart` (prod). There is no UAT flavor.
+
+**Theme system**: `AppTheme` in `lib/app/app_theme.dart` defines two palettes — dark (forest greens + amber) and light (cream paper + sage). All colors are exposed as named `static const` values on `AppTheme`. In widgets, access the active palette via `final cs = Theme.of(context).colorScheme;` (the `cs` shorthand is the established pattern throughout the codebase). Never hardcode palette constants directly — always go through `cs.*`. `AppTheme.resolveMode(stored)` converts the `theme_mode` string from `app_settings` to a `ThemeMode`.
+
+**Tutorial**: A one-time first-run tutorial is implemented as `TutorialOverlay` in `lib/presentation/tutorial/tutorial_overlay.dart`. Completion is tracked by the `tutorialCompleted` flag stored in the `app_settings` singleton row.
 
 **Home widget**: `HomeWidgetSyncService` bridges Flutter data to the native home screen widget. `FeloosyApp` listens to provider changes via `ref.listenManual()` to keep the widget in sync.
 
@@ -111,3 +114,17 @@ Firebase and Firestore have been fully removed from the project. Cloud backup is
 - `restore(fileId)` — atomically replaces all local data in a single SQLite transaction. Irreversible; UI should confirm before calling.
 - `listBackups()` returns `List<BackupEntry>` (id + modifiedTime), sorted newest-first.
 - `firebase_options.dart` may still exist in the repo but Firebase is no longer initialised or used.
+
+## Version Management
+
+The canonical version lives in two places and must be kept in sync:
+- `pubspec.yaml` → `version: X.Y.Z+BUILD`
+- `lib/core/constants/app_info.dart` → `kAppVersionLabel = 'X.Y.Z (BUILD)'`
+
+The build number is the total number of git commits (`git rev-list --count HEAD`).
+
+**Rules:**
+- **Major version** (`X.0.0`) — only the repo owner decides when to increment this. Do not bump the major version without explicit instruction.
+- **Minor version** (`X.Y.0`) — bump when a meaningful new feature or capability ships (e.g. a new screen, a new integration, a significant UX addition).
+- **Patch version** (`X.Y.Z`) — bump when shipping a fix or small improvement with no new surface area.
+- Always update both files together in the same commit whenever the version changes.
