@@ -152,7 +152,7 @@ class _CategorySectionList extends ConsumerWidget {
         ],
         if (both.isNotEmpty) ...[
           const SizedBox(height: 20),
-          _SectionHeader(label: 'Shown in both tabs'),
+          const _SectionHeader(label: 'Shown in both tabs'),
           const SizedBox(height: 8),
           for (final cat in both)
             _CategoryTile(key: ValueKey(cat.uuid), category: cat),

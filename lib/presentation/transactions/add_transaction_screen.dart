@@ -934,12 +934,12 @@ class _AddCategoryCell extends StatelessWidget {
             width: 1.5,
           ),
         ),
-        child: Column(
+        child: const Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.add_rounded, size: 22, color: AppTheme.muted),
-            const SizedBox(height: 4),
-            const Text(
+            SizedBox(height: 4),
+            Text(
               'New',
               style: TextStyle(
                 fontSize: 12,

@@ -1,4 +1,3 @@
-import 'package:flutter/widgets.dart' show Color, IconData;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
