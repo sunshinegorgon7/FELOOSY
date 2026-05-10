@@ -180,7 +180,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       fontWeight: FontWeight.w700,
                       fontSize: 18,
                       letterSpacing: 1.8,
-                      color: AppTheme.cream,
+                      color: cs.onSurface,
                     ),
                   ),
                   Expanded(
@@ -191,17 +191,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: AppTheme.forest2,
+                          color: cs.surfaceContainerLow,
                           borderRadius: BorderRadius.circular(999),
-                          border: Border.all(color: AppTheme.border),
+                          border: Border.all(color: cs.outlineVariant),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.bar_chart_rounded,
                               size: 14,
-                              color: AppTheme.muted,
+                              color: cs.onSurfaceVariant,
                             ),
                             const SizedBox(width: 6),
                             Text(
@@ -209,7 +209,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   ? 'All wallets'
                                   : selectedAccountName ?? 'Unknown wallet',
                               style: tt.labelSmall?.copyWith(
-                                color: AppTheme.cream,
+                                color: cs.onSurface,
                                 fontSize: 12,
                               ),
                             ),
@@ -316,12 +316,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     borderRadius: BorderRadius.circular(26),
                     boxShadow: [
                       BoxShadow(
-                        color: AppTheme.amber.withValues(alpha: 0.35),
+                        color: cs.primary.withValues(alpha: 0.35),
                         blurRadius: 28,
                         offset: const Offset(0, 12),
                       ),
                       BoxShadow(
-                        color: AppTheme.forest.withValues(alpha: 0.6),
+                        color: cs.surface.withValues(alpha: 0.6),
                         spreadRadius: 4,
                         blurRadius: 0,
                       ),
@@ -335,8 +335,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       heroTag: 'add_fab',
                       elevation: 0,
                       highlightElevation: 0,
-                      backgroundColor: AppTheme.amber,
-                      foregroundColor: AppTheme.forest,
+                      backgroundColor: cs.primary,
+                      foregroundColor: cs.onPrimary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(22),
                       ),
@@ -524,7 +524,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     Text(
                       'TOP SPENDING',
                       style: tt.labelSmall?.copyWith(
-                        color: AppTheme.amber,
+                        color: cs.primary,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 0.10 * 11,
                       ),
@@ -639,7 +639,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           child: Text(
                             group.label,
                             style: tt.bodyMedium?.copyWith(
-                              color: AppTheme.cream,
+                              color: cs.onSurface,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -648,16 +648,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           width: 22,
                           height: 22,
                           decoration: BoxDecoration(
-                            color: const Color(0x1FF5A623),
+                            color: cs.primary.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(11),
                           ),
                           alignment: Alignment.center,
                           child: Text(
                             '${group.txs.length}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
-                              color: AppTheme.amber,
+                              color: cs.primary,
                             ),
                           ),
                         ),
@@ -666,11 +666,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           width: 88,
                           child: Text(
                             summary.formatAmount(group.dayNet.abs()),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
                               fontFamily: 'DM Mono',
-                              color: AppTheme.amber,
+                              color: cs.primary,
                             ),
                             textAlign: TextAlign.right,
                           ),
@@ -1092,8 +1092,7 @@ class _BudgetHero extends StatelessWidget {
     }
 
     final isOver = summary.isOverBudget;
-    final heroColor =
-        isOver ? AppTheme.destructiveColor : AppTheme.amber;
+    final heroColor = isOver ? cs.error : cs.primary;
     final pct = summary.spentPercentage.clamp(0.0, 1.0);
 
     return Padding(
@@ -1119,7 +1118,7 @@ class _BudgetHero extends StatelessWidget {
             isOver
                 ? 'over budget · ${(pct * 100).round()}% spent'
                 : 'remaining this month · ${(pct * 100).round()}% spent',
-            style: tt.bodySmall?.copyWith(color: AppTheme.muted),
+            style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
           ),
           const SizedBox(height: 14),
           ClipRRect(
@@ -1127,10 +1126,8 @@ class _BudgetHero extends StatelessWidget {
             child: LinearProgressIndicator(
               value: pct,
               minHeight: 4,
-              backgroundColor: const Color(0x14F6F1E3),
-              valueColor: AlwaysStoppedAnimation<Color>(
-                isOver ? AppTheme.destructiveColor : AppTheme.amber,
-              ),
+              backgroundColor: cs.outlineVariant,
+              valueColor: AlwaysStoppedAnimation<Color>(heroColor),
             ),
           ),
         ],
@@ -1179,6 +1176,7 @@ class _TopCategoriesChartState extends State<_TopCategoriesChart> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     const barAreaHeight = 100.0;
     final maxAmount = widget.stats.first.amount;
     final hasSelection = widget.selectedCategoryUuid != null;
@@ -1257,7 +1255,7 @@ class _TopCategoriesChartState extends State<_TopCategoriesChart> {
                       fontSize: 10,
                       fontWeight:
                           isSelected ? FontWeight.w700 : FontWeight.w500,
-                      color: isSelected ? AppTheme.cream : AppTheme.muted,
+                      color: isSelected ? cs.onSurface : cs.onSurfaceVariant,
                     ),
                     textAlign: TextAlign.center,
                     maxLines: 1,
@@ -1306,6 +1304,7 @@ class _ExpandableDayGroupState extends State<_ExpandableDayGroup> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     final group = widget.group;
     final firstCat = group.txs.isNotEmpty
@@ -1315,7 +1314,7 @@ class _ExpandableDayGroupState extends State<_ExpandableDayGroup> {
         : null;
     final lineColor = firstCat != null
         ? Color(firstCat.colorValue).withValues(alpha: 0.45)
-        : AppTheme.amber.withValues(alpha: 0.3);
+        : cs.primary.withValues(alpha: 0.3);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1329,10 +1328,10 @@ class _ExpandableDayGroupState extends State<_ExpandableDayGroup> {
                 AnimatedRotation(
                   turns: _expanded ? 0.25 : 0,
                   duration: const Duration(milliseconds: 180),
-                  child: const Icon(
+                  child: Icon(
                     Icons.chevron_right,
                     size: 16,
-                    color: AppTheme.muted,
+                    color: cs.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(width: 6),
@@ -1340,7 +1339,7 @@ class _ExpandableDayGroupState extends State<_ExpandableDayGroup> {
                   child: Text(
                     group.label,
                     style: tt.bodyMedium?.copyWith(
-                      color: AppTheme.cream,
+                      color: cs.onSurface,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -1349,27 +1348,27 @@ class _ExpandableDayGroupState extends State<_ExpandableDayGroup> {
                   width: 22,
                   height: 22,
                   decoration: BoxDecoration(
-                    color: const Color(0x1FF5A623),
+                    color: cs.primary.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(11),
                   ),
                   alignment: Alignment.center,
                   child: Text(
                     '${group.txs.length}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.amber,
+                      color: cs.primary,
                     ),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Text(
                   widget.summary.formatAmount(group.dayNet.abs()),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                     fontFamily: 'DM Mono',
-                    color: AppTheme.amber,
+                    color: cs.primary,
                   ),
                 ),
               ],
@@ -1429,12 +1428,13 @@ class _InlineTransactionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final isExpense = tx.type == TransactionType.expense;
-    final catColor = cat != null ? Color(cat!.colorValue) : AppTheme.muted;
+    final catColor = cat != null ? Color(cat!.colorValue) : cs.onSurfaceVariant;
     final amountPrefix = isExpense ? '-' : '+';
     final amountColor = isExpense
-        ? AppTheme.cream.withValues(alpha: 0.85)
-        : const Color(0xFF81C784);
+        ? cs.onSurface.withValues(alpha: 0.85)
+        : const Color(0xFF4ADE80);
 
     final label =
         tx.description.isEmpty ? (cat?.name ?? 'Transaction') : tx.description;
@@ -1471,10 +1471,10 @@ class _InlineTransactionRow extends StatelessWidget {
                 children: [
                   Text(
                     label,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: AppTheme.cream,
+                      color: cs.onSurface,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -1482,9 +1482,9 @@ class _InlineTransactionRow extends StatelessWidget {
                   if (sublabel != null)
                     Text(
                       sublabel,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
-                        color: AppTheme.muted,
+                        color: cs.onSurfaceVariant,
                       ),
                     ),
                 ],

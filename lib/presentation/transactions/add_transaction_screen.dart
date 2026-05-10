@@ -313,10 +313,10 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                     children: [
                       Text(
                         symbol,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          color: AppTheme.amber,
+                          color: cs.primary,
                           letterSpacing: 14 * 0.08,
                         ),
                       ),
@@ -349,7 +349,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                               fontSize: 56,
                               fontWeight: FontWeight.w400,
                               fontFamily: 'DM Mono',
-                              color: AppTheme.cream.withValues(alpha: 0.4),
+                              color: cs.onSurface.withValues(alpha: 0.35),
                               letterSpacing: 56 * -0.02,
                               height: 1.1,
                             ),
@@ -393,7 +393,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
               ),
             ),
 
-            const Divider(height: 1, color: AppTheme.border),
+            Divider(height: 1, color: cs.outlineVariant),
 
             // ── Scrollable: categories ───────────────────────────────
             Expanded(
@@ -555,7 +555,8 @@ class _Chip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? selectedColor : AppTheme.muted;
+    final cs = Theme.of(context).colorScheme;
+    final color = selected ? selectedColor : cs.onSurfaceVariant;
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -567,9 +568,7 @@ class _Chip extends StatelessWidget {
               : Colors.transparent,
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: selected
-                ? selectedColor
-                : const Color(0x1AF6F1E3),
+            color: selected ? selectedColor : cs.outlineVariant,
             width: selected ? 1.5 : 1.0,
           ),
         ),
@@ -583,7 +582,7 @@ class _Chip extends StatelessWidget {
               decoration: BoxDecoration(
                 color: selected
                     ? selectedColor.withValues(alpha: 0.18)
-                    : const Color(0x0FF6F1E3),
+                    : cs.outlineVariant.withValues(alpha: 0.5),
                 shape: BoxShape.circle,
               ),
               child: Center(
@@ -735,15 +734,15 @@ class _DescriptionAutocomplete extends ConsumerWidget {
                 Icon(Icons.edit_outlined, size: 18, color: cs.onSurfaceVariant),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: AppTheme.border),
+              borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: AppTheme.border),
+              borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: AppTheme.amber, width: 1.5),
+              borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1.5),
             ),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -790,13 +789,13 @@ class _CategoryGrid extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (mostUsed.isNotEmpty) ...[
-          const Text(
+          Text(
             'FREQUENT',
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.10 * 11,
-              color: AppTheme.muted,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 8),
@@ -818,7 +817,7 @@ class _CategoryGrid extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          const Divider(height: 1, color: AppTheme.border),
+          Divider(height: 1, color: Theme.of(context).colorScheme.outlineVariant),
           const SizedBox(height: 12),
         ],
         GridView.builder(
@@ -861,6 +860,7 @@ class _CategoryCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final color = Color(cat.colorValue);
     return GestureDetector(
       onTap: () => onSelect(cat.uuid),
@@ -868,19 +868,19 @@ class _CategoryCell extends StatelessWidget {
         duration: const Duration(milliseconds: 150),
         decoration: BoxDecoration(
           color: isSelected
-              ? const Color(0x1FF5A623)       // rgba(245,166,35,0.12)
-              : const Color(0x80143A23),       // rgba(20,58,35,0.5)
+              ? cs.primary.withValues(alpha: 0.12)
+              : cs.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isSelected
-                ? AppTheme.amber
+                ? cs.primary
                 : color.withValues(alpha: 0.2),
             width: 1.5,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: AppTheme.amber.withValues(alpha: 0.25),
+                    color: cs.primary.withValues(alpha: 0.25),
                     blurRadius: 8,
                     spreadRadius: 0,
                   ),
@@ -900,9 +900,9 @@ class _CategoryCell extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 4),
               child: Text(
                 cat.name,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
-                  color: AppTheme.cream,
+                  color: cs.onSurface,
                   fontWeight: FontWeight.w500,
                 ),
                 textAlign: TextAlign.center,
@@ -923,27 +923,28 @@ class _AddCategoryCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0x80143A23),
+          color: cs.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: AppTheme.muted.withValues(alpha: 0.25),
+            color: cs.outlineVariant,
             width: 1.5,
           ),
         ),
-        child: const Column(
+        child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.add_rounded, size: 22, color: AppTheme.muted),
-            SizedBox(height: 4),
+            Icon(Icons.add_rounded, size: 22, color: cs.onSurfaceVariant),
+            const SizedBox(height: 4),
             Text(
               'New',
               style: TextStyle(
                 fontSize: 12,
-                color: AppTheme.muted,
+                color: cs.onSurfaceVariant,
                 fontWeight: FontWeight.w500,
               ),
               textAlign: TextAlign.center,
