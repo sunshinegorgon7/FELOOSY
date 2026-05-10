@@ -72,6 +72,8 @@ class _SettingsBody extends ConsumerWidget {
     return ListView(
       padding: EdgeInsets.only(bottom: MediaQuery.paddingOf(context).bottom + 16),
       children: [
+        const _SectionHeader('Appearance'),
+        _AppearanceSection(settings: settings),
         const _SectionHeader('Budget'),
         _SettingsRow(
           title: 'Currency',
@@ -889,6 +891,73 @@ class _LocalBackupTileState extends ConsumerState<_LocalBackupTile> {
           onTap: busy ? null : _pickAndImport,
         ),
       ],
+    );
+  }
+}
+
+// ── Appearance segmented control ──────────────────────────────────────────────
+
+class _AppearanceSection extends ConsumerWidget {
+  final AppSettings settings;
+  const _AppearanceSection({required this.settings});
+
+  static const _segments = [
+    ('light', 'Light'),
+    ('system', 'System'),
+    ('dark', 'Dark'),
+  ];
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cs = Theme.of(context).colorScheme;
+    final current = settings.themeMode;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+      child: Container(
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: cs.surface,
+          border: Border.all(color: cs.outlineVariant),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: _segments.map((seg) {
+            final (value, label) = seg;
+            final isActive = current == value;
+            return Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  if (current == value) return;
+                  ref.read(settingsProvider.notifier).saveSettings(
+                        settings.copyWith(themeMode: value),
+                      );
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeInOut,
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  decoration: BoxDecoration(
+                    color: isActive ? cs.primary : Colors.transparent,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: isActive
+                          ? cs.onPrimary
+                          : cs.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ),
     );
   }
 }
