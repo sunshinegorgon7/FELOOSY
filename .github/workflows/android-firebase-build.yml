@@ -1,4 +1,4 @@
-name: Build and Distribute Android APK
+name: Build Android and Send to Firebase
 
 on:
   workflow_dispatch:
@@ -25,7 +25,7 @@ jobs:
       - name: Build APK
         run: flutter build apk --release
 
-      - name: Upload to Firebase App Distribution
+      - name: Upload APK to Firebase App Distribution
         uses: wzieba/Firebase-Distribution-Github-Action@v1
         with:
           appId: ${{ secrets.FIREBASE_ANDROID_APP_ID }}
