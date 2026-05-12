@@ -125,6 +125,12 @@ class TransactionRepository {
         .toList();
   }
 
+  Future<int> count() async {
+    final db = await _db.database;
+    final rows = await db.rawQuery('SELECT COUNT(*) as c FROM transactions');
+    return rows.first['c'] as int? ?? 0;
+  }
+
   /// Returns category UUIDs ordered by transaction frequency (most used first).
   Future<List<String>> getMostUsedCategoryUuids({int limit = 4, int? accountId}) async {
     final db = await _db.database;

@@ -12,6 +12,7 @@ import '../../providers/categories_provider.dart';
 import '../../providers/accounts_provider.dart';
 import '../../providers/database_provider.dart';
 import '../../providers/settings_provider.dart';
+import '../../providers/purchase_provider.dart';
 import '../../providers/transactions_provider.dart';
 
 const _windowChannel = MethodChannel('com.feloosy/window');
@@ -168,6 +169,14 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
               ),
             );
       } else {
+        final isPurchased = ref.read(purchaseProvider).value ?? false;
+        if (!isPurchased) {
+          final txCount = await ref.read(transactionRepositoryProvider).count();
+          if (txCount >= 10) {
+            if (mounted) context.push('/paywall');
+            return;
+          }
+        }
         await ref.read(transactionsProvider.notifier).add(
               Transaction(
                 uuid: const Uuid().v4(),
