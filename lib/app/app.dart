@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/accounts_provider.dart';
@@ -20,18 +22,29 @@ class FeloosyApp extends ConsumerStatefulWidget {
 
 class _FeloosyAppState extends ConsumerState<FeloosyApp>
     with WidgetsBindingObserver {
+  Timer? _widgetSyncDebounce;
+
+  void _scheduleWidgetSync() {
+    _widgetSyncDebounce?.cancel();
+    _widgetSyncDebounce = Timer(
+      const Duration(milliseconds: 400),
+      () => syncWidget(ref),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    Future<void>.microtask(() => syncWidget(ref));
-    ref.listenManual(accountsProvider, (_, _) => syncWidget(ref));
-    ref.listenManual(transactionsProvider, (_, _) => syncWidget(ref));
-    ref.listenManual(currentBudgetProvider, (_, _) => syncWidget(ref));
+    Future<void>.microtask(_scheduleWidgetSync);
+    ref.listenManual(accountsProvider, (_, _) => _scheduleWidgetSync());
+    ref.listenManual(transactionsProvider, (_, _) => _scheduleWidgetSync());
+    ref.listenManual(currentBudgetProvider, (_, _) => _scheduleWidgetSync());
   }
 
   @override
   void dispose() {
+    _widgetSyncDebounce?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -39,7 +52,7 @@ class _FeloosyAppState extends ConsumerState<FeloosyApp>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      syncWidget(ref).ignore();
+      _scheduleWidgetSync();
     }
     if (state == AppLifecycleState.paused &&
         ref.read(googleAccountProvider) != null) {
