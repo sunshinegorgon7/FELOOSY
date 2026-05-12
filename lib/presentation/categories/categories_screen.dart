@@ -99,7 +99,7 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen>
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           final isPurchased =
-              ref.read(purchaseProvider).valueOrNull ?? false;
+              ref.read(purchaseProvider).asData?.value ?? false;
           if (!isPurchased) {
             context.push('/paywall');
             return;
