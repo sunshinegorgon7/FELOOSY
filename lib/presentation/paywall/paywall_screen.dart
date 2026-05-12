@@ -50,7 +50,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
       await ref.read(purchaseProvider.notifier).restore();
       // Stream delivers result; if nothing restored, inform user
       await Future.delayed(const Duration(seconds: 2));
-      final purchased = ref.read(purchaseProvider).valueOrNull ?? false;
+      final purchased = ref.read(purchaseProvider).asData?.value ?? false;
       if (mounted && !purchased) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('No previous purchase found for this account.'),
@@ -70,7 +70,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isPurchased = ref.watch(purchaseProvider).valueOrNull ?? false;
+    final isPurchased = ref.watch(purchaseProvider).asData?.value ?? false;
     if (isPurchased) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) Navigator.of(context).pop();

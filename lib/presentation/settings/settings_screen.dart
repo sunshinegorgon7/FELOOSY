@@ -679,7 +679,7 @@ class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
             ? null
             : () {
                 final isPurchased =
-                    ref.read(purchaseProvider).valueOrNull ?? false;
+                    ref.read(purchaseProvider).asData?.value ?? false;
                 if (!isPurchased) {
                   _navigateToPaywall(context);
                   return;
@@ -919,7 +919,7 @@ class _LocalBackupTileState extends ConsumerState<_LocalBackupTile> {
               ? null
               : () {
                   final isPurchased =
-                      ref.read(purchaseProvider).valueOrNull ?? false;
+                      ref.read(purchaseProvider).asData?.value ?? false;
                   if (!isPurchased) {
                     _navigateToPaywall(context);
                     return;
