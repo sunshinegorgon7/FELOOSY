@@ -60,6 +60,8 @@ The app follows a three-layer architecture:
 
 **Tutorial**: A one-time first-run tutorial is implemented as `TutorialOverlay` in `lib/presentation/tutorial/tutorial_overlay.dart`. Completion is tracked by the `tutorialCompleted` flag stored in the `app_settings` singleton row.
 
+**Monetization**: The app is free with a $4.99 one-time purchase (product ID: `feloosy_pro_lifetime`) that unlocks: multiple wallets, Google Drive backup, local export, and custom categories. Purchase state is stored in the platform keychain/keystore via `flutter_secure_storage` (key: `feloosy_pro_purchased`), not in SQLite. `purchaseProvider` in `providers/purchase_provider.dart` manages the `in_app_purchase` stream, buy, and restore flows. **Dev flavor always returns purchased = true** — no paywall appears in dev builds. The paywall screen lives at `/paywall` and is pushed from each feature gate; modal settings contexts pop before pushing. Never store the purchase flag in SQLite — it must stay in secure storage to resist tampering.
+
 **Home widget**: `HomeWidgetSyncService` bridges Flutter data to the native home screen widget. `FeloosyApp` listens to provider changes via `ref.listenManual()` to keep the widget in sync.
 
 **Period navigation**: The home screen supports swiping between budget periods (months). Available offsets are cached in `_cachedPeriodOffsets` (a `Set<int>`) when the data loads, so swipe buttons don't disable mid-gesture during account switches. `selectedPeriodOffsetProvider` tracks the current offset.

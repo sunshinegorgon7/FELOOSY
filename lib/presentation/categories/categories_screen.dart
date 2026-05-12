@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/app_theme.dart';
 import '../../data/models/category.dart';
 import '../../providers/categories_provider.dart';
+import '../../providers/purchase_provider.dart';
 
 class CategoriesScreen extends ConsumerStatefulWidget {
   const CategoriesScreen({super.key});
@@ -96,10 +97,15 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen>
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push(
-          '/categories/edit',
-          extra: {'defaultType': _activeType},
-        ),
+        onPressed: () {
+          final isPurchased =
+              ref.read(purchaseProvider).valueOrNull ?? false;
+          if (!isPurchased) {
+            context.push('/paywall');
+            return;
+          }
+          context.push('/categories/edit', extra: {'defaultType': _activeType});
+        },
         child: const Icon(Icons.add),
       ),
     );
