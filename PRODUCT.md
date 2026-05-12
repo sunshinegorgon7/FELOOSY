@@ -1,8 +1,22 @@
 # Product
 
-## Register
+## Business Model
 
-product
+**Free tier** — fully functional for a single wallet. No transaction limits. The free experience is intentionally complete so users can build a habit before being asked to pay.
+
+**Pro — $4.99 one-time** — unlocks everything, forever. No subscription, no recurring charge.
+
+| Feature | Free | Pro |
+|---|---|---|
+| Wallets | 1 | Unlimited |
+| Google Drive backup | No | Yes |
+| Local export (JSON) | No | Yes |
+| Custom categories | No | Yes |
+| All future features | — | Yes |
+
+The paywall appears only when a user reaches a gated feature. It never interrupts the core flow (logging transactions, checking balance). The upgrade pitch is "more power", not "you've run out."
+
+Product ID: `feloosy_pro_lifetime` (non-consumable, configured in App Store Connect and Google Play Console).
 
 ## Users
 
