@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import '../../app/app_theme.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../data/models/budget.dart';
 import '../../data/models/category.dart';
