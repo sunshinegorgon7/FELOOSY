@@ -18,6 +18,7 @@ import '../../providers/google_auth_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/transactions_provider.dart';
 import '../../providers/accounts_provider.dart';
+import '../../providers/purchase_provider.dart';
 
 class SettingsScreen extends ConsumerWidget {
   final bool isModal;
@@ -619,6 +620,17 @@ class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
     }
   }
 
+  void _navigateToPaywall(BuildContext context) {
+    if (widget.isModal) {
+      Navigator.of(context).pop();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted) context.push('/paywall');
+      });
+    } else {
+      context.push('/paywall');
+    }
+  }
+
   Future<String?> _pickBackup(List<BackupEntry> backups) {
     return showDialog<String>(
       context: context,
@@ -663,7 +675,17 @@ class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
         title: 'Back up to Google Drive',
         subtitle: 'Sign in to enable backup',
         busy: _signingIn,
-        onTap: anyBusy ? null : _signIn,
+        onTap: anyBusy
+            ? null
+            : () {
+                final isPurchased =
+                    ref.read(purchaseProvider).valueOrNull ?? false;
+                if (!isPurchased) {
+                  _navigateToPaywall(context);
+                  return;
+                }
+                _signIn();
+              },
       );
     }
 
@@ -769,6 +791,17 @@ class _LocalBackupTileState extends ConsumerState<_LocalBackupTile> {
   bool _importing = false;
 
   final _svc = LocalExportService(DatabaseHelper.instance);
+
+  void _navigateToPaywall(BuildContext context) {
+    if (widget.isModal) {
+      Navigator.of(context).pop();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted) context.push('/paywall');
+      });
+    } else {
+      context.push('/paywall');
+    }
+  }
 
   Future<void> _export() async {
     setState(() => _exporting = true);
@@ -882,7 +915,17 @@ class _LocalBackupTileState extends ConsumerState<_LocalBackupTile> {
           title: 'Export backup',
           subtitle: 'Save all data as a JSON file',
           busy: _exporting,
-          onTap: busy ? null : _export,
+          onTap: busy
+              ? null
+              : () {
+                  final isPurchased =
+                      ref.read(purchaseProvider).valueOrNull ?? false;
+                  if (!isPurchased) {
+                    _navigateToPaywall(context);
+                    return;
+                  }
+                  _export();
+                },
         ),
         _SettingsRow(
           title: 'Restore from file',

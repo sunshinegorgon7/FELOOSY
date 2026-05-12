@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/constants/currencies.dart';
 import '../../data/models/account.dart';
 import '../../providers/accounts_provider.dart';
+import '../../providers/purchase_provider.dart';
 
 class ManageAccountsScreen extends ConsumerWidget {
   const ManageAccountsScreen({super.key});
@@ -10,10 +12,18 @@ class ManageAccountsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final accountsAsync = ref.watch(accountsProvider);
+    final isPurchased = ref.watch(purchaseProvider).valueOrNull ?? false;
     return Scaffold(
       appBar: AppBar(title: const Text('Manage Wallets')),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAccountEditor(context, ref),
+        onPressed: () {
+          final accounts = accountsAsync.value ?? [];
+          if (!isPurchased && accounts.length >= 1) {
+            context.push('/paywall');
+            return;
+          }
+          _showAccountEditor(context, ref);
+        },
         child: const Icon(Icons.add),
       ),
       body: accountsAsync.when(

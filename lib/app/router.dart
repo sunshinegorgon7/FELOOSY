@@ -9,6 +9,7 @@ import '../presentation/home/home_screen.dart';
 import '../presentation/settings/settings_screen.dart';
 import '../presentation/settings/manage_accounts_screen.dart';
 import '../presentation/transactions/add_transaction_screen.dart';
+import '../presentation/paywall/paywall_screen.dart';
 import 'package:flutter/material.dart';
 
 final appRouter = GoRouter(
@@ -66,6 +67,11 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/categories',
       builder: (context, state) => const CategoriesScreen(),
+    ),
+
+    GoRoute(
+      path: '/paywall',
+      builder: (context, state) => const PaywallScreen(),
     ),
 
     GoRoute(
