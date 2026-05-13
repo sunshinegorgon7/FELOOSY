@@ -11,10 +11,28 @@ class CurrentBudgetNotifier extends AsyncNotifier<Budget?> {
     final selectedAccountId = ref.watch(selectedHomeAccountIdProvider);
     if (selectedAccountId == null) return null;
     final repo = ref.watch(budgetRepositoryProvider);
-    return repo.getForPeriod(
+    final stored = await repo.getForPeriod(
       period.budgetYear,
       period.budgetMonth,
       accountId: selectedAccountId,
+    );
+    if (stored != null) return stored;
+
+    // No explicit budget row yet — synthesize one from the wallet's default
+    // so the Budget screen can display it. Nothing is written to the DB here;
+    // setAmount() persists a real row the first time the user edits it.
+    final account = ref.watch(activeAccountProvider);
+    final defaultAmount = account?.defaultMonthlyBudget ?? 0;
+    if (defaultAmount <= 0) return null;
+    final now = DateTime.now();
+    return Budget(
+      accountId: selectedAccountId,
+      year: period.budgetYear,
+      month: period.budgetMonth,
+      amount: defaultAmount,
+      currencyCode: account!.currencyCode,
+      createdAt: now,
+      updatedAt: now,
     );
   }
 

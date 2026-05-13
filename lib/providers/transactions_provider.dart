@@ -124,6 +124,15 @@ final mostUsedCategoryUuidsProvider = FutureProvider<List<String>>((ref) async {
       .getMostUsedCategoryUuids(accountId: activeAccount?.id);
 });
 
+/// All transactions for the active account across all periods, sorted newest-first.
+/// Used by the History Ledger screen.
+final allTransactionsForAccountProvider = FutureProvider<List<Transaction>>((ref) async {
+  ref.watch(transactionsProvider); // re-run whenever any mutation fires
+  final selectedAccountId = ref.watch(selectedHomeAccountIdProvider);
+  final repo = ref.watch(transactionRepositoryProvider);
+  return repo.getAll(accountId: selectedAccountId);
+});
+
 /// Total spend per category UUID for the currently selected period + account.
 /// Expenses only.
 final categorySpendThisPeriodProvider = FutureProvider<Map<String, double>>((ref) async {

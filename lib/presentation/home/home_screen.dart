@@ -257,7 +257,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ],
                   ),
                 IconButton(
-                  tooltip: 'Budget',
+                  tooltip: 'History Ledger',
                   icon: const Icon(Icons.menu_book_outlined),
                   onPressed: isAllAccounts
                       ? null
