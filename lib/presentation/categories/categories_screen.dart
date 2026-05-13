@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../app/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../data/models/category.dart';
 import '../../providers/categories_provider.dart';
 import '../../providers/purchase_provider.dart';
+import '../../providers/transactions_provider.dart';
 
 class CategoriesScreen extends ConsumerStatefulWidget {
   const CategoriesScreen({super.key});
@@ -30,8 +31,7 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen>
     super.dispose();
   }
 
-  String get _activeType =>
-      _tabController.index == 0 ? 'expense' : 'income';
+  String get _activeType => _tabController.index == 0 ? 'expense' : 'income';
 
   @override
   Widget build(BuildContext context) {
@@ -43,34 +43,8 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen>
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
-            Tab(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '−',
-                    style: TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.w700, height: 1),
-                  ),
-                  SizedBox(width: 6),
-                  Text('Expense'),
-                ],
-              ),
-            ),
-            Tab(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '+',
-                    style: TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.w700, height: 1),
-                  ),
-                  SizedBox(width: 6),
-                  Text('Income'),
-                ],
-              ),
-            ),
+            Tab(child: _TabLabel(symbol: '−', label: 'Expense')),
+            Tab(child: _TabLabel(symbol: '+', label: 'Income')),
           ],
         ),
       ),
@@ -82,12 +56,12 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen>
           return TabBarView(
             controller: _tabController,
             children: [
-              _CategorySectionList(
+              _CategoryIndex(
                 allCats: cats,
                 sectionType: 'expense',
                 bottomPad: bottomPad,
               ),
-              _CategorySectionList(
+              _CategoryIndex(
                 allCats: cats,
                 sectionType: 'income',
                 bottomPad: bottomPad,
@@ -112,14 +86,34 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen>
   }
 }
 
+class _TabLabel extends StatelessWidget {
+  final String symbol;
+  final String label;
+  const _TabLabel({required this.symbol, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(symbol,
+            style: const TextStyle(
+                fontSize: 15, fontWeight: FontWeight.w700, height: 1)),
+        const SizedBox(width: 6),
+        Text(label),
+      ],
+    );
+  }
+}
+
 // ---------------------------------------------------------------------------
 
-class _CategorySectionList extends ConsumerWidget {
+class _CategoryIndex extends ConsumerWidget {
   final List<Category> allCats;
   final String sectionType; // 'expense' or 'income'
   final double bottomPad;
 
-  const _CategorySectionList({
+  const _CategoryIndex({
     required this.allCats,
     required this.sectionType,
     required this.bottomPad,
@@ -127,60 +121,133 @@ class _CategorySectionList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final typed = allCats
-        .where((c) => c.transactionType == sectionType)
+    final scoped = allCats
+        .where((c) =>
+            c.transactionType == sectionType || c.transactionType == null)
         .toList()
       ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
 
-    final both = allCats
-        .where((c) => c.transactionType == null)
-        .toList()
-      ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
-
-    if (typed.isEmpty && both.isEmpty) {
+    if (scoped.isEmpty) {
       return Center(
         child: Text(
           'No ${sectionType == 'expense' ? 'expense' : 'income'} categories yet.',
-          style: Theme.of(context)
-              .textTheme
-              .bodyMedium
-              ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
       );
     }
 
+    final spendAsync = ref.watch(sectionType == 'expense'
+        ? categorySpendThisPeriodProvider
+        : categoryIncomeThisPeriodProvider);
+
+    final spend = spendAsync.asData?.value ?? const <String, double>{};
+    final total = spend.values.fold<double>(0, (a, b) => a + b);
+
+    final active = scoped.where((c) => (spend[c.uuid] ?? 0) > 0).toList()
+      ..sort((a, b) =>
+          (spend[b.uuid] ?? 0).compareTo(spend[a.uuid] ?? 0));
+    final unused = scoped.where((c) => (spend[c.uuid] ?? 0) == 0).toList();
+
     return ListView(
-      padding: EdgeInsets.fromLTRB(16, 16, 16, bottomPad + 80),
+      padding: EdgeInsets.fromLTRB(16, 12, 16, bottomPad + 80),
       children: [
-        if (typed.isNotEmpty) ...[
-          for (final cat in typed)
-            _CategoryTile(key: ValueKey(cat.uuid), category: cat),
-        ],
-        if (both.isNotEmpty) ...[
-          const SizedBox(height: 20),
-          const _SectionHeader(label: 'Shown in both tabs'),
-          const SizedBox(height: 8),
-          for (final cat in both)
-            _CategoryTile(key: ValueKey(cat.uuid), category: cat),
+        _SummaryStrip(
+          total: total,
+          activeCount: active.length,
+        ),
+        const SizedBox(height: 4),
+        for (final cat in active)
+          _IndexRow(
+            category: cat,
+            amount: spend[cat.uuid] ?? 0,
+            total: total,
+          ),
+        if (unused.isNotEmpty) ...[
+          const SizedBox(height: 18),
+          _UnusedHeader(count: unused.length),
+          const SizedBox(height: 4),
+          for (final cat in unused)
+            _IndexRow(
+              category: cat,
+              amount: 0,
+              total: total,
+              dim: true,
+            ),
         ],
       ],
     );
   }
 }
 
-class _SectionHeader extends StatelessWidget {
-  final String label;
-  const _SectionHeader({required this.label});
+// ---------------------------------------------------------------------------
+
+class _SummaryStrip extends StatelessWidget {
+  final double total;
+  final int activeCount;
+  const _SummaryStrip({required this.total, required this.activeCount});
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      label.toUpperCase(),
-      style: TextStyle(
-        fontSize: 11,
-        fontWeight: FontWeight.w600,
-        letterSpacing: 0.10 * 11,
-        color: Theme.of(context).colorScheme.onSurfaceVariant,
+    final cs = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'MAY · SPEND',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1.0,
+                    color: cs.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _fmt(total),
+                  style: GoogleFonts.dmMono(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w500,
+                    color: cs.onSurface,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            '$activeCount active',
+            style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _UnusedHeader extends StatelessWidget {
+  final int count;
+  const _UnusedHeader({required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Text(
+        'UNUSED THIS MONTH · $count',
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 1.0,
+          color: cs.onSurfaceVariant.withValues(alpha: 0.7),
+        ),
       ),
     );
   }
@@ -188,177 +255,124 @@ class _SectionHeader extends StatelessWidget {
 
 // ---------------------------------------------------------------------------
 
-class _CategoryTile extends ConsumerWidget {
+class _IndexRow extends StatelessWidget {
   final Category category;
-  const _CategoryTile({super.key, required this.category});
+  final double amount;
+  final double total;
+  final bool dim;
+
+  const _IndexRow({
+    required this.category,
+    required this.amount,
+    required this.total,
+    this.dim = false,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final cat = category;
-    final color = Color(cat.colorValue);
-    final iconData =
-        IconData(cat.iconCodePoint, fontFamily: cat.iconFontFamily);
+  Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final isActive = cat.isActive;
+    final color = Color(category.colorValue);
+    final iconData =
+        IconData(category.iconCodePoint, fontFamily: category.iconFontFamily);
+    final pct = (total > 0 && amount > 0) ? amount / total : 0.0;
+    final opacity = dim ? 0.55 : 1.0;
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 200),
-        opacity: isActive ? 1.0 : 0.45,
-        child: Container(
-          decoration: BoxDecoration(
-            color: cs.surfaceContainerLow,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: color.withValues(alpha: isActive ? 0.18 : 0.08),
-              width: 1,
-            ),
-          ),
+    return InkWell(
+      onTap: () => GoRouter.of(context)
+          .push('/categories/edit', extra: category),
+      borderRadius: BorderRadius.circular(8),
+      child: Opacity(
+        opacity: opacity,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 4),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const SizedBox(width: 12),
-              // Icon badge
+              // 3px color sliver
               Container(
-                width: 42,
-                height: 42,
+                width: 3,
+                height: 30,
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: isActive ? 0.14 : 0.06),
-                  borderRadius: BorderRadius.circular(11),
+                  color: color,
+                  borderRadius: BorderRadius.circular(2),
                 ),
-                child: Icon(iconData,
-                    color: color.withValues(alpha: isActive ? 1.0 : 0.5),
-                    size: 20),
               ),
-              const SizedBox(width: 12),
-              // Name + meta
+              const SizedBox(width: 14),
+              // Icon
+              Icon(iconData, color: color, size: 20),
+              const SizedBox(width: 14),
+              // Name + share bar
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      cat.name,
+                      category.name,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: isActive
-                                ? cs.onSurface
-                                : cs.onSurfaceVariant,
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w500,
+                            color: cs.onSurface,
+                            letterSpacing: -0.1,
                           ),
                     ),
-                    const SizedBox(height: 2),
-                    Row(
-                      children: [
-                        _TypeBadge(type: cat.transactionType),
-                        if (!cat.isActive) ...[
-                          const SizedBox(width: 6),
-                          Text(
-                            'Hidden',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: cs.onSurfaceVariant,
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                        ],
-                      ],
+                    const SizedBox(height: 6),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(1),
+                      child: LinearProgressIndicator(
+                        value: pct,
+                        minHeight: 2,
+                        backgroundColor:
+                            cs.onSurface.withValues(alpha: 0.06),
+                        valueColor: AlwaysStoppedAnimation<Color>(color),
+                      ),
                     ),
                   ],
                 ),
               ),
-              // Actions
-              IconButton(
-                icon: const Icon(Icons.edit_outlined, size: 18),
-                tooltip: 'Edit',
-                onPressed: () =>
-                    context.push('/categories/edit', extra: cat),
-              ),
-              if (cat.isCustom)
-                IconButton(
-                  icon: const Icon(Icons.delete_outline, size: 18),
-                  tooltip: 'Delete',
-                  color: cs.error,
-                  onPressed: () => _confirmDelete(context, ref, cat),
-                )
-              else
-                IconButton(
-                  icon: Icon(
-                    isActive
-                        ? Icons.visibility_off_outlined
-                        : Icons.visibility_outlined,
-                    size: 18,
+              const SizedBox(width: 12),
+              // Amount + %
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    amount > 0 ? _fmt(amount) : '—',
+                    style: GoogleFonts.dmMono(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: amount > 0
+                          ? cs.onSurface
+                          : cs.onSurfaceVariant.withValues(alpha: 0.5),
+                    ),
                   ),
-                  tooltip: isActive ? 'Hide' : 'Show',
-                  onPressed: () => ref
-                      .read(categoriesProvider.notifier)
-                      .setActive(cat.uuid, active: !isActive),
-                ),
-              const SizedBox(width: 4),
+                  const SizedBox(height: 3),
+                  Text(
+                    amount > 0
+                        ? '${(pct * 100).toStringAsFixed(0)}% of spend'
+                        : 'unused',
+                    style: TextStyle(
+                      fontSize: 10,
+                      letterSpacing: 0.2,
+                      color: cs.onSurfaceVariant.withValues(alpha: 0.7),
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
       ),
     );
   }
-
-  Future<void> _confirmDelete(
-      BuildContext context, WidgetRef ref, Category cat) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete category?'),
-        content: Text(
-          'Delete "${cat.name}"? Transactions using it will keep the category label.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: FilledButton.styleFrom(
-                backgroundColor: Theme.of(ctx).colorScheme.error),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed == true) {
-      await ref.read(categoriesProvider.notifier).delete(cat.uuid);
-    }
-  }
 }
 
-// ---------------------------------------------------------------------------
-
-class _TypeBadge extends StatelessWidget {
-  final String? type;
-  const _TypeBadge({required this.type});
-
-  @override
-  Widget build(BuildContext context) {
-    final (label, color) = switch (type) {
-      'expense' => ('Expense', AppTheme.expenseColor),
-      'income'  => ('Income',  AppTheme.incomeColor),
-      _         => ('Both',    AppTheme.muted),
-    };
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
-          color: color,
-          letterSpacing: 0.3,
-        ),
-      ),
-    );
-  }
+String _fmt(double v) {
+  final s = v.toStringAsFixed(2);
+  final parts = s.split('.');
+  final whole = parts[0].replaceAllMapped(
+    RegExp(r'(\d)(?=(\d{3})+$)'),
+    (m) => '${m[1]},',
+  );
+  return '$whole.${parts[1]}';
 }

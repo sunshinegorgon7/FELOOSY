@@ -123,3 +123,26 @@ final mostUsedCategoryUuidsProvider = FutureProvider<List<String>>((ref) async {
       .read(transactionRepositoryProvider)
       .getMostUsedCategoryUuids(accountId: activeAccount?.id);
 });
+
+/// Total spend per category UUID for the currently selected period + account.
+/// Expenses only.
+final categorySpendThisPeriodProvider = FutureProvider<Map<String, double>>((ref) async {
+  final txs = await ref.watch(transactionsProvider.future);
+  final map = <String, double>{};
+  for (final tx in txs) {
+    if (tx.type != TransactionType.expense) continue;
+    map[tx.categoryUuid] = (map[tx.categoryUuid] ?? 0) + tx.amount;
+  }
+  return map;
+});
+
+/// Total income per category UUID for the currently selected period + account.
+final categoryIncomeThisPeriodProvider = FutureProvider<Map<String, double>>((ref) async {
+  final txs = await ref.watch(transactionsProvider.future);
+  final map = <String, double>{};
+  for (final tx in txs) {
+    if (tx.type != TransactionType.income) continue;
+    map[tx.categoryUuid] = (map[tx.categoryUuid] ?? 0) + tx.amount;
+  }
+  return map;
+});
