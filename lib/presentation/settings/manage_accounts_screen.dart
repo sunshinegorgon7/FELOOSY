@@ -12,18 +12,21 @@ class ManageAccountsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final accountsAsync = ref.watch(accountsProvider);
-    final isPurchased = ref.watch(purchaseProvider).asData?.value ?? false;
+    final purchaseAsync = ref.watch(purchaseProvider);
     return Scaffold(
       appBar: AppBar(title: const Text('Manage Wallets')),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          final accounts = accountsAsync.value ?? [];
-          if (!isPurchased && accounts.isNotEmpty) {
-            context.push('/paywall');
-            return;
-          }
-          _showAccountEditor(context, ref);
-        },
+        onPressed: purchaseAsync.isLoading
+            ? null
+            : () {
+                final accounts = accountsAsync.value ?? [];
+                final isPurchased = purchaseAsync.value ?? false;
+                if (!isPurchased && accounts.isNotEmpty) {
+                  context.push('/paywall');
+                  return;
+                }
+                _showAccountEditor(context, ref);
+              },
         child: const Icon(Icons.add),
       ),
       body: accountsAsync.when(
