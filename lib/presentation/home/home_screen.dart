@@ -4,6 +4,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../../app/app_theme.dart';
 import '../../data/models/category.dart';
 import '../../data/models/account.dart';
@@ -229,14 +230,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ]
             : [
                 IconButton(
-                  icon: const Icon(Icons.search_outlined),
+                  icon: const Icon(LucideIcons.search, size: 22),
                   tooltip: 'Search',
                   onPressed: _startSearch,
                 ),
                 if (accounts.length > 1)
                   PopupMenuButton<int>(
                     tooltip: 'Select wallet',
-                    icon: const Icon(Icons.wallet_outlined, size: 20),
+                    icon: const Icon(LucideIcons.wallet, size: 20),
                     initialValue: hasSelectedAccount ? selectedAccountId : -1,
                     onSelected: (value) {
                       ref
@@ -258,14 +259,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 IconButton(
                   tooltip: 'History Ledger',
-                  icon: const Icon(Icons.menu_book_outlined),
+                  icon: const Icon(LucideIcons.receipt, size: 22),
                   onPressed: isAllAccounts
                       ? null
                       : () => context.push('/budget'),
                 ),
                 IconButton(
                   key: _settingsIconKey,
-                  icon: const Icon(Icons.settings_outlined),
+                  icon: const Icon(LucideIcons.slidersHorizontal, size: 22),
                   onPressed: () => _openSettings(context),
                 ),
               ],
