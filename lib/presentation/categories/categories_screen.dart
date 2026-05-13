@@ -176,11 +176,11 @@ class _SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       label.toUpperCase(),
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 11,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.10 * 11,
-        color: AppTheme.muted,
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
       ),
     );
   }
@@ -242,7 +242,7 @@ class _CategoryTile extends ConsumerWidget {
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.w600,
                             color: isActive
-                                ? AppTheme.cream
+                                ? cs.onSurface
                                 : cs.onSurfaceVariant,
                           ),
                     ),
