@@ -73,13 +73,22 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
 
     if (_isEditing) _amountController.addListener(_onFieldChanged);
 
-    // Normal push-nav: keyboard via postFrameCallback.
-    // Deep-link / widget-tap: Android suppresses the IME until the window has
-    // OS-level focus (hasWindowFocus=true). MainActivity fires a MethodChannel
-    // event the moment focus arrives; that's the only reliable trigger.
+    // Normal push-nav: keyboard via postFrameCallback + immediate TextInput.show.
+    // Deep-link / widget-tap: when the app is already foregrounded, Android never
+    // re-fires onWindowFocusChanged, so the MethodChannel event never arrives.
+    // The timer fallback below covers that case: by 300 ms the window always has
+    // OS-level focus, so TextInput.show reliably raises the soft keyboard.
     _windowChannel.setMethodCallHandler(_onWindowFocused);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _amountFocusNode.requestFocus();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      _amountFocusNode.requestFocus();
+      // Immediate attempt for regular push-navigation.
+      await SystemChannels.textInput.invokeMethod<void>('TextInput.show');
+      // Delayed fallback for widget deep-links where window focus arrives late.
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      if (mounted && _amountFocusNode.hasFocus) {
+        await SystemChannels.textInput.invokeMethod<void>('TextInput.show');
+      }
     });
   }
 
@@ -393,7 +402,12 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                     onSuggestionSelected: (suggestion) {
                       setState(() => _selectedCategoryUuid =
                           suggestion.categoryUuid);
-                      _tryAutoSave();
+                      // Defer to next frame: Autocomplete sets the controller
+                      // text synchronously but the update may not be readable
+                      // from _descFieldController until after the current build.
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted) _tryAutoSave();
+                      });
                     },
                     onSubmitted: _tryAutoSave,
                   ),
