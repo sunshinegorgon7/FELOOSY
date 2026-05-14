@@ -94,11 +94,12 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
 
   Future<dynamic> _onWindowFocused(MethodCall call) async {
     if (!mounted) return;
-    // requestFocus() is a no-op when the node already has Flutter-level focus
-    // (set during postFrameCallback while hasWindowFocus was still false).
-    // Calling TextInput.show directly re-issues showSoftInput() to Android now
-    // that the window actually has focus, bypassing the "already focused" guard.
-    _amountFocusNode.requestFocus();
+    // Do NOT call requestFocus() here. The postFrameCallback already placed
+    // focus on the amount field. Calling requestFocus() again here would yank
+    // focus away from whatever field the user has moved to (e.g. description),
+    // which breaks mid-session interactions when onWindowFocusChanged fires late
+    // (e.g. triggered by the soft keyboard appearing on some Android versions).
+    // TextInput.show re-raises the keyboard for whichever field is focused.
     await SystemChannels.textInput.invokeMethod<void>('TextInput.show');
   }
 
