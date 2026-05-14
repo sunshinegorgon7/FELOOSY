@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../dev/seed_snapshot_service.dart';
 import '../providers/accounts_provider.dart';
 import '../providers/budget_provider.dart';
 import '../providers/drive_backup_provider.dart';
@@ -68,6 +69,10 @@ class _FeloosyAppState extends ConsumerState<FeloosyApp>
       orElse: () => ThemeMode.system,
     );
 
+    final snapshotActive = AppFlavor.isDev
+        ? (ref.watch(snapshotModeProvider).value ?? false)
+        : false;
+
     return MaterialApp.router(
       title: 'FELOOSY',
       debugShowCheckedModeBanner: !AppFlavor.isProd,
@@ -75,6 +80,62 @@ class _FeloosyAppState extends ConsumerState<FeloosyApp>
       darkTheme: AppTheme.dark,
       themeMode: themeMode,
       routerConfig: appRouter,
+      builder: AppFlavor.isDev && snapshotActive
+          ? (context, child) => Column(
+                children: [
+                  const _SnapshotBanner(),
+                  Expanded(child: child!),
+                ],
+              )
+          : null,
+    );
+  }
+}
+
+class _SnapshotBanner extends ConsumerWidget {
+  const _SnapshotBanner();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final top = MediaQuery.paddingOf(context).top;
+    return Material(
+      color: AppTheme.amber,
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: EdgeInsets.only(top: top > 0 ? 0 : 4, bottom: 4, left: 16, right: 8),
+          child: Row(
+            children: [
+              const Icon(Icons.science_outlined, size: 14, color: Colors.black87),
+              const SizedBox(width: 6),
+              const Expanded(
+                child: Text(
+                  'SNAPSHOT MODE — edits are temporary',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black87,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () => SeedSnapshotService.exitSnapshot(ref),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.black87,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: const Text(
+                  'Exit',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

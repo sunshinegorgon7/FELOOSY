@@ -4,10 +4,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import '../../app/app_flavor.dart';
 import '../../app/app_theme.dart';
 import '../../core/constants/app_info.dart';
 import '../../core/constants/currencies.dart';
 import '../../data/database/database_helper.dart';
+import '../../dev/seed_snapshot_service.dart';
 import '../../data/models/app_settings.dart';
 import '../../domain/services/google_drive_backup_service.dart';
 import '../../domain/services/local_export_service.dart';
@@ -121,6 +123,11 @@ class _SettingsBody extends ConsumerWidget {
 
         const _SectionHeader('About'),
         const _InfoRow(title: 'Version', value: kAppVersionLabel),
+
+        if (AppFlavor.isDev) ...[
+          const _SectionHeader('Developer Tools'),
+          const _DevSnapshotTile(),
+        ],
 
         const _SectionHeader('Danger Zone', danger: true),
         _SettingsRow(
@@ -1125,6 +1132,58 @@ class _InfoRow extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _DevSnapshotTile extends ConsumerStatefulWidget {
+  const _DevSnapshotTile();
+
+  @override
+  ConsumerState<_DevSnapshotTile> createState() => _DevSnapshotTileState();
+}
+
+class _DevSnapshotTileState extends ConsumerState<_DevSnapshotTile> {
+  bool _busy = false;
+
+  Future<void> _enter() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Enter Snapshot Mode?'),
+        content: const Text(
+          'Your current data will be backed up locally. '
+          '3 wallets with 90 days of sample transactions will be seeded. '
+          'Tap "Exit" in the amber banner at any time to restore your real data.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Seed & Enter')),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _busy = true);
+    await SeedSnapshotService.enterSnapshot(ref);
+    if (mounted) setState(() => _busy = false);
+  }
+
+  Future<void> _exit() async {
+    setState(() => _busy = true);
+    await SeedSnapshotService.exitSnapshot(ref);
+    if (mounted) setState(() => _busy = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final snapshotActive = ref.watch(snapshotModeProvider).value ?? false;
+    return _SettingsRow(
+      title: snapshotActive ? 'Exit Snapshot Mode' : 'Seed Test Data',
+      subtitle: snapshotActive
+          ? 'Restore your real data and discard sample data'
+          : 'Seed 3 wallets × 90 days of sample transactions',
+      busy: _busy,
+      onTap: _busy ? null : (snapshotActive ? _exit : _enter),
     );
   }
 }
