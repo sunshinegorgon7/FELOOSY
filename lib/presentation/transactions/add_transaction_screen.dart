@@ -115,12 +115,14 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
 
   /// Called whenever a field changes. Saves silently when all three
   /// required fields (amount, description, category) are complete.
-  void _tryAutoSave() {
+  /// [description] can be supplied directly (e.g. from an autocomplete
+  /// selection) to avoid reading the controller which may not have settled yet.
+  void _tryAutoSave({String? description}) {
     if (_saving || _isEditing) return;
     final amount =
         double.tryParse(_amountController.text.replaceAll(',', ''));
     if (amount == null || amount <= 0) return;
-    final desc = _descFieldController?.text.trim() ?? '';
+    final desc = description ?? _descFieldController?.text.trim() ?? '';
     if (desc.isEmpty) return;
     if (_selectedCategoryUuid == null) return;
     _commit(amount: amount, description: desc);
@@ -402,12 +404,9 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                     onSuggestionSelected: (suggestion) {
                       setState(() => _selectedCategoryUuid =
                           suggestion.categoryUuid);
-                      // Defer to next frame: Autocomplete sets the controller
-                      // text synchronously but the update may not be readable
-                      // from _descFieldController until after the current build.
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (mounted) _tryAutoSave();
-                      });
+                      // Pass the description directly — the controller text
+                      // may not have propagated to _descFieldController yet.
+                      _tryAutoSave(description: suggestion.description);
                     },
                     onSubmitted: _tryAutoSave,
                   ),
