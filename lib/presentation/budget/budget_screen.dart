@@ -18,11 +18,20 @@ import '../../providers/transactions_provider.dart';
 import '../transactions/widgets/transaction_tile.dart';
 import 'set_budget_sheet.dart';
 
-class BudgetScreen extends ConsumerWidget {
+enum _LedgerGrouping { day, week, month, year }
+
+class BudgetScreen extends ConsumerStatefulWidget {
   const BudgetScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<BudgetScreen> createState() => _BudgetScreenState();
+}
+
+class _BudgetScreenState extends ConsumerState<BudgetScreen> {
+  _LedgerGrouping _grouping = _LedgerGrouping.month;
+
+  @override
+  Widget build(BuildContext context) {
     final period = ref.watch(currentBudgetPeriodProvider);
     final budgetAsync = ref.watch(currentBudgetProvider);
     final summaryAsync = ref.watch(budgetSummaryProvider);
@@ -39,12 +48,19 @@ class BudgetScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('History Ledger'),
         centerTitle: true,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(44),
+          child: _GroupingPicker(
+            value: _grouping,
+            onChanged: (g) => setState(() => _grouping = g),
+          ),
+        ),
       ),
       body: allTxAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
         data: (allTxs) {
-          final groups = _groupByMonth(allTxs);
+          final groups = _group(allTxs, _grouping);
 
           return ListView(
             padding: EdgeInsets.fromLTRB(16, 12, 16, bottomPad + 80),
@@ -119,7 +135,7 @@ class BudgetScreen extends ConsumerWidget {
                 ),
               ),
 
-              // ── Month cards ─────────────────────────────────────────
+              // ── Period cards ─────────────────────────────────────────
               if (allTxs.isEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top: 32),
@@ -167,6 +183,58 @@ class _MonthGroup {
   const _MonthGroup(this.label, this.txs);
 }
 
+List<_MonthGroup> _group(List<Transaction> txs, _LedgerGrouping g) =>
+    switch (g) {
+      _LedgerGrouping.day   => _groupByDay(txs),
+      _LedgerGrouping.week  => _groupByWeek(txs),
+      _LedgerGrouping.month => _groupByMonth(txs),
+      _LedgerGrouping.year  => _groupByYear(txs),
+    };
+
+List<_MonthGroup> _groupByDay(List<Transaction> txs) {
+  final keys = <String>[];
+  final map = <String, List<Transaction>>{};
+  for (final tx in txs) {
+    final key = DateFormat('yyyy-MM-dd').format(tx.transactionDate);
+    if (!map.containsKey(key)) keys.add(key);
+    map.putIfAbsent(key, () => []).add(tx);
+  }
+  return [
+    for (final k in keys)
+      _MonthGroup(
+        DateFormat('EEE, d MMM yyyy').format(DateFormat('yyyy-MM-dd').parse(k)),
+        map[k]!,
+      ),
+  ];
+}
+
+List<_MonthGroup> _groupByWeek(List<Transaction> txs) {
+  final keys = <String>[];
+  final map = <String, List<Transaction>>{};
+  for (final tx in txs) {
+    final dt = tx.transactionDate;
+    final monday = dt.subtract(Duration(days: dt.weekday - 1));
+    final key = DateFormat('yyyy-MM-dd').format(monday);
+    if (!map.containsKey(key)) keys.add(key);
+    map.putIfAbsent(key, () => []).add(tx);
+  }
+  return [
+    for (final k in keys)
+      _MonthGroup(_weekLabel(DateFormat('yyyy-MM-dd').parse(k)), map[k]!),
+  ];
+}
+
+String _weekLabel(DateTime monday) {
+  final sunday = monday.add(const Duration(days: 6));
+  if (monday.month == sunday.month) {
+    return '${DateFormat('d').format(monday)}–${DateFormat('d MMM yyyy').format(sunday)}';
+  } else if (monday.year == sunday.year) {
+    return '${DateFormat('d MMM').format(monday)}–${DateFormat('d MMM yyyy').format(sunday)}';
+  } else {
+    return '${DateFormat('d MMM yy').format(monday)}–${DateFormat('d MMM yy').format(sunday)}';
+  }
+}
+
 List<_MonthGroup> _groupByMonth(List<Transaction> txs) {
   final keys = <String>[];
   final map = <String, List<Transaction>>{};
@@ -176,6 +244,79 @@ List<_MonthGroup> _groupByMonth(List<Transaction> txs) {
     map.putIfAbsent(key, () => []).add(tx);
   }
   return [for (final k in keys) _MonthGroup(k, map[k]!)];
+}
+
+List<_MonthGroup> _groupByYear(List<Transaction> txs) {
+  final keys = <String>[];
+  final map = <String, List<Transaction>>{};
+  for (final tx in txs) {
+    final key = '${tx.transactionDate.year}';
+    if (!map.containsKey(key)) keys.add(key);
+    map.putIfAbsent(key, () => []).add(tx);
+  }
+  return [for (final k in keys) _MonthGroup(k, map[k]!)];
+}
+
+// ---------------------------------------------------------------------------
+// Grouping filter — shown in the AppBar bottom
+// ---------------------------------------------------------------------------
+
+class _GroupingPicker extends StatelessWidget {
+  final _LedgerGrouping value;
+  final ValueChanged<_LedgerGrouping> onChanged;
+
+  const _GroupingPicker({required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: Row(
+        children: _LedgerGrouping.values.map((g) {
+          final selected = g == value;
+          final label = switch (g) {
+            _LedgerGrouping.day   => 'Day',
+            _LedgerGrouping.week  => 'Week',
+            _LedgerGrouping.month => 'Month',
+            _LedgerGrouping.year  => 'Year',
+          };
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => onChanged(g),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                padding: const EdgeInsets.symmetric(vertical: 7),
+                decoration: BoxDecoration(
+                  color: selected
+                      ? AppTheme.amber.withValues(alpha: 0.12)
+                      : cs.surfaceContainerLow,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: selected
+                        ? AppTheme.amber.withValues(alpha: 0.55)
+                        : cs.outlineVariant,
+                    width: selected ? 1.5 : 1.0,
+                  ),
+                ),
+                child: Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight:
+                        selected ? FontWeight.w700 : FontWeight.w400,
+                    color: selected ? AppTheme.amber : cs.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
 }
 
 // ---------------------------------------------------------------------------
