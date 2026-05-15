@@ -181,8 +181,11 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
               ),
             );
       } else {
-        final isPurchased = ref.read(purchaseProvider).value ?? false;
-        if (!isPurchased) {
+        // Only gate on the paywall when we know for certain the user hasn't
+        // purchased. If the provider is still loading (.value == null), let
+        // the transaction through — treating loading as unpurchased causes a
+        // spurious paywall push on the very first transaction of each session.
+        if (ref.read(purchaseProvider).value == false) {
           final txCount = await ref.read(transactionRepositoryProvider).count();
           if (txCount >= 10) {
             if (mounted) context.push('/paywall');
