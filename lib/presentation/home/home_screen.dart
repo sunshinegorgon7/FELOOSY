@@ -186,73 +186,121 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                   Expanded(
                     child: Center(
-                      child: PopupMenuButton<int>(
-                        tooltip: accounts.length > 1 ? 'Switch wallet' : '',
-                        enabled: accounts.length > 1,
-                        initialValue: hasSelectedAccount ? selectedAccountId : -1,
-                        onSelected: (value) {
-                          ref
-                              .read(selectedHomeAccountIdProvider.notifier)
-                              .select(value == -1 ? null : value);
-                        },
-                        itemBuilder: (context) => [
-                          const PopupMenuItem<int>(
-                            value: -1,
-                            child: Text('All wallets'),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // ── Wallet switcher bubble ──────────────────────
+                          PopupMenuButton<int>(
+                            tooltip: accounts.length > 1 ? 'Switch wallet' : '',
+                            enabled: accounts.length > 1,
+                            initialValue: hasSelectedAccount ? selectedAccountId : -1,
+                            onSelected: (value) {
+                              ref
+                                  .read(selectedHomeAccountIdProvider.notifier)
+                                  .select(value == -1 ? null : value);
+                            },
+                            itemBuilder: (context) => [
+                              const PopupMenuItem<int>(
+                                value: -1,
+                                child: Text('All wallets'),
+                              ),
+                              ...accounts.map(
+                                (a) => PopupMenuItem<int>(
+                                  value: a.id ?? -1,
+                                  child: Text(a.name),
+                                ),
+                              ),
+                            ],
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 7,
+                              ),
+                              decoration: BoxDecoration(
+                                color: cs.primary.withValues(alpha: 0.10),
+                                borderRadius: BorderRadius.circular(999),
+                                border: Border.all(
+                                  color: cs.primary.withValues(alpha: 0.28),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    LucideIcons.wallet,
+                                    size: 13,
+                                    color: cs.primary,
+                                  ),
+                                  const SizedBox(width: 7),
+                                  Flexible(
+                                    child: Text(
+                                      isAllAccounts
+                                          ? 'All wallets'
+                                          : selectedAccountName ?? 'Wallet',
+                                      style: tt.labelSmall?.copyWith(
+                                        color: cs.onSurface,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  if (accounts.length > 1) ...[
+                                    const SizedBox(width: 2),
+                                    Icon(
+                                      Icons.keyboard_arrow_down_rounded,
+                                      size: 16,
+                                      color: cs.onSurfaceVariant,
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
                           ),
-                          ...accounts.map(
-                            (a) => PopupMenuItem<int>(
-                              value: a.id ?? -1,
-                              child: Text(a.name),
+                          const SizedBox(width: 8),
+                          // ── History ledger bubble ───────────────────────
+                          Opacity(
+                            opacity: isAllAccounts ? 0.35 : 1.0,
+                            child: GestureDetector(
+                              onTap: isAllAccounts
+                                  ? null
+                                  : () => context.push('/budget'),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 7,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: cs.primary.withValues(alpha: 0.10),
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(
+                                    color: cs.primary.withValues(alpha: 0.28),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      LucideIcons.scrollText,
+                                      size: 13,
+                                      color: cs.primary,
+                                    ),
+                                    const SizedBox(width: 7),
+                                    Text(
+                                      'Ledger',
+                                      style: tt.labelSmall?.copyWith(
+                                        color: cs.onSurface,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
                         ],
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 7,
-                          ),
-                          decoration: BoxDecoration(
-                            color: cs.primary.withValues(alpha: 0.10),
-                            borderRadius: BorderRadius.circular(999),
-                            border: Border.all(
-                              color: cs.primary.withValues(alpha: 0.28),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                LucideIcons.wallet,
-                                size: 13,
-                                color: cs.primary,
-                              ),
-                              const SizedBox(width: 7),
-                              Flexible(
-                                child: Text(
-                                  isAllAccounts
-                                      ? 'All wallets'
-                                      : selectedAccountName ?? 'Wallet',
-                                  style: tt.labelSmall?.copyWith(
-                                    color: cs.onSurface,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              if (accounts.length > 1) ...[
-                                const SizedBox(width: 2),
-                                Icon(
-                                  Icons.keyboard_arrow_down_rounded,
-                                  size: 16,
-                                  color: cs.onSurfaceVariant,
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
                       ),
                     ),
                   ),
@@ -270,13 +318,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   icon: const Icon(LucideIcons.search, size: 22),
                   tooltip: 'Search',
                   onPressed: _startSearch,
-                ),
-                IconButton(
-                  tooltip: 'History Ledger',
-                  icon: const Icon(LucideIcons.receipt, size: 22),
-                  onPressed: isAllAccounts
-                      ? null
-                      : () => context.push('/budget'),
                 ),
                 IconButton(
                   key: _settingsIconKey,
