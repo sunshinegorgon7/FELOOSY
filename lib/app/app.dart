@@ -58,7 +58,7 @@ class _FeloosyAppState extends ConsumerState<FeloosyApp>
     }
     if (state == AppLifecycleState.paused &&
         ref.read(googleAccountProvider) != null) {
-      ref.read(googleDriveBackupProvider).backup().ignore();
+      ref.read(googleDriveBackupProvider).backup(silent: true).ignore();
     }
   }
 

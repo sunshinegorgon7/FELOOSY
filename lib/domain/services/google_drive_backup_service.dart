@@ -160,7 +160,15 @@ class GoogleDriveBackupService {
     }
   }
 
-  Future<BackupResult> backup() async {
+  Future<BackupResult> backup({bool silent = false}) async {
+    if (silent) {
+      // Non-interactive path: only proceed if Drive is already authorized.
+      // authorizeScopes() would show a consent UI; authorizationForScopes()
+      // returns null instead, which we treat as nothing to do.
+      final auth = await GoogleSignIn.instance.authorizationClient
+          .authorizationForScopes([kDriveAppDataScope]);
+      if (auth == null) return const BackupSkipped();
+    }
     final api = await _api();
     final db = await _db.database;
 
