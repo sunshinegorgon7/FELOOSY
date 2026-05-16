@@ -41,6 +41,7 @@ class _FeloosyAppState extends ConsumerState<FeloosyApp>
     ref.listenManual(accountsProvider, (_, _) => _scheduleWidgetSync());
     ref.listenManual(transactionsProvider, (_, _) => _scheduleWidgetSync());
     ref.listenManual(currentBudgetProvider, (_, _) => _scheduleWidgetSync());
+    ref.listenManual(settingsProvider, (_, _) => _scheduleWidgetSync());
   }
 
   @override
