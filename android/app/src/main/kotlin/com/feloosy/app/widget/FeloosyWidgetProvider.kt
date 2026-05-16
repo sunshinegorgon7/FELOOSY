@@ -103,6 +103,13 @@ class FeloosyWidgetProvider : AppWidgetProvider() {
 
             val views = RemoteViews(context.packageName, R.layout.feloosy_widget)
 
+            // Switch background and button drawables to match the active theme.
+            // setBackgroundColor would flatten the rounded corners, so we swap resources.
+            views.setInt(R.id.fw_root, "setBackgroundResource",
+                if (isNight) R.drawable.fw_bg_dark else R.drawable.fw_bg)
+            views.setInt(R.id.fw_add_btn, "setBackgroundResource",
+                if (isNight) R.drawable.fw_btn_dark else R.drawable.fw_btn)
+
             // ── Label ──────────────────────────────────────────────────────
             views.setTextViewText(
                 R.id.fw_label,
