@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../app/app_theme.dart';
@@ -292,19 +291,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                       ),
                     ],
-                  ),
-                  // FELOOSY — pinned to the left edge of the title area
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'FELOOSY',
-                      style: GoogleFonts.geist(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 18,
-                        letterSpacing: 1.8,
-                        color: cs.onSurface,
-                      ),
-                    ),
                   ),
                 ],
               ),
