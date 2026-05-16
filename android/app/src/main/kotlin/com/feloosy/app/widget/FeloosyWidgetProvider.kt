@@ -5,6 +5,7 @@ import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
@@ -86,6 +87,13 @@ class FeloosyWidgetProvider : AppWidgetProvider() {
             val todayTotal = todayTotalStr.toDoubleOrNull() ?: 0.0
             val categories = parseCategories(categoriesJson)
 
+            // ── Adaptive palette ───────────────────────────────────────────
+            val isNight = (context.resources.configuration.uiMode and
+                Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+            val colAmber  = if (isNight) Color.parseColor("#f5a623") else Color.parseColor("#d68410")
+            val colText   = if (isNight) Color.parseColor("#f6f1e3") else Color.parseColor("#0d2818")
+            val colMuted  = if (isNight) Color.parseColor("#7fa890") else Color.parseColor("#5a7d6a")
+
             val views = RemoteViews(context.packageName, R.layout.feloosy_widget)
 
             // ── Label ──────────────────────────────────────────────────────
@@ -93,10 +101,7 @@ class FeloosyWidgetProvider : AppWidgetProvider() {
                 R.id.fw_label,
                 if (isOverBudget) "OVER BUDGET" else "AVAILABLE TO SPEND",
             )
-            views.setTextColor(
-                R.id.fw_label,
-                if (isOverBudget) Color.parseColor("#f5a623") else Color.parseColor("#7fa890"),
-            )
+            views.setTextColor(R.id.fw_label, if (isOverBudget) colAmber else colMuted)
 
             // ── Amount ─────────────────────────────────────────────────────
             val displayAmt = if (isOverBudget) {
@@ -105,11 +110,9 @@ class FeloosyWidgetProvider : AppWidgetProvider() {
                 formatAmount(Math.abs(availableVal))
             }
             views.setTextViewText(R.id.fw_amount, displayAmt)
-            views.setTextColor(
-                R.id.fw_amount,
-                if (isOverBudget) Color.parseColor("#f5a623") else Color.parseColor("#f6f1e3"),
-            )
+            views.setTextColor(R.id.fw_amount, if (isOverBudget) colAmber else colText)
             views.setTextViewText(R.id.fw_currency, " $currencyCode")
+            views.setTextColor(R.id.fw_currency, colAmber)
 
             // ── Accessibility ──────────────────────────────────────────────
             val availableDesc = "$displayAmt $currencyCode available to spend this month"
@@ -150,7 +153,7 @@ class FeloosyWidgetProvider : AppWidgetProvider() {
                 views.setViewVisibility(R.id.fw_bar, View.VISIBLE)
                 views.setViewVisibility(R.id.fw_legend, View.VISIBLE)
                 views.setViewVisibility(R.id.fw_empty_text, View.GONE)
-                bindLegend(context, views, categories)
+                bindLegend(context, views, categories, colText)
             }
 
             return views
@@ -204,6 +207,7 @@ class FeloosyWidgetProvider : AppWidgetProvider() {
             context: Context,
             views: RemoteViews,
             categories: List<CategoryData>,
+            labelColor: Int,
         ) {
             val slots = listOf(
                 Triple(R.id.fw_item_1, R.id.fw_dot_1, R.id.fw_label_1),
@@ -216,6 +220,7 @@ class FeloosyWidgetProvider : AppWidgetProvider() {
                     views.setViewVisibility(itemId, View.VISIBLE)
                     views.setImageViewBitmap(dotId, buildDotBitmap(categories[i].color))
                     views.setTextViewText(labelId, categories[i].name)
+                    views.setTextColor(labelId, labelColor)
                 } else {
                     views.setViewVisibility(itemId, View.GONE)
                 }

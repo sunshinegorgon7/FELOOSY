@@ -117,6 +117,16 @@ Firebase and Firestore have been fully removed from the project. Cloud backup is
 - `listBackups()` returns `List<BackupEntry>` (id + modifiedTime), sorted newest-first.
 - `firebase_options.dart` may still exist in the repo but Firebase is no longer initialised or used.
 
+## Home Screen Widget
+
+The native widget lives in two places:
+- **Android**: `android/app/src/main/kotlin/com/feloosy/app/widget/FeloosyWidgetProvider.kt` + layout/drawables in `android/app/src/main/res/`
+- **iOS**: `ios/FeloosyWidget/FeloosyWidget.swift`
+
+**Widget / app parity rule**: The widget should generally match any visual or data changes made to the app where the context applies (theme colours, data fields shown, formatting). When making such a change, **always confirm** with the user whether it should also be applied to the widget before doing so.
+
+**Theme sync**: The widget palette mirrors `AppTheme` in `lib/app/app_theme.dart`. It adapts to the device's system dark/light mode (not the app's in-app override, since widgets run outside the app process). When `AppTheme` colours change, update the widget colour constants in both the Kotlin provider and the Swift file to match.
+
 ## Version Management
 
 The canonical version lives in two places and must be kept in sync:

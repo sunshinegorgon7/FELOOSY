@@ -118,11 +118,16 @@ struct FWProvider: TimelineProvider {
 
 struct FeloosyWidgetEntryView: View {
     let entry: FWEntry
+    @Environment(\.colorScheme) var colorScheme
 
-    private let bg        = Color(argb: "#FF143A23")
-    private let cream     = Color(argb: "#FFF6F1E3")
-    private let muted     = Color(argb: "#FF7FA890")
-    private let amber     = Color(argb: "#FFF5A623")
+    private var isDark: Bool { colorScheme == .dark }
+
+    // Adaptive palette — mirrors AppTheme dark/light palettes
+    private var bg:         Color { isDark ? Color(argb: "#FF143A23") : Color(argb: "#FFF6F1E3") }
+    private var textColor:  Color { isDark ? Color(argb: "#FFF6F1E3") : Color(argb: "#FF0D2818") }
+    private var mutedColor: Color { isDark ? Color(argb: "#FF7FA890") : Color(argb: "#FF5A7D6A") }
+    private var amberColor: Color { isDark ? Color(argb: "#FFF5A623") : Color(argb: "#FFD68410") }
+    // Button text is always deep forest — dark text on amber circle reads well in both modes
     private let deepForest = Color(argb: "#FF0D2818")
 
     var data: FWData { entry.data }
@@ -150,7 +155,7 @@ struct FeloosyWidgetEntryView: View {
                 Text(data.isOverBudget ? "OVER BUDGET" : "AVAILABLE TO SPEND")
                     .font(.system(size: 11, weight: .semibold))
                     .tracking(1.1)
-                    .foregroundColor(data.isOverBudget ? amber : muted)
+                    .foregroundColor(data.isOverBudget ? amberColor : mutedColor)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
                     .accessibilityHidden(true)
@@ -158,12 +163,12 @@ struct FeloosyWidgetEntryView: View {
                 HStack(alignment: .bottom, spacing: 0) {
                     Text(formattedAvailable)
                         .font(.system(size: 24, weight: .medium, design: .monospaced))
-                        .foregroundColor(data.isOverBudget ? amber : cream)
+                        .foregroundColor(data.isOverBudget ? amberColor : textColor)
                         .lineLimit(1)
                         .minimumScaleFactor(0.5)
                     Text(" \(data.currencyCode)")
                         .font(.system(size: 13, weight: .medium, design: .monospaced))
-                        .foregroundColor(amber)
+                        .foregroundColor(amberColor)
                         .offset(y: -3)
                 }
             }
@@ -175,7 +180,7 @@ struct FeloosyWidgetEntryView: View {
 
             Link(destination: URL(string: "feloosy:///transactions/add?type=expense")!) {
                 ZStack {
-                    Circle().fill(amber).frame(width: 42, height: 42)
+                    Circle().fill(amberColor).frame(width: 42, height: 42)
                     Text("−")
                         .font(.system(size: 22, weight: .semibold))
                         .foregroundColor(deepForest)
@@ -196,7 +201,7 @@ struct FeloosyWidgetEntryView: View {
         GeometryReader { geo in
             if data.todayEmpty || data.categories.isEmpty {
                 Rectangle()
-                    .fill(cream.opacity(0.1))
+                    .fill(textColor.opacity(0.1))
                     .frame(height: 1)
                     .frame(maxHeight: .infinity, alignment: .center)
             } else {
@@ -230,7 +235,7 @@ struct FeloosyWidgetEntryView: View {
                     Circle().fill(cat.color).frame(width: 7, height: 7)
                     Text(cat.name)
                         .font(.system(size: 11, weight: .regular))
-                        .foregroundColor(cream)
+                        .foregroundColor(textColor)
                         .lineLimit(1)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
