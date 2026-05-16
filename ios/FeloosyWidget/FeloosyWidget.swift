@@ -120,7 +120,15 @@ struct FeloosyWidgetEntryView: View {
     let entry: FWEntry
     @Environment(\.colorScheme) var colorScheme
 
-    private var isDark: Bool { colorScheme == .dark }
+    private var isDark: Bool {
+        let stored = UserDefaults(suiteName: kAppGroup)?
+            .string(forKey: "fw_theme_mode") ?? "system"
+        switch stored {
+        case "dark":  return true
+        case "light": return false
+        default:      return colorScheme == .dark
+        }
+    }
 
     // Adaptive palette — mirrors AppTheme dark/light palettes
     private var bg:         Color { isDark ? Color(argb: "#FF143A23") : Color(argb: "#FFF6F1E3") }

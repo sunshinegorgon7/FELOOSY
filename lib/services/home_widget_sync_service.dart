@@ -7,6 +7,7 @@ import '../data/models/transaction.dart';
 import '../providers/accounts_provider.dart';
 import '../providers/budget_period_provider.dart';
 import '../providers/database_provider.dart';
+import '../providers/settings_provider.dart';
 
 const _androidProvider = 'com.feloosy.app.widget.FeloosyWidgetProvider';
 const _iOSKind = 'FeloosyWidget';
@@ -23,6 +24,12 @@ Future<void> syncWidget(WidgetRef ref) async {
 }
 
 Future<void> _sync(WidgetRef ref) async {
+  // Sync the app's theme preference so the widget can match it exactly,
+  // even when the user has overridden the system default.
+  final themeMode = ref.read(settingsProvider)
+      .whenOrNull(data: (s) => s.themeMode) ?? 'system';
+  await HomeWidget.saveWidgetData<String>('fw_theme_mode', themeMode);
+
   final accounts = ref.read(accountsProvider).value ?? const [];
   final account =
       accounts.where((a) => a.isFavorite).firstOrNull ?? accounts.firstOrNull;
@@ -90,7 +97,7 @@ Future<void> _sync(WidgetRef ref) async {
     }
   }
   if (otherAmount > 0) {
-    catList.add({'name': 'Other', 'amount': otherAmount, 'color': '#66F6F1E3'});
+    catList.add({'name': 'Other', 'amount': otherAmount, 'color': '#FF5B8DB8'});
   }
 
   await HomeWidget.saveWidgetData<String>('fw_account_name', account.name);

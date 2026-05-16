@@ -88,8 +88,15 @@ class FeloosyWidgetProvider : AppWidgetProvider() {
             val categories = parseCategories(categoriesJson)
 
             // ── Adaptive palette ───────────────────────────────────────────
-            val isNight = (context.resources.configuration.uiMode and
-                Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+            // Honour the app's in-app theme override before falling back to
+            // the device system dark/light mode.
+            val themeMode = prefs.getString("fw_theme_mode", "system") ?: "system"
+            val isNight = when (themeMode) {
+                "dark"  -> true
+                "light" -> false
+                else    -> (context.resources.configuration.uiMode and
+                    Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+            }
             val colAmber  = if (isNight) Color.parseColor("#f5a623") else Color.parseColor("#d68410")
             val colText   = if (isNight) Color.parseColor("#f6f1e3") else Color.parseColor("#0d2818")
             val colMuted  = if (isNight) Color.parseColor("#7fa890") else Color.parseColor("#5a7d6a")
