@@ -239,7 +239,7 @@ struct FeloosyWidgetEntryView: View {
     private var legendRow: some View {
         HStack(spacing: 0) {
             ForEach(data.categories) { cat in
-                HStack(spacing: 6) {
+                HStack(spacing: 3) {
                     Circle().fill(cat.color).frame(width: 7, height: 7)
                     Text(cat.name)
                         .font(.system(size: 11, weight: .regular))
