@@ -115,7 +115,8 @@ class AiBackgroundScanner extends Notifier<Set<String>> {
           source: 'local',
           retryAfter: retryAfter,
         );
-        // Stop processing — quota hit, no point continuing
+        // Refresh UI then stop — quota hit, no point continuing
+        ref.invalidate(aiCacheForHashProvider(job.hash));
         state = state.difference({job.hash});
         break;
       } else {
@@ -138,6 +139,8 @@ class AiBackgroundScanner extends Notifier<Set<String>> {
         );
       }
 
+      // Refresh the UI cache for this hash so the card re-reads from SQLite
+      ref.invalidate(aiCacheForHashProvider(job.hash));
       state = state.difference({job.hash});
 
       // Rate limit: 1 request per 5 seconds (12 RPM, safely under 15 RPM free tier)
