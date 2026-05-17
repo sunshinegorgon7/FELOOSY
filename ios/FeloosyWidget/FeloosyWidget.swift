@@ -138,6 +138,21 @@ struct FeloosyWidgetEntryView: View {
     // Button text is always deep forest — dark text on amber circle reads well in both modes
     private let deepForest = Color(argb: "#FF0D2818")
 
+    // Static category palettes (applied by index, ignoring per-category DB colors)
+    private let catColorsLight: [Color] = [
+        Color(argb: "#FF1E3A5F"), // Deep Navy
+        Color(argb: "#FF2B2B2B"), // Charcoal
+        Color(argb: "#FF6B1F2A"), // Burgundy
+        Color(argb: "#FF4A5D7A"), // Slate Blue
+    ]
+    private let catColorsDark: [Color] = [
+        Color(argb: "#FFF4EBD0"), // Warm Cream
+        Color(argb: "#FFD4A017"), // Soft Gold
+        Color(argb: "#FFE07A5F"), // Muted Coral
+        Color(argb: "#FFB7C9A8"), // Pale Sage
+    ]
+    private var catPalette: [Color] { isDark ? catColorsDark : catColorsLight }
+
     var data: FWData { entry.data }
 
     var body: some View {
@@ -215,9 +230,9 @@ struct FeloosyWidgetEntryView: View {
             } else {
                 let total = data.categories.map(\.amount).reduce(0, +)
                 HStack(spacing: 0) {
-                    ForEach(data.categories) { cat in
+                    ForEach(Array(data.categories.enumerated()), id: \.offset) { i, cat in
                         Rectangle()
-                            .fill(cat.color)
+                            .fill(catPalette[i % catPalette.count])
                             .frame(
                                 width: total > 0
                                     ? CGFloat(cat.amount / total) * geo.size.width
@@ -238,9 +253,9 @@ struct FeloosyWidgetEntryView: View {
     // ── Legend ───────────────────────────────────────────────────────────
     private var legendRow: some View {
         HStack(spacing: 0) {
-            ForEach(data.categories) { cat in
+            ForEach(Array(data.categories.enumerated()), id: \.offset) { i, cat in
                 HStack(spacing: 3) {
-                    Circle().fill(cat.color).frame(width: 7, height: 7)
+                    Circle().fill(catPalette[i % catPalette.count]).frame(width: 7, height: 7)
                     Text(cat.name)
                         .font(.system(size: 11, weight: .regular))
                         .foregroundColor(textColor)
