@@ -1,1 +1,1 @@
-const kAppVersionLabel = '1.4.0 (69)';
+﻿const kAppVersionLabel = '1.4.1 (70)';

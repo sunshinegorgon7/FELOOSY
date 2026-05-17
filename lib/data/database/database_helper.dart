@@ -1,4 +1,4 @@
-import 'package:path/path.dart' as p;
+﻿import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import '../../app/app_flavor.dart';
@@ -26,7 +26,7 @@ class DatabaseHelper {
     final dbPath = p.join(docDir.path, AppFlavor.databaseName);
     return openDatabase(
       dbPath,
-      version: 12,
+      version: 13,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -118,6 +118,21 @@ class DatabaseHelper {
         tutorial_completed INTEGER NOT NULL DEFAULT 0
       )
     ''');
+
+    await db.execute(
+      '''
+      CREATE TABLE ai_analysis_cache (
+        hash TEXT PRIMARY KEY,
+        group_label TEXT NOT NULL,
+        summary TEXT NOT NULL,
+        insights TEXT NOT NULL,
+        advice TEXT NOT NULL,
+        source TEXT NOT NULL,
+        created_at INTEGER NOT NULL,
+        retry_after INTEGER
+      )
+      ''',
+    );
 
     await _seed(db);
   }
@@ -318,6 +333,22 @@ class DatabaseHelper {
         }
       }
     }
+    if (oldVersion < 13) {
+      await db.execute(
+        '''
+        CREATE TABLE IF NOT EXISTS ai_analysis_cache (
+          hash TEXT PRIMARY KEY,
+          group_label TEXT NOT NULL,
+          summary TEXT NOT NULL,
+          insights TEXT NOT NULL,
+          advice TEXT NOT NULL,
+          source TEXT NOT NULL,
+          created_at INTEGER NOT NULL,
+          retry_after INTEGER
+        )
+        ''',
+      );
+    }
   }
 
   Future<void> _seed(Database db) async {
@@ -377,3 +408,5 @@ class DatabaseHelper {
     _db = null;
   }
 }
+
+

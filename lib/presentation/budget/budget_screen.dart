@@ -17,6 +17,8 @@ import '../../providers/categories_provider.dart';
 import '../../providers/transactions_provider.dart';
 import '../transactions/widgets/transaction_tile.dart';
 import 'set_budget_sheet.dart';
+import '../../providers/ai_analysis_provider.dart';
+import 'widgets/ai_insights_card.dart';
 
 enum _LedgerGrouping { day, week, month, year }
 
@@ -38,6 +40,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
     final allTxAsync = ref.watch(allTransactionsForAccountProvider);
     final cats =
         ref.watch(categoriesProvider).asData?.value ?? const <Category>[];
+    final account = ref.watch(activeAccountProvider);
 
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
@@ -61,6 +64,26 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
         error: (e, _) => Center(child: Text('Error: $e')),
         data: (allTxs) {
           final groups = _group(allTxs, _grouping);
+
+          // Trigger background AI scan for all complete groups
+          if (account != null && cats.isNotEmpty) {
+            final jobs = groups
+                .where((g) => g.isPeriodComplete)
+                .map((g) => AiScanJob(
+                      hash: computeGroupHash(g.txs, 0),
+                      groupLabel: g.label,
+                      transactions: g.txs,
+                      budgetAmount: 0,
+                      currencySymbol: account.currencySymbol,
+                      symbolLeading: account.currencySymbolLeading,
+                    ))
+                .toList();
+            if (jobs.isNotEmpty) {
+              Future.microtask(() {
+                ref.read(aiBackgroundScannerProvider.notifier).enqueue(jobs);
+              });
+            }
+          }
 
           return ListView(
             padding: EdgeInsets.fromLTRB(16, 12, 16, bottomPad + 80),
@@ -153,6 +176,9 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
                     monthLabel: group.label,
                     transactions: group.txs,
                     cats: cats,
+                    isPeriodComplete: group.isPeriodComplete,
+                    currencySymbol: account?.currencySymbol ?? '',
+                    symbolLeading: account?.currencySymbolLeading ?? false,
                   ),
             ],
           );
@@ -180,7 +206,8 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
 class _MonthGroup {
   final String label;
   final List<Transaction> txs;
-  const _MonthGroup(this.label, this.txs);
+  final bool isPeriodComplete;
+  const _MonthGroup(this.label, this.txs, this.isPeriodComplete);
 }
 
 List<_MonthGroup> _group(List<Transaction> txs, _LedgerGrouping g) =>
@@ -194,6 +221,7 @@ List<_MonthGroup> _group(List<Transaction> txs, _LedgerGrouping g) =>
 List<_MonthGroup> _groupByDay(List<Transaction> txs) {
   final keys = <String>[];
   final map = <String, List<Transaction>>{};
+  final now = DateTime.now();
   for (final tx in txs) {
     final key = DateFormat('yyyy-MM-dd').format(tx.transactionDate);
     if (!map.containsKey(key)) keys.add(key);
@@ -204,6 +232,9 @@ List<_MonthGroup> _groupByDay(List<Transaction> txs) {
       _MonthGroup(
         DateFormat('EEE, d MMM yyyy').format(DateFormat('yyyy-MM-dd').parse(k)),
         map[k]!,
+        DateFormat('yyyy-MM-dd')
+            .parse(k)
+            .isBefore(DateTime(now.year, now.month, now.day)),
       ),
   ];
 }
@@ -211,6 +242,7 @@ List<_MonthGroup> _groupByDay(List<Transaction> txs) {
 List<_MonthGroup> _groupByWeek(List<Transaction> txs) {
   final keys = <String>[];
   final map = <String, List<Transaction>>{};
+  final now = DateTime.now();
   for (final tx in txs) {
     final dt = tx.transactionDate;
     final monday = dt.subtract(Duration(days: dt.weekday - 1));
@@ -220,7 +252,14 @@ List<_MonthGroup> _groupByWeek(List<Transaction> txs) {
   }
   return [
     for (final k in keys)
-      _MonthGroup(_weekLabel(DateFormat('yyyy-MM-dd').parse(k)), map[k]!),
+      _MonthGroup(
+        _weekLabel(DateFormat('yyyy-MM-dd').parse(k)),
+        map[k]!,
+        DateFormat('yyyy-MM-dd')
+            .parse(k)
+            .add(const Duration(days: 6))
+            .isBefore(now),
+      ),
   ];
 }
 
@@ -238,23 +277,45 @@ String _weekLabel(DateTime monday) {
 List<_MonthGroup> _groupByMonth(List<Transaction> txs) {
   final keys = <String>[];
   final map = <String, List<Transaction>>{};
+  final now = DateTime.now();
   for (final tx in txs) {
     final key = DateFormat('MMMM yyyy').format(tx.transactionDate);
     if (!map.containsKey(key)) keys.add(key);
     map.putIfAbsent(key, () => []).add(tx);
   }
-  return [for (final k in keys) _MonthGroup(k, map[k]!)];
+  return [
+    for (final k in keys)
+      _MonthGroup(k, map[k]!, _isMonthComplete(k, now)),
+  ];
+}
+
+bool _isMonthComplete(String monthLabel, DateTime now) {
+  try {
+    final dt = DateFormat('MMMM yyyy').parse(monthLabel);
+    final lastDay = DateTime(dt.year, dt.month + 1, 0);
+    return lastDay.isBefore(DateTime(now.year, now.month, now.day));
+  } catch (_) {
+    return false;
+  }
 }
 
 List<_MonthGroup> _groupByYear(List<Transaction> txs) {
   final keys = <String>[];
   final map = <String, List<Transaction>>{};
+  final now = DateTime.now();
   for (final tx in txs) {
     final key = '${tx.transactionDate.year}';
     if (!map.containsKey(key)) keys.add(key);
     map.putIfAbsent(key, () => []).add(tx);
   }
-  return [for (final k in keys) _MonthGroup(k, map[k]!)];
+  return [
+    for (final k in keys)
+      _MonthGroup(
+        k,
+        map[k]!,
+        int.tryParse(k) != null && int.parse(k) < now.year,
+      ),
+  ];
 }
 
 // ---------------------------------------------------------------------------
@@ -329,24 +390,32 @@ class _CatStat {
   const _CatStat(this.category, this.amount);
 }
 
-class _MonthCard extends StatefulWidget {
+class _MonthCard extends ConsumerStatefulWidget {
   final String monthLabel;
   final List<Transaction> transactions;
   final List<Category> cats;
+  final bool isPeriodComplete;
+  final String currencySymbol;
+  final bool symbolLeading;
 
   const _MonthCard({
     required this.monthLabel,
     required this.transactions,
     required this.cats,
+    required this.isPeriodComplete,
+    required this.currencySymbol,
+    required this.symbolLeading,
   });
 
   @override
-  State<_MonthCard> createState() => _MonthCardState();
+  ConsumerState<_MonthCard> createState() => _MonthCardState();
 }
 
-class _MonthCardState extends State<_MonthCard> {
+class _MonthCardState extends ConsumerState<_MonthCard> {
   bool _expanded = false;
   String? _selectedCategoryUuid;
+
+  String get _hash => computeGroupHash(widget.transactions, 0);
 
   @override
   Widget build(BuildContext context) {
@@ -381,6 +450,11 @@ class _MonthCardState extends State<_MonthCard> {
         : widget.transactions
             .where((t) => t.categoryUuid == _selectedCategoryUuid)
             .toList();
+
+    final hash = _hash;
+    final scanningHashes = ref.watch(aiBackgroundScannerProvider);
+    final isScanning = scanningHashes.contains(hash);
+    final cacheAsync = ref.watch(aiCacheForHashProvider(hash));
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -510,6 +584,24 @@ class _MonthCardState extends State<_MonthCard> {
                     ),
                   const SizedBox(height: 8),
                 ],
+
+                // ── AI Insights ─────────────────────────────────────
+                const Divider(height: 1),
+                const SizedBox(height: 12),
+                if (!widget.isPeriodComplete)
+                  AiInsightsPendingCard(groupLabel: widget.monthLabel)
+                else if (isScanning && cacheAsync.value == null)
+                  const AiInsightsPreparingCard()
+                else
+                  cacheAsync.when(
+                    loading: () => const AiInsightsPreparingCard(),
+                    error: (e, st) => const SizedBox.shrink(),
+                    data: (entry) => entry != null
+                        ? AiInsightsCard(entry: entry)
+                        : isScanning
+                            ? const AiInsightsPreparingCard()
+                            : const SizedBox.shrink(),
+                  ),
 
                 // Transaction list
                 const Divider(height: 1),
