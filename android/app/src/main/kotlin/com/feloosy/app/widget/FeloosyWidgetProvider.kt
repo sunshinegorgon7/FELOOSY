@@ -62,6 +62,19 @@ class FeloosyWidgetProvider : AppWidgetProvider() {
 
         private data class CategoryData(val name: String, val amount: Double, val color: Int)
 
+        private val CAT_COLORS_LIGHT = intArrayOf(
+            Color.parseColor("#1E3A5F"), // Deep Navy
+            Color.parseColor("#2B2B2B"), // Charcoal
+            Color.parseColor("#6B1F2A"), // Burgundy
+            Color.parseColor("#4A5D7A"), // Slate Blue
+        )
+        private val CAT_COLORS_DARK = intArrayOf(
+            Color.parseColor("#F4EBD0"), // Warm Cream
+            Color.parseColor("#D4A017"), // Soft Gold
+            Color.parseColor("#E07A5F"), // Muted Coral
+            Color.parseColor("#B7C9A8"), // Pale Sage
+        )
+
         fun buildViews(context: Context): RemoteViews {
             return try {
                 buildViewsInternal(context).also {
@@ -85,7 +98,7 @@ class FeloosyWidgetProvider : AppWidgetProvider() {
 
             val availableVal = availableStr.toDoubleOrNull() ?: 0.0
             val todayTotal = todayTotalStr.toDoubleOrNull() ?: 0.0
-            val categories = parseCategories(categoriesJson)
+            val rawCategories = parseCategories(categoriesJson)
 
             // ── Adaptive palette ───────────────────────────────────────────
             // Honour the app's in-app theme override before falling back to
@@ -100,6 +113,10 @@ class FeloosyWidgetProvider : AppWidgetProvider() {
             val colAmber  = if (isNight) Color.parseColor("#f5a623") else Color.parseColor("#d68410")
             val colText   = if (isNight) Color.parseColor("#f6f1e3") else Color.parseColor("#0d2818")
             val colMuted  = if (isNight) Color.parseColor("#7fa890") else Color.parseColor("#5a7d6a")
+            val catPalette = if (isNight) CAT_COLORS_DARK else CAT_COLORS_LIGHT
+            val categories = rawCategories.mapIndexed { i, cat ->
+                cat.copy(color = catPalette[i % catPalette.size])
+            }
 
             val views = RemoteViews(context.packageName, R.layout.feloosy_widget)
 
