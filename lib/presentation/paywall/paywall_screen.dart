@@ -154,7 +154,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                   ),
                   onPressed: busy ? null : _buy,
                   child: _buying
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 22,
                           height: 22,
                           child: CircularProgressIndicator(

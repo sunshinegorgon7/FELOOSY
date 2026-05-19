@@ -712,7 +712,7 @@ class _MonthBarChartState extends State<_MonthBarChart> {
                           right: 0,
                           child: Text(
                             _fmt(stat.amount),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 9,
                               fontWeight: FontWeight.w500,
                               fontFamily: 'DM Mono',
