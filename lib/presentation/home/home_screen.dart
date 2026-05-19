@@ -278,7 +278,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 ),
                                 const SizedBox(width: 7),
                                 Text(
-                                  'Ledger',
+                                  'History',
                                   style: tt.labelSmall?.copyWith(
                                     color: cs.onSurface,
                                     fontSize: 12,

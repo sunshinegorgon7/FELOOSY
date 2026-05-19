@@ -49,7 +49,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
     return Scaffold(
       backgroundColor: cs.surface,
       appBar: AppBar(
-        title: const Text('History Ledger'),
+        title: const Text('History'),
         centerTitle: true,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(44),
@@ -500,7 +500,7 @@ class _MonthCardState extends ConsumerState<_MonthCard> {
                       style: GoogleFonts.dmMono(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
-                        color: AppTheme.expenseColor,
+                        color: cs.primary,
                       ),
                     ),
                   const SizedBox(width: 6),

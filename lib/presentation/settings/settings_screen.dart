@@ -953,7 +953,7 @@ class _AppearanceSection extends ConsumerWidget {
 
   static const _segments = [
     ('light', 'Light'),
-    ('system', 'System'),
+    ('system', 'Auto'),
     ('dark', 'Dark'),
   ];
 
