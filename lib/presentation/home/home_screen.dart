@@ -4,7 +4,6 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import '../../app/app_theme.dart';
 import '../../data/models/category.dart';
 import '../../data/models/account.dart';
 import '../../data/models/transaction.dart';
@@ -1224,6 +1223,7 @@ class _TopCategoriesChartState extends State<_TopCategoriesChart> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final accentColor = cs.brightness == Brightness.dark ? cs.primary : cs.onSurface;
     const barAreaHeight = 100.0;
     final maxAmount = widget.stats.first.amount;
     final hasSelection = widget.selectedCategoryUuid != null;
@@ -1260,11 +1260,11 @@ class _TopCategoriesChartState extends State<_TopCategoriesChart> {
                           right: 0,
                           child: Text(
                             widget.summary.formatAmount(stat.amount),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w500,
                               fontFamily: 'DM Mono',
-                              color: AppTheme.muted,
+                              color: accentColor,
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -1302,7 +1302,7 @@ class _TopCategoriesChartState extends State<_TopCategoriesChart> {
                       fontSize: 10,
                       fontWeight:
                           isSelected ? FontWeight.w700 : FontWeight.w500,
-                      color: isSelected ? cs.onSurface : cs.onSurfaceVariant,
+                      color: accentColor,
                     ),
                     textAlign: TextAlign.center,
                     maxLines: 1,
