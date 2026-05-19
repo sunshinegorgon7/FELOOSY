@@ -32,9 +32,9 @@ struct FWData {
             todayEmpty: false,
             todayTotal: 595,
             categories: [
-                FWCategory(name: "Coffee",    amount: 200, color: Color(argb: "#FFF5A623")),
-                FWCategory(name: "Transport", amount: 295, color: Color(argb: "#FF7FA890")),
-                FWCategory(name: "Dining",    amount: 100, color: Color(argb: "#FFE08A10")),
+                FWCategory(name: "Coffee",    amount: 200, color: Color(argb: "#FF8A6F5C")),
+                FWCategory(name: "Transport", amount: 295, color: Color(argb: "#FF5F7F8A")),
+                FWCategory(name: "Dining",    amount: 100, color: Color(argb: "#FF8F7A4F")),
             ]
         )
     }
@@ -55,7 +55,7 @@ struct FWData {
             for obj in arr {
                 let catName   = obj["name"]   as? String ?? "Other"
                 let catAmount = obj["amount"] as? Double ?? 0
-                let catColor  = obj["color"]  as? String ?? "#66F6F1E3"
+                let catColor  = obj["color"]  as? String ?? "#FF6E8790"
                 cats.append(FWCategory(name: catName, amount: catAmount,
                                        color: Color(argb: catColor)))
             }
@@ -131,25 +131,27 @@ struct FeloosyWidgetEntryView: View {
     }
 
     // Adaptive palette — mirrors AppTheme dark/light palettes
-    private var bg:         Color { isDark ? Color(argb: "#FF143A23") : Color(argb: "#FFF6F1E3") }
-    private var textColor:  Color { isDark ? Color(argb: "#FFF6F1E3") : Color(argb: "#FF0D2818") }
-    private var mutedColor: Color { isDark ? Color(argb: "#FF7FA890") : Color(argb: "#FF5A7D6A") }
-    private var amberColor: Color { isDark ? Color(argb: "#FFF5A623") : Color(argb: "#FFD68410") }
-    // Button text is always deep forest — dark text on amber circle reads well in both modes
-    private let deepForest = Color(argb: "#FF0D2818")
+    private var bg:          Color { isDark ? Color(argb: "#FF1E2E3D") : Color(argb: "#FFF4F7F1") }
+    private var textColor:   Color { isDark ? Color(argb: "#FFC4D0DC") : Color(argb: "#FF2C2C2C") }
+    private var mutedColor:  Color { isDark ? Color(argb: "#FF9AB0C4") : Color(argb: "#FF4A5E40") }
+    private var accentColor: Color { isDark ? Color(argb: "#FF7AAECF") : Color(argb: "#FF3F6329") }
+    private var overColor:   Color { isDark ? Color(argb: "#FFF07171") : Color(argb: "#FFB23636") }
+    private var primaryFill: Color { isDark ? Color(argb: "#FF4D7FA8") : Color(argb: "#FF639922") }
+    private var onPrimary:   Color { isDark ? Color(argb: "#FF060C11") : Color(argb: "#FF162008") }
+    // Button text is dark in both modes so the primary circle stays readable.
 
     // Static category palettes (applied by index, ignoring per-category DB colors)
     private let catColorsLight: [Color] = [
-        Color(argb: "#FF1E3A5F"), // Deep Navy
-        Color(argb: "#FF2B2B2B"), // Charcoal
-        Color(argb: "#FF6B1F2A"), // Burgundy
-        Color(argb: "#FF4A5D7A"), // Slate Blue
+        Color(argb: "#FF6E8F68"), // Soft Sage
+        Color(argb: "#FF8F7A4F"), // Ledger Ochre
+        Color(argb: "#FF7C7796"), // Dust Violet
+        Color(argb: "#FF67849A"), // Steel Water
     ]
     private let catColorsDark: [Color] = [
-        Color(argb: "#FFF4EBD0"), // Warm Cream
-        Color(argb: "#FFD4A017"), // Soft Gold
-        Color(argb: "#FFE07A5F"), // Muted Coral
-        Color(argb: "#FFB7C9A8"), // Pale Sage
+        Color(argb: "#FF9BB09B"), // Pale Sage
+        Color(argb: "#FFC0A86A"), // Muted Ochre
+        Color(argb: "#FFA99FC8"), // Pale Violet
+        Color(argb: "#FF8FB2C8"), // Steel Water
     ]
     private var catPalette: [Color] { isDark ? catColorsDark : catColorsLight }
 
@@ -178,7 +180,7 @@ struct FeloosyWidgetEntryView: View {
                 Text(data.isOverBudget ? "OVER BUDGET" : "AVAILABLE TO SPEND")
                     .font(.system(size: 11, weight: .semibold))
                     .tracking(1.1)
-                    .foregroundColor(data.isOverBudget ? amberColor : mutedColor)
+                    .foregroundColor(data.isOverBudget ? overColor : mutedColor)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
                     .accessibilityHidden(true)
@@ -186,12 +188,12 @@ struct FeloosyWidgetEntryView: View {
                 HStack(alignment: .bottom, spacing: 0) {
                     Text(formattedAvailable)
                         .font(.system(size: 24, weight: .medium, design: .monospaced))
-                        .foregroundColor(data.isOverBudget ? amberColor : textColor)
+                        .foregroundColor(data.isOverBudget ? overColor : textColor)
                         .lineLimit(1)
                         .minimumScaleFactor(0.5)
                     Text(" \(data.currencyCode)")
                         .font(.system(size: 13, weight: .medium, design: .monospaced))
-                        .foregroundColor(amberColor)
+                        .foregroundColor(accentColor)
                         .offset(y: -3)
                 }
             }
@@ -203,10 +205,10 @@ struct FeloosyWidgetEntryView: View {
 
             Link(destination: URL(string: "feloosy:///transactions/add?type=expense")!) {
                 ZStack {
-                    Circle().fill(amberColor).frame(width: 42, height: 42)
+                    Circle().fill(primaryFill).frame(width: 42, height: 42)
                     Text("−")
                         .font(.system(size: 22, weight: .semibold))
-                        .foregroundColor(deepForest)
+                        .foregroundColor(onPrimary)
                 }
             }
             .accessibilityLabel("Add expense")

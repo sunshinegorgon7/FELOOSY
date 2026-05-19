@@ -242,7 +242,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
         ref.watch(mostUsedCategoryUuidsProvider).value ?? [];
 
     final amountColor =
-        isExpense ? AppTheme.expenseColor : AppTheme.incomeColor;
+        isExpense ? AppTheme.expenseText(cs) : AppTheme.incomeText(cs);
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -343,7 +343,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          color: cs.primary,
+                          color: AppTheme.primaryText(cs),
                           letterSpacing: 14 * 0.08,
                         ),
                       ),
@@ -551,7 +551,7 @@ class _TypeToggle extends StatelessWidget {
           label: 'Expense',
           symbol: '−',
           selected: isExpense,
-          selectedColor: AppTheme.expenseColor,
+          selectedColor: AppTheme.expenseText(Theme.of(context).colorScheme),
           onTap: onExpense,
         ),
         const SizedBox(width: 8),
@@ -559,7 +559,7 @@ class _TypeToggle extends StatelessWidget {
           label: 'Income',
           symbol: '+',
           selected: !isExpense,
-          selectedColor: AppTheme.incomeColor,
+          selectedColor: AppTheme.incomeText(Theme.of(context).colorScheme),
           onTap: onIncome,
         ),
       ],

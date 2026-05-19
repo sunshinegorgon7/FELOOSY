@@ -63,16 +63,16 @@ class FeloosyWidgetProvider : AppWidgetProvider() {
         private data class CategoryData(val name: String, val amount: Double, val color: Int)
 
         private val CAT_COLORS_LIGHT = intArrayOf(
-            Color.parseColor("#1E3A5F"), // Deep Navy
-            Color.parseColor("#2B2B2B"), // Charcoal
-            Color.parseColor("#6B1F2A"), // Burgundy
-            Color.parseColor("#4A5D7A"), // Slate Blue
+            Color.parseColor("#6E8F68"), // Soft Sage
+            Color.parseColor("#8F7A4F"), // Ledger Ochre
+            Color.parseColor("#7C7796"), // Dust Violet
+            Color.parseColor("#67849A"), // Steel Water
         )
         private val CAT_COLORS_DARK = intArrayOf(
-            Color.parseColor("#F4EBD0"), // Warm Cream
-            Color.parseColor("#D4A017"), // Soft Gold
-            Color.parseColor("#E07A5F"), // Muted Coral
-            Color.parseColor("#B7C9A8"), // Pale Sage
+            Color.parseColor("#9BB09B"), // Pale Sage
+            Color.parseColor("#C0A86A"), // Muted Ochre
+            Color.parseColor("#A99FC8"), // Pale Violet
+            Color.parseColor("#8FB2C8"), // Steel Water
         )
 
         fun buildViews(context: Context): RemoteViews {
@@ -110,9 +110,11 @@ class FeloosyWidgetProvider : AppWidgetProvider() {
                 else    -> (context.resources.configuration.uiMode and
                     Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
             }
-            val colAmber  = if (isNight) Color.parseColor("#f5a623") else Color.parseColor("#d68410")
-            val colText   = if (isNight) Color.parseColor("#f6f1e3") else Color.parseColor("#0d2818")
-            val colMuted  = if (isNight) Color.parseColor("#7fa890") else Color.parseColor("#5a7d6a")
+            val colAccent = if (isNight) Color.parseColor("#7AAECF") else Color.parseColor("#3F6329")
+            val colText   = if (isNight) Color.parseColor("#C4D0DC") else Color.parseColor("#2C2C2C")
+            val colMuted  = if (isNight) Color.parseColor("#9AB0C4") else Color.parseColor("#4A5E40")
+            val colOver   = if (isNight) Color.parseColor("#F07171") else Color.parseColor("#B23636")
+            val colOnPrimary = if (isNight) Color.parseColor("#060C11") else Color.parseColor("#162008")
             val catPalette = if (isNight) CAT_COLORS_DARK else CAT_COLORS_LIGHT
             val categories = rawCategories.mapIndexed { i, cat ->
                 cat.copy(color = catPalette[i % catPalette.size])
@@ -126,13 +128,14 @@ class FeloosyWidgetProvider : AppWidgetProvider() {
                 if (isNight) R.drawable.fw_bg_dark else R.drawable.fw_bg)
             views.setInt(R.id.fw_add_btn, "setBackgroundResource",
                 if (isNight) R.drawable.fw_btn_dark else R.drawable.fw_btn)
+            views.setTextColor(R.id.fw_add_btn, colOnPrimary)
 
             // ── Label ──────────────────────────────────────────────────────
             views.setTextViewText(
                 R.id.fw_label,
                 if (isOverBudget) "OVER BUDGET" else "AVAILABLE TO SPEND",
             )
-            views.setTextColor(R.id.fw_label, if (isOverBudget) colAmber else colMuted)
+            views.setTextColor(R.id.fw_label, if (isOverBudget) colOver else colMuted)
 
             // ── Amount ─────────────────────────────────────────────────────
             val displayAmt = if (isOverBudget) {
@@ -141,9 +144,9 @@ class FeloosyWidgetProvider : AppWidgetProvider() {
                 formatAmount(Math.abs(availableVal))
             }
             views.setTextViewText(R.id.fw_amount, displayAmt)
-            views.setTextColor(R.id.fw_amount, if (isOverBudget) colAmber else colText)
+            views.setTextColor(R.id.fw_amount, if (isOverBudget) colOver else colText)
             views.setTextViewText(R.id.fw_currency, " $currencyCode")
-            views.setTextColor(R.id.fw_currency, colAmber)
+            views.setTextColor(R.id.fw_currency, colAccent)
 
             // ── Accessibility ──────────────────────────────────────────────
             val availableDesc = "$displayAmt $currencyCode available to spend this month"

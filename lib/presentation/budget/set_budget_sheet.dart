@@ -124,11 +124,13 @@ class _SetBudgetSheetState extends ConsumerState<SetBudgetSheet> {
                   child: FilledButton(
                     onPressed: _saving ? null : _save,
                     child: _saving
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 20,
                             height: 20,
                             child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.white))
+                              strokeWidth: 2,
+                              color: Theme.of(context).colorScheme.onPrimary,
+                            ))
                         : const Text('Save Budget'),
                   ),
                 ),

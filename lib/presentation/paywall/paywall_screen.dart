@@ -79,6 +79,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
 
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final accentColor = AppTheme.primaryText(cs);
     final busy = _buying || _restoring;
     final priceLabel = _price ?? '\$4.99';
 
@@ -105,12 +106,12 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
-                  color: AppTheme.amber.withValues(alpha: 0.12),
+                  color: cs.primary.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.lock_open_rounded,
-                  color: AppTheme.amber,
+                  color: accentColor,
                   size: 38,
                 ),
               ),
@@ -120,7 +121,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
               Text(
                 'FELOOSY PRO',
                 style: tt.headlineSmall?.copyWith(
-                  color: AppTheme.amber,
+                  color: accentColor,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 2,
                 ),
@@ -145,8 +146,8 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                 height: 54,
                 child: FilledButton(
                   style: FilledButton.styleFrom(
-                    backgroundColor: AppTheme.amber,
-                    foregroundColor: AppTheme.forest,
+                    backgroundColor: cs.primary,
+                    foregroundColor: cs.onPrimary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
@@ -158,7 +159,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                           height: 22,
                           child: CircularProgressIndicator(
                             strokeWidth: 2.5,
-                            color: AppTheme.forest,
+                            color: cs.onPrimary,
                           ),
                         )
                       : Text(
@@ -223,6 +224,7 @@ class _FeatureRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final accentColor = AppTheme.primaryText(cs);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -231,10 +233,10 @@ class _FeatureRow extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: AppTheme.amber.withValues(alpha: 0.1),
+              color: cs.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: AppTheme.amber, size: 18),
+            child: Icon(icon, color: accentColor, size: 18),
           ),
           const SizedBox(width: 14),
           Text(
@@ -245,8 +247,7 @@ class _FeatureRow extends StatelessWidget {
                 ),
           ),
           const Spacer(),
-          const Icon(Icons.check_circle_rounded,
-              color: AppTheme.amber, size: 18),
+          Icon(Icons.check_circle_rounded, color: accentColor, size: 18),
         ],
       ),
     );

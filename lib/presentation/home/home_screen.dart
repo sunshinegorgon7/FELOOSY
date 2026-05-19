@@ -4,6 +4,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../../app/app_theme.dart';
 import '../../data/models/category.dart';
 import '../../data/models/account.dart';
 import '../../data/models/transaction.dart';
@@ -148,7 +149,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         : null;
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final accentColor = cs.brightness == Brightness.dark ? cs.primary : cs.onSurface;
+    final accentColor = AppTheme.primaryText(cs);
 
     final showTutorial =
         !_tutorialDismissed &&
@@ -360,14 +361,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     borderRadius: BorderRadius.circular(26),
                     boxShadow: [
                       BoxShadow(
-                        color: cs.primary.withValues(alpha: 0.35),
-                        blurRadius: 28,
-                        offset: const Offset(0, 12),
-                      ),
-                      BoxShadow(
-                        color: cs.surface.withValues(alpha: 0.6),
-                        spreadRadius: 4,
-                        blurRadius: 0,
+                        color: cs.shadow.withValues(alpha: 0.18),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
                       ),
                     ],
                   ),
@@ -417,7 +413,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   ) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final accentColor = cs.brightness == Brightness.dark ? cs.primary : cs.onSurface;
+    final accentColor = AppTheme.primaryText(cs);
 
     final isAllAccounts = selectedAccountId == null;
 
@@ -765,7 +761,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void _openSettings(BuildContext context) {
     showDialog<void>(
       context: context,
-      barrierColor: Colors.black54,
+      barrierColor: AppTheme.deepNimbus.withValues(alpha: 0.54),
       builder: (ctx) {
         final topPad = MediaQuery.paddingOf(context).top;
         final botPad = MediaQuery.paddingOf(context).bottom;
@@ -1111,7 +1107,7 @@ class _BudgetHero extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final accentColor = cs.brightness == Brightness.dark ? cs.primary : cs.onSurface;
+    final accentColor = AppTheme.primaryText(cs);
 
     if (summary.budgetAmount == 0) {
       return Padding(
@@ -1223,7 +1219,7 @@ class _TopCategoriesChartState extends State<_TopCategoriesChart> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final accentColor = cs.brightness == Brightness.dark ? cs.primary : cs.onSurface;
+    final accentColor = AppTheme.primaryText(cs);
     const barAreaHeight = 100.0;
     final maxAmount = widget.stats.first.amount;
     final hasSelection = widget.selectedCategoryUuid != null;
@@ -1280,14 +1276,10 @@ class _TopCategoriesChartState extends State<_TopCategoriesChart> {
                               color: color,
                               borderRadius: const BorderRadius.vertical(
                                   top: Radius.circular(6)),
-                              boxShadow: isSelected
-                                  ? [
-                                      BoxShadow(
-                                        color: color.withValues(alpha: 0.55),
-                                        blurRadius: 10,
-                                        offset: const Offset(0, 3),
-                                      ),
-                                    ]
+                              border: isSelected
+                                  ? Border.all(
+                                      color: color.withValues(alpha: 0.55),
+                                    )
                                   : null,
                             ),
                           ),
@@ -1353,7 +1345,7 @@ class _ExpandableDayGroupState extends State<_ExpandableDayGroup> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final accentColor = cs.brightness == Brightness.dark ? cs.primary : cs.onSurface;
+    final accentColor = AppTheme.primaryText(cs);
     final group = widget.group;
     final firstCat = group.txs.isNotEmpty
         ? widget.cats
@@ -1481,8 +1473,8 @@ class _InlineTransactionRow extends StatelessWidget {
     final catColor = cat != null ? Color(cat!.colorValue) : cs.onSurfaceVariant;
     final amountPrefix = isExpense ? '-' : '+';
     final amountColor = isExpense
-        ? cs.onSurface.withValues(alpha: 0.85)
-        : const Color(0xFF4ADE80);
+        ? AppTheme.expenseText(cs)
+        : AppTheme.incomeText(cs);
 
     final label =
         tx.description.isEmpty ? (cat?.name ?? 'Transaction') : tx.description;

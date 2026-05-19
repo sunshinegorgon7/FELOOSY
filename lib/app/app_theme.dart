@@ -2,92 +2,119 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // ── Dark palette ───────────────────────────────────────────────────────────
-  static const Color forest  = Color(0xFF0D2818);
-  static const Color forest2 = Color(0xFF143A23);
-  static const Color forest3 = Color(0xFF1C4A2E);
-  static const Color amber   = Color(0xFFF5A623);
-  static const Color amber2  = Color(0xFFE08A10);
-  static const Color cream   = Color(0xFFF6F1E3);
-  static const Color muted   = Color(0xFF7FA890);
-  static const Color muted2  = Color(0xFF5A7D6A);
-  static const Color border  = Color(0x14F6F1E3); // rgba(246,241,227,0.08)
-  static const Color income  = Color(0xFF4ADE80);
+  // Grove palette, light theme.
+  static const Color fern = Color(0xFF639922);
+  static const Color washedSage = Color(0xFF7A9A7A);
+  static const Color forestDeep = Color(0xFF5A8A40);
+  static const Color mintMist = Color(0xFFF4F7F1);
+  static const Color mintLift = Color(0xFFFAFCF7);
+  static const Color paleGrove = Color(0xFFE4EBDE);
+  static const Color paleGroveHigh = Color(0xFFC4D4C4);
+  static const Color inkDeep = Color(0xFF2C2C2C);
+  static const Color groveShadow = Color(0xFF4A5E40);
+  static const Color groveOutline = Color(0xFF7A9A5A);
+  static const Color groveOutlineVariant = Color(0xFFBED4A4);
 
-  // ── Light palette ──────────────────────────────────────────────────────────
-  static const Color lightBg       = Color(0xFFF6F1E3); // cream paper
-  static const Color lightSurface  = Color(0xFFFFFFFF); // white cards
-  static const Color lightSurface2 = Color(0xFFEDE4CC); // hover/raised
-  static const Color lightText     = Color(0xFF0D2818); // deep forest ink
-  static const Color lightMuted    = Color(0xFF5A7D6A); // sage green
-  static const Color lightMuted2   = Color(0xFF93927E); // warm gray tertiary
-  static const Color lightAmber    = Color(0xFFD68410); // deeper, AA on cream
-  static const Color lightAmber2   = Color(0xFFB06A08);
-  static const Color lightBorder   = Color(0x1A0D2818); // rgba(13,40,24,0.10)
+  // Nimbus palette, dark theme.
+  static const Color iceGlow = Color(0xFF4D7FA8);
+  static const Color deepNimbus = Color(0xFF111922);
+  static const Color nimbusLowest = Color(0xFF060C11);
+  static const Color nimbusSurface = Color(0xFF1E2E3D);
+  static const Color nimbusMid = Color(0xFF243547);
+  static const Color nimbusHigh = Color(0xFF2A3D52);
+  static const Color nimbusHighest = Color(0xFF30455C);
+  static const Color mistText = Color(0xFFC4D0DC);
+  static const Color mistVariant = Color(0xFF9AB0C4);
 
-  // ── Semantic colors ────────────────────────────────────────────────────────
-  static const Color expenseColor     = amber;
-  static const Color incomeColor      = income;
-  static const Color warningColor     = amber2;
-  static const Color destructiveColor = Color(0xFFC44A4A);
+  // Semantic colors.
+  static const Color ledgerRed = Color(0xFFD64545);
+  static const Color ledgerGreen = Color(0xFF4A9955);
+  static const Color amberMark = Color(0xFFCC8830);
+  static const Color destructiveColor = Color(0xFFC73535);
 
-  // ── Theme data ─────────────────────────────────────────────────────────────
-  static final ThemeData dark  = _buildDark();
+  // Text-safe variants for small semantic text on tinted surfaces.
+  static const Color fernText = Color(0xFF3F6329);
+  static const Color iceGlowText = Color(0xFF7AAECF);
+  static const Color ledgerRedText = Color(0xFFB23636);
+  static const Color ledgerRedTextDark = Color(0xFFF07171);
+  static const Color ledgerGreenText = Color(0xFF2F7139);
+  static const Color ledgerGreenTextDark = Color(0xFF72B879);
+  static const Color amberText = Color(0xFF8F5F22);
+
+  static const Color expenseColor = ledgerRed;
+  static const Color incomeColor = ledgerGreen;
+  static const Color warningColor = amberMark;
+
+  static final ThemeData dark = _buildDark();
   static final ThemeData light = _buildLight();
 
   static ThemeMode resolveMode(String stored) => switch (stored) {
-        'light'  => ThemeMode.light,
-        'dark'   => ThemeMode.dark,
-        _        => ThemeMode.system,
+        'light' => ThemeMode.light,
+        'dark' => ThemeMode.dark,
+        _ => ThemeMode.system,
       };
 
-  // ── Dark ───────────────────────────────────────────────────────────────────
+  static Color primaryText(ColorScheme cs) =>
+      cs.brightness == Brightness.dark ? iceGlowText : fernText;
+
+  static Color expenseText(ColorScheme cs) =>
+      cs.brightness == Brightness.dark ? ledgerRedTextDark : ledgerRedText;
+
+  static Color incomeText(ColorScheme cs) =>
+      cs.brightness == Brightness.dark ? ledgerGreenTextDark : ledgerGreenText;
+
+  static Color warningText(ColorScheme cs) =>
+      cs.brightness == Brightness.dark ? amberMark : amberText;
+
+  static Color readableOn(Color background) =>
+      background.computeLuminance() > 0.45 ? inkDeep : mintMist;
+
   static ThemeData _buildDark() {
     return ThemeData(
       useMaterial3: true,
       colorScheme: const ColorScheme(
         brightness: Brightness.dark,
         surfaceTint: Colors.transparent,
-        primary: amber,
-        onPrimary: forest,
-        primaryContainer: Color(0xFF3A2000),
-        onPrimaryContainer: cream,
-        secondary: muted,
-        onSecondary: forest,
-        secondaryContainer: forest2,
-        onSecondaryContainer: cream,
-        tertiary: income,
-        onTertiary: forest,
-        tertiaryContainer: forest2,
-        onTertiaryContainer: cream,
+        primary: iceGlow,
+        onPrimary: nimbusLowest,
+        primaryContainer: nimbusHigh,
+        onPrimaryContainer: iceGlowText,
+        secondary: mistVariant,
+        onSecondary: nimbusLowest,
+        secondaryContainer: nimbusMid,
+        onSecondaryContainer: mistText,
+        tertiary: ledgerGreen,
+        onTertiary: nimbusLowest,
+        tertiaryContainer: nimbusMid,
+        onTertiaryContainer: ledgerGreenTextDark,
         error: destructiveColor,
-        onError: cream,
-        errorContainer: Color(0xFF4A1515),
-        onErrorContainer: Color(0xFFFFB4AB),
-        surface: forest,
-        onSurface: cream,
-        surfaceContainerLowest: Color(0xFF081610),
-        surfaceContainerLow: forest2,
-        surfaceContainer: forest2,
-        surfaceContainerHigh: forest3,
-        surfaceContainerHighest: forest3,
-        onSurfaceVariant: muted,
-        outline: muted2,
-        outlineVariant: border,
-        inverseSurface: cream,
-        onInverseSurface: forest,
-        inversePrimary: amber2,
-        scrim: Colors.black,
-        shadow: Colors.black,
+        onError: mintMist,
+        errorContainer: Color(0xFF5C1A1A),
+        onErrorContainer: Color(0xFFFFDAD6),
+        surface: deepNimbus,
+        onSurface: mistText,
+        surfaceContainerLowest: nimbusLowest,
+        surfaceContainerLow: nimbusSurface,
+        surfaceContainer: nimbusSurface,
+        surfaceContainerHigh: nimbusMid,
+        surfaceContainerHighest: nimbusHigh,
+        onSurfaceVariant: mistVariant,
+        outline: nimbusHighest,
+        outlineVariant: nimbusHigh,
+        inverseSurface: mintMist,
+        onInverseSurface: deepNimbus,
+        inversePrimary: fern,
+        scrim: nimbusLowest,
+        shadow: nimbusLowest,
       ),
-      scaffoldBackgroundColor: forest,
-      canvasColor: forest,
+      scaffoldBackgroundColor: deepNimbus,
+      canvasColor: deepNimbus,
       appBarTheme: const AppBarTheme(
         centerTitle: false,
         elevation: 0,
         scrolledUnderElevation: 0,
-        backgroundColor: forest,
-        foregroundColor: cream,
+        backgroundColor: deepNimbus,
+        foregroundColor: mistText,
       ),
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(
@@ -97,66 +124,65 @@ class AppTheme {
       ),
       cardTheme: const CardThemeData(
         elevation: 0,
-        color: forest2,
+        color: nimbusSurface,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(20)),
-          side: BorderSide(color: border),
+          borderRadius: BorderRadius.all(Radius.circular(16)),
+          side: BorderSide(color: nimbusHigh),
         ),
       ),
       textTheme: GoogleFonts.geistTextTheme(ThemeData.dark().textTheme).apply(
-        bodyColor: cream,
-        displayColor: cream,
+        bodyColor: mistText,
+        displayColor: mistText,
       ),
     );
   }
 
-  // ── Light ──────────────────────────────────────────────────────────────────
   static ThemeData _buildLight() {
     return ThemeData(
       useMaterial3: true,
       colorScheme: const ColorScheme(
         brightness: Brightness.light,
         surfaceTint: Colors.transparent,
-        primary: lightAmber,
-        onPrimary: lightText,
-        primaryContainer: Color(0xFFFFE0A0),
-        onPrimaryContainer: lightText,
-        secondary: lightMuted,
-        onSecondary: lightSurface,
-        secondaryContainer: lightSurface2,
-        onSecondaryContainer: lightText,
-        tertiary: Color(0xFF4ADE80),
-        onTertiary: lightText,
-        tertiaryContainer: lightSurface2,
-        onTertiaryContainer: lightText,
+        primary: fern,
+        onPrimary: Color(0xFF162008),
+        primaryContainer: paleGroveHigh,
+        onPrimaryContainer: fernText,
+        secondary: washedSage,
+        onSecondary: Color(0xFF162008),
+        secondaryContainer: paleGrove,
+        onSecondaryContainer: inkDeep,
+        tertiary: ledgerGreen,
+        onTertiary: Color(0xFF162008),
+        tertiaryContainer: Color(0xFFE5F2E7),
+        onTertiaryContainer: ledgerGreenText,
         error: destructiveColor,
-        onError: lightSurface,
-        errorContainer: Color(0xFFFFDAD6),
-        onErrorContainer: Color(0xFF93000A),
-        surface: lightBg,
-        onSurface: lightText,
-        surfaceContainerLowest: lightSurface,
-        surfaceContainerLow: lightSurface,
-        surfaceContainer: lightSurface,
-        surfaceContainerHigh: lightSurface2,
-        surfaceContainerHighest: lightSurface2,
-        onSurfaceVariant: lightMuted,
-        outline: lightMuted2,
-        outlineVariant: lightBorder,
-        inverseSurface: lightText,
-        onInverseSurface: lightBg,
-        inversePrimary: lightAmber2,
-        scrim: Colors.black,
-        shadow: Colors.black,
+        onError: mintMist,
+        errorContainer: Color(0xFFF9DEDC),
+        onErrorContainer: Color(0xFF8C1D18),
+        surface: mintMist,
+        onSurface: inkDeep,
+        surfaceContainerLowest: mintLift,
+        surfaceContainerLow: paleGrove,
+        surfaceContainer: paleGrove,
+        surfaceContainerHigh: paleGroveHigh,
+        surfaceContainerHighest: paleGroveHigh,
+        onSurfaceVariant: groveShadow,
+        outline: groveOutline,
+        outlineVariant: groveOutlineVariant,
+        inverseSurface: inkDeep,
+        onInverseSurface: mintMist,
+        inversePrimary: iceGlow,
+        scrim: Color(0xFF162008),
+        shadow: Color(0xFF162008),
       ),
-      scaffoldBackgroundColor: lightBg,
-      canvasColor: lightBg,
+      scaffoldBackgroundColor: mintMist,
+      canvasColor: mintMist,
       appBarTheme: const AppBarTheme(
         centerTitle: false,
         elevation: 0,
         scrolledUnderElevation: 0,
-        backgroundColor: lightBg,
-        foregroundColor: lightText,
+        backgroundColor: mintMist,
+        foregroundColor: inkDeep,
       ),
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(
@@ -166,15 +192,15 @@ class AppTheme {
       ),
       cardTheme: const CardThemeData(
         elevation: 0,
-        color: lightSurface,
+        color: paleGroveHigh,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(20)),
-          side: BorderSide(color: lightBorder),
+          borderRadius: BorderRadius.all(Radius.circular(16)),
+          side: BorderSide(color: groveOutlineVariant),
         ),
       ),
       textTheme: GoogleFonts.geistTextTheme(ThemeData.light().textTheme).apply(
-        bodyColor: lightText,
-        displayColor: lightText,
+        bodyColor: inkDeep,
+        displayColor: inkDeep,
       ),
     );
   }

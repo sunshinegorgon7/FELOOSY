@@ -99,23 +99,24 @@ class _SnapshotBanner extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final top = MediaQuery.paddingOf(context).top;
+    final cs = Theme.of(context).colorScheme;
     return Material(
-      color: AppTheme.amber,
+      color: cs.primary,
       child: SafeArea(
         bottom: false,
         child: Padding(
           padding: EdgeInsets.only(top: top > 0 ? 0 : 4, bottom: 4, left: 16, right: 8),
           child: Row(
             children: [
-              const Icon(Icons.science_outlined, size: 14, color: Colors.black87),
+              Icon(Icons.science_outlined, size: 14, color: cs.onPrimary),
               const SizedBox(width: 6),
-              const Expanded(
+              Expanded(
                 child: Text(
                   'SNAPSHOT MODE — edits are temporary',
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
-                    color: Colors.black87,
+                    color: cs.onPrimary,
                     letterSpacing: 0.3,
                   ),
                 ),
@@ -123,7 +124,7 @@ class _SnapshotBanner extends ConsumerWidget {
               TextButton(
                 onPressed: () => SeedSnapshotService.exitSnapshot(ref),
                 style: TextButton.styleFrom(
-                  foregroundColor: Colors.black87,
+                  foregroundColor: cs.onPrimary,
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,

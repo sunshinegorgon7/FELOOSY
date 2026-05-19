@@ -335,7 +335,9 @@ class _SettingsBody extends ConsumerWidget {
                       '$day',
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
-                        color: isSelected ? Colors.white : null,
+                        color: isSelected
+                            ? Theme.of(context).colorScheme.onPrimary
+                            : null,
                         fontSize: 13,
                       ),
                     ),
@@ -715,12 +717,12 @@ class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
                   : Container(
                       width: 36,
                       height: 36,
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: [AppTheme.amber, AppTheme.amber2],
+                          colors: [cs.primary, cs.inversePrimary],
                         ),
                       ),
                       alignment: Alignment.center,
@@ -728,8 +730,8 @@ class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
                         account.email.isNotEmpty
                             ? account.email[0].toUpperCase()
                             : 'S',
-                        style: const TextStyle(
-                          color: AppTheme.forest,
+                        style: TextStyle(
+                          color: cs.onPrimary,
                           fontWeight: FontWeight.w700,
                           fontSize: 14,
                         ),
@@ -755,7 +757,7 @@ class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
                   : TextButton(
                       onPressed: anyBusy ? null : _signOut,
                       style: TextButton.styleFrom(
-                        foregroundColor: cs.brightness == Brightness.dark ? cs.primary : cs.onSurface,
+                        foregroundColor: AppTheme.primaryText(cs),
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 4),
                         visualDensity: VisualDensity.compact,
@@ -1033,7 +1035,7 @@ class _SettingsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final accentColor = cs.brightness == Brightness.dark ? cs.primary : cs.onSurface;
+    final accentColor = AppTheme.primaryText(cs);
 
     final content = Padding(
       padding: EdgeInsets.fromLTRB(
@@ -1097,7 +1099,7 @@ class _SettingsRow extends StatelessWidget {
               size: 14,
               color: danger
                   ? cs.error.withValues(alpha: 0.4)
-                  : AppTheme.muted2,
+                  : cs.onSurfaceVariant,
             ),
         ],
       ),
@@ -1155,7 +1157,7 @@ class _DevSnapshotTileState extends ConsumerState<_DevSnapshotTile> {
         content: const Text(
           'Your current data will be backed up locally. '
           '3 wallets with 90 days of sample transactions will be seeded. '
-          'Tap "Exit" in the amber banner at any time to restore your real data.',
+          'Tap "Exit" in the snapshot banner at any time to restore your real data.',
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
@@ -1197,7 +1199,7 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final accentColor = cs.brightness == Brightness.dark ? cs.primary : cs.onSurface;
+    final accentColor = AppTheme.primaryText(cs);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 28, 16, 2),
       child: Text(

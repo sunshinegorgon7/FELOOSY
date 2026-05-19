@@ -27,16 +27,15 @@ class TransactionTile extends ConsumerWidget {
 
     final cs = Theme.of(context).colorScheme;
     final isExpense = transaction.type == TransactionType.expense;
-    final amountColor = isExpense
-        ? (cs.brightness == Brightness.dark ? cs.primary : cs.onSurface)
-        : AppTheme.incomeColor;
+    final amountColor =
+        isExpense ? AppTheme.expenseText(cs) : AppTheme.incomeText(cs);
     final amountText = settings != null
         ? CurrencyFormatter.format(transaction.amount, settings)
         : transaction.amount.toStringAsFixed(2);
 
     final tileColor = isExpense
-        ? AppTheme.expenseColor.withValues(alpha: 0.07)
-        : AppTheme.incomeColor.withValues(alpha: 0.07);
+        ? AppTheme.expenseColor.withValues(alpha: 0.06)
+        : AppTheme.incomeColor.withValues(alpha: 0.06);
 
     final iconColor = category != null
         ? Color(category!.colorValue)

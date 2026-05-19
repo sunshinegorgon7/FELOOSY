@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../../app/app_theme.dart';
 import '../../../data/repositories/ai_cache_repository.dart';
 
 class AiInsightsCard extends StatelessWidget {
@@ -12,7 +13,7 @@ class AiInsightsCard extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     final isAi = entry.source == 'ai';
-    final accentColor = cs.brightness == Brightness.dark ? cs.primary : cs.onSurface;
+    final accentColor = AppTheme.primaryText(cs);
 
     return Container(
       margin: const EdgeInsets.fromLTRB(14, 0, 14, 12),
@@ -179,7 +180,7 @@ class AiInsightsPreparingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final accentColor = cs.brightness == Brightness.dark ? cs.primary : cs.onSurface;
+    final accentColor = AppTheme.primaryText(cs);
 
     return Container(
       margin: const EdgeInsets.fromLTRB(14, 0, 14, 12),

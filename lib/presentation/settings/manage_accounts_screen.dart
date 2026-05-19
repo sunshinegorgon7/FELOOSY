@@ -50,7 +50,9 @@ class ManageAccountsScreen extends ConsumerWidget {
                         : () => ref.read(accountsProvider.notifier).setFavorite(a.id!),
                     icon: Icon(
                       a.isFavorite ? Icons.star : Icons.star_border,
-                      color: a.isFavorite ? Colors.amber : null,
+                      color: a.isFavorite
+                          ? Theme.of(context).colorScheme.primary
+                          : null,
                     ),
                   ),
                   PopupMenuButton<String>(

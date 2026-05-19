@@ -68,9 +68,10 @@ class _BudgetCard extends StatelessWidget {
   const _BudgetCard({required this.summary, required this.onSetBudget});
 
   Color _barColor(BuildContext context) {
-    if (summary.isOverBudget) return AppTheme.expenseColor;
-    if (summary.spentPercentage > 0.8) return AppTheme.warningColor;
-    return Theme.of(context).colorScheme.primary;
+    final cs = Theme.of(context).colorScheme;
+    if (summary.isOverBudget) return AppTheme.expenseText(cs);
+    if (summary.spentPercentage > 0.8) return AppTheme.warningText(cs);
+    return AppTheme.primaryText(cs);
   }
 
   @override
@@ -79,10 +80,10 @@ class _BudgetCard extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final progress = summary.spentPercentage.clamp(0.0, 1.0);
     final remainingColor = summary.isOverBudget
-        ? AppTheme.expenseColor
+        ? AppTheme.expenseText(cs)
         : summary.spentPercentage > 0.8
-            ? AppTheme.warningColor
-            : cs.primary;
+            ? AppTheme.warningText(cs)
+            : AppTheme.primaryText(cs);
 
     return Card(
       margin: const EdgeInsets.all(16),
@@ -154,13 +155,13 @@ class _BudgetCard extends StatelessWidget {
                 _Stat(
                   label: 'Spent',
                   value: summary.formatAmount(summary.totalExpenses),
-                  color: AppTheme.expenseColor,
+                  color: AppTheme.expenseText(cs),
                 ),
                 const Gap(8),
                 _Stat(
                   label: 'Income',
                   value: summary.formatAmount(summary.totalIncome),
-                  color: AppTheme.incomeColor,
+                  color: AppTheme.incomeText(cs),
                 ),
               ],
             ),

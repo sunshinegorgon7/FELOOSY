@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
+import '../../app/app_theme.dart';
 import '../../core/constants/category_options.dart';
 import '../../data/models/category.dart';
 import '../../providers/categories_provider.dart';
@@ -162,7 +163,7 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
                 _TypeChip(
                   label: 'Expense',
                   symbol: '−',
-                  color: const Color(0xFFE05C5C),
+                  color: AppTheme.expenseText(cs),
                   selected: _transactionType == 'expense',
                   onTap: () => setState(() => _transactionType = 'expense'),
                 ),
@@ -170,7 +171,7 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
                 _TypeChip(
                   label: 'Income',
                   symbol: '+',
-                  color: const Color(0xFF81C784),
+                  color: AppTheme.incomeText(cs),
                   selected: _transactionType == 'income',
                   onTap: () => setState(() => _transactionType = 'income'),
                 ),
@@ -216,8 +217,8 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
                           : null,
                     ),
                     child: isSel
-                        ? const Icon(Icons.check,
-                            color: Colors.white, size: 18)
+                        ? Icon(Icons.check,
+                            color: AppTheme.readableOn(c), size: 18)
                         : null,
                   ),
                 );
@@ -254,7 +255,7 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
                     child: Icon(
                       ic,
                       size: 22,
-                      color: isSel ? Colors.white : _color,
+                      color: isSel ? AppTheme.readableOn(_color) : _color,
                     ),
                   ),
                 );

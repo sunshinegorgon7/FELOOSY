@@ -44,7 +44,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
 
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final accentColor = cs.brightness == Brightness.dark ? cs.primary : cs.onSurface;
+    final accentColor = AppTheme.primaryText(cs);
     final bottomPad = MediaQuery.paddingOf(context).bottom;
 
     return Scaffold(
@@ -370,7 +370,7 @@ class _GroupingPicker extends StatelessWidget {
                     fontWeight:
                         selected ? FontWeight.w700 : FontWeight.w400,
                     color: selected
-                        ? (cs.brightness == Brightness.dark ? cs.primary : cs.onSurface)
+                        ? AppTheme.primaryText(cs)
                         : cs.onSurfaceVariant,
                   ),
                 ),
@@ -423,7 +423,7 @@ class _MonthCardState extends ConsumerState<_MonthCard> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final accentColor = cs.brightness == Brightness.dark ? cs.primary : cs.onSurface;
+    final accentColor = AppTheme.primaryText(cs);
 
     final expenseTotal = widget.transactions
         .where((t) => t.type == TransactionType.expense)
@@ -493,7 +493,7 @@ class _MonthCardState extends ConsumerState<_MonthCard> {
                       style: GoogleFonts.dmMono(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
-                        color: AppTheme.incomeColor,
+                        color: AppTheme.incomeText(cs),
                       ),
                     ),
                   if (expenseTotal > 0 && incomeTotal > 0)
@@ -716,7 +716,7 @@ class _MonthBarChartState extends State<_MonthBarChart> {
                               fontSize: 9,
                               fontWeight: FontWeight.w500,
                               fontFamily: 'DM Mono',
-                              color: AppTheme.muted,
+                              color: cs.onSurfaceVariant,
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -732,14 +732,10 @@ class _MonthBarChartState extends State<_MonthBarChart> {
                               color: color,
                               borderRadius: const BorderRadius.vertical(
                                   top: Radius.circular(5)),
-                              boxShadow: isSelected
-                                  ? [
-                                      BoxShadow(
-                                        color: color.withValues(alpha: 0.55),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 3),
-                                      ),
-                                    ]
+                              border: isSelected
+                                  ? Border.all(
+                                      color: color.withValues(alpha: 0.55),
+                                    )
                                   : null,
                             ),
                           ),
@@ -818,7 +814,7 @@ class _BudgetInfo extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
-    final accentColor = cs.brightness == Brightness.dark ? cs.primary : cs.onSurface;
+    final accentColor = AppTheme.primaryText(cs);
     final account = ref.watch(activeAccountProvider);
 
     final formattedBudget = account == null
@@ -878,8 +874,8 @@ class _BudgetInfo extends ConsumerWidget {
                       shape: const StadiumBorder(),
                     ),
                     child: Text('Change',
-                        style:
-                            TextStyle(color: cs.primary, fontSize: 12)),
+                        style: TextStyle(
+                            color: AppTheme.primaryText(cs), fontSize: 12)),
                   ),
                 ],
               ),

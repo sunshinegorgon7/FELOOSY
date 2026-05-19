@@ -26,7 +26,7 @@ class DatabaseHelper {
     final dbPath = p.join(docDir.path, AppFlavor.databaseName);
     return openDatabase(
       dbPath,
-      version: 13,
+      version: 14,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -231,25 +231,25 @@ class DatabaseHelper {
       );
     }
     if (oldVersion < 11) {
-      // Migrate default category colors to the harmonized forest palette.
+      // Migrate default category colors to the quieter Grove/Nimbus palette.
       // Values are Color(0xFFRRGGBB).toARGB32() integer equivalents.
       const colorUpdates = <(String, int)>[
-        ('00000000-0000-0000-0000-000000000001', 0xFF5FB574), // Groceries
-        ('00000000-0000-0000-0000-000000000002', 0xFFF5A623), // Dining Out
-        ('00000000-0000-0000-0000-000000000003', 0xFFC4821A), // Coffee
-        ('00000000-0000-0000-0000-000000000004', 0xFF7FA890), // Transport
-        ('00000000-0000-0000-0000-000000000005', 0xFFA89070), // Fuel
-        ('00000000-0000-0000-0000-000000000006', 0xFFF5D623), // Utilities
-        ('00000000-0000-0000-0000-000000000007', 0xFF9A7FB0), // Rent / Housing
-        ('00000000-0000-0000-0000-000000000008', 0xFFE58040), // Healthcare
-        ('00000000-0000-0000-0000-000000000009', 0xFFD96A8A), // Pharmacy
-        ('00000000-0000-0000-0000-000000000010', 0xFFE08A10), // Shopping
-        ('00000000-0000-0000-0000-000000000011', 0xFFA87FC4), // Entertainment
-        ('00000000-0000-0000-0000-000000000012', 0xFF5FB5A8), // Sports / Gym
-        ('00000000-0000-0000-0000-000000000013', 0xFF7FB5D9), // Travel
-        ('00000000-0000-0000-0000-000000000014', 0xFF5FB574), // Salary
-        ('00000000-0000-0000-0000-000000000015', 0xFFB5D95F), // Cashback
-        ('00000000-0000-0000-0000-000000000016', 0xFF5FB5D9), // Refund
+        ('00000000-0000-0000-0000-000000000001', 0xFF6E8F68), // Groceries
+        ('00000000-0000-0000-0000-000000000002', 0xFF8F7A4F), // Dining Out
+        ('00000000-0000-0000-0000-000000000003', 0xFF8A6F5C), // Coffee
+        ('00000000-0000-0000-0000-000000000004', 0xFF5F7F8A), // Transport
+        ('00000000-0000-0000-0000-000000000005', 0xFF7B7462), // Fuel
+        ('00000000-0000-0000-0000-000000000006', 0xFF9A8652), // Utilities
+        ('00000000-0000-0000-0000-000000000007', 0xFF7C7796), // Rent / Housing
+        ('00000000-0000-0000-0000-000000000008', 0xFF8A7078), // Healthcare
+        ('00000000-0000-0000-0000-000000000009', 0xFF8B7589), // Pharmacy
+        ('00000000-0000-0000-0000-000000000010', 0xFF8A765F), // Shopping
+        ('00000000-0000-0000-0000-000000000011', 0xFF7F7299), // Entertainment
+        ('00000000-0000-0000-0000-000000000012', 0xFF5F8A84), // Sports / Gym
+        ('00000000-0000-0000-0000-000000000013', 0xFF67849A), // Travel
+        ('00000000-0000-0000-0000-000000000014', 0xFF6B7E9A), // Salary
+        ('00000000-0000-0000-0000-000000000015', 0xFF7A8064), // Cashback
+        ('00000000-0000-0000-0000-000000000016', 0xFF6E8790), // Refund
       ];
       for (final (uuid, colorValue) in colorUpdates) {
         await db.rawUpdate(
@@ -348,6 +348,36 @@ class DatabaseHelper {
         )
         ''',
       );
+    }
+    if (oldVersion < 14) {
+      // Migrate default category colors to the quieter Grove/Nimbus palette.
+      // Values are Color(0xFFRRGGBB).toARGB32() integer equivalents.
+      const colorUpdates = <(String, int)>[
+        ('00000000-0000-0000-0000-000000000001', 0xFF6E8F68),
+        ('00000000-0000-0000-0000-000000000002', 0xFF8F7A4F),
+        ('00000000-0000-0000-0000-000000000003', 0xFF8A6F5C),
+        ('00000000-0000-0000-0000-000000000004', 0xFF5F7F8A),
+        ('00000000-0000-0000-0000-000000000005', 0xFF7B7462),
+        ('00000000-0000-0000-0000-000000000006', 0xFF9A8652),
+        ('00000000-0000-0000-0000-000000000007', 0xFF7C7796),
+        ('00000000-0000-0000-0000-000000000008', 0xFF8A7078),
+        ('00000000-0000-0000-0000-000000000009', 0xFF8B7589),
+        ('00000000-0000-0000-0000-000000000010', 0xFF8A765F),
+        ('00000000-0000-0000-0000-000000000011', 0xFF7F7299),
+        ('00000000-0000-0000-0000-000000000012', 0xFF5F8A84),
+        ('00000000-0000-0000-0000-000000000013', 0xFF67849A),
+        ('00000000-0000-0000-0000-000000000014', 0xFF6B7E9A),
+        ('00000000-0000-0000-0000-000000000015', 0xFF7A8064),
+        ('00000000-0000-0000-0000-000000000016', 0xFF6E8790),
+        ('00000000-0000-0000-0000-000000000017', 0xFF776D8F),
+        ('00000000-0000-0000-0000-000000000018', 0xFF5F7C76),
+      ];
+      for (final (uuid, colorValue) in colorUpdates) {
+        await db.rawUpdate(
+          'UPDATE categories SET color_value = ? WHERE uuid = ? AND is_custom = 0',
+          [colorValue, uuid],
+        );
+      }
     }
   }
 

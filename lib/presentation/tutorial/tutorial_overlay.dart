@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../app/app_theme.dart';
 
 class TutorialStep {
   final String title;
@@ -109,8 +110,8 @@ class _TutorialOverlayState extends State<TutorialOverlay>
             left: 20,
             child: Text(
               '${_step + 1} of ${widget.steps.length}',
-              style: const TextStyle(
-                color: Colors.white60,
+              style: TextStyle(
+                color: AppTheme.mintMist.withValues(alpha: 0.60),
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
               ),
@@ -123,9 +124,12 @@ class _TutorialOverlayState extends State<TutorialOverlay>
             right: 8,
             child: TextButton(
               onPressed: widget.onComplete,
-              child: const Text(
+              child: Text(
                 'Skip',
-                style: TextStyle(color: Colors.white70, fontSize: 14),
+                style: TextStyle(
+                  color: AppTheme.mintMist.withValues(alpha: 0.70),
+                  fontSize: 14,
+                ),
               ),
             ),
           ),
@@ -234,7 +238,7 @@ class _StepCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.45),
+              color: AppTheme.deepNimbus.withValues(alpha: 0.45),
               blurRadius: 24,
               spreadRadius: 4,
             ),
@@ -310,7 +314,8 @@ class _SpotlightPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final overlay = Paint()..color = Colors.black.withValues(alpha: 0.72);
+    final overlay = Paint()
+      ..color = AppTheme.deepNimbus.withValues(alpha: 0.72);
 
     if (rect == null) {
       canvas.drawRect(Offset.zero & size, overlay);
@@ -331,7 +336,7 @@ class _SpotlightPainter extends CustomPainter {
     canvas.drawRRect(
       rRect,
       Paint()
-        ..color = Colors.white.withValues(alpha: 0.25)
+        ..color = AppTheme.mintMist.withValues(alpha: 0.25)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2,
     );

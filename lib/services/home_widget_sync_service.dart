@@ -86,7 +86,7 @@ Future<void> _sync(WidgetRef ref) async {
       final cat = await categoryRepo.getByUuid(sorted[i].key);
       // Flutter ARGB int → #AARRGGBB for Android Color.parseColor
       final colorHex =
-          '#${(cat?.colorValue ?? 0xFFFFFFFF).toRadixString(16).padLeft(8, '0').toUpperCase()}';
+          '#${(cat?.colorValue ?? 0xFF6E8790).toRadixString(16).padLeft(8, '0').toUpperCase()}';
       catList.add({
         'name': cat?.name ?? 'Other',
         'amount': sorted[i].value,
