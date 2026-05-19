@@ -44,6 +44,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
 
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final accentColor = cs.brightness == Brightness.dark ? cs.primary : cs.onSurface;
     final bottomPad = MediaQuery.paddingOf(context).bottom;
 
     return Scaffold(
@@ -108,13 +109,13 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
                             ),
                             alignment: Alignment.center,
                             child: Icon(Icons.calendar_month,
-                                color: cs.primary, size: 13),
+                                color: accentColor, size: 13),
                           ),
                           const SizedBox(width: 7),
                           Text(
                             'CURRENT PERIOD',
                             style: tt.labelSmall?.copyWith(
-                              color: cs.primary,
+                              color: accentColor,
                               fontWeight: FontWeight.w600,
                               letterSpacing: 0.10 * 11,
                               fontSize: 10,
@@ -551,7 +552,7 @@ class _MonthCardState extends ConsumerState<_MonthCard> {
                               .firstOrNull;
                           final catColor = selStat != null
                               ? Color(selStat.category.colorValue)
-                              : cs.primary;
+                              : accentColor;
                           return GestureDetector(
                             onTap: () => setState(
                                 () => _selectedCategoryUuid = null),
@@ -817,6 +818,7 @@ class _BudgetInfo extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
+    final accentColor = cs.brightness == Brightness.dark ? cs.primary : cs.onSurface;
     final account = ref.watch(activeAccountProvider);
 
     final formattedBudget = account == null
@@ -889,7 +891,7 @@ class _BudgetInfo extends ConsumerWidget {
                   minHeight: 5,
                   backgroundColor: cs.outlineVariant,
                   valueColor: AlwaysStoppedAnimation<Color>(
-                    isOver ? cs.error : cs.primary,
+                    isOver ? cs.error : accentColor,
                   ),
                 ),
               ),
@@ -919,7 +921,7 @@ class _BudgetInfo extends ConsumerWidget {
                 shape: const StadiumBorder(),
               ),
               child: Text('Change',
-                  style: TextStyle(color: cs.primary, fontSize: 12)),
+                  style: TextStyle(color: accentColor, fontSize: 12)),
             ),
           ],
         );

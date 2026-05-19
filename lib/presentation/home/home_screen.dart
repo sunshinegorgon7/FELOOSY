@@ -149,6 +149,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         : null;
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final accentColor = cs.brightness == Brightness.dark ? cs.primary : cs.onSurface;
 
     final showTutorial =
         !_tutorialDismissed &&
@@ -219,7 +220,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               Icon(
                                 LucideIcons.wallet,
                                 size: 13,
-                                color: cs.primary,
+                                color: accentColor,
                               ),
                               const SizedBox(width: 7),
                               Flexible(
@@ -274,7 +275,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 Icon(
                                   LucideIcons.scrollText,
                                   size: 13,
-                                  color: cs.primary,
+                                  color: accentColor,
                                 ),
                                 const SizedBox(width: 7),
                                 Text(
@@ -417,6 +418,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   ) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final accentColor = cs.brightness == Brightness.dark ? cs.primary : cs.onSurface;
 
     final isAllAccounts = selectedAccountId == null;
 
@@ -529,7 +531,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               'Tap to return to current month',
                               textAlign: TextAlign.center,
                               style: tt.labelSmall?.copyWith(
-                                color: cs.primary,
+                                color: accentColor,
                               ),
                             ),
                         ],
@@ -568,7 +570,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     Text(
                       'TOP SPENDING',
                       style: tt.labelSmall?.copyWith(
-                        color: cs.primary,
+                        color: accentColor,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 0.10 * 11,
                       ),
@@ -593,7 +595,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             .firstOrNull;
                         final catColor = selStat != null
                             ? Color(selStat.category.colorValue)
-                            : AppTheme.amber;
+                            : accentColor;
                         return Row(
                           children: [
                             GestureDetector(
@@ -701,7 +703,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
-                              color: cs.primary,
+                              color: accentColor,
                             ),
                           ),
                         ),
@@ -714,7 +716,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
                               fontFamily: 'DM Mono',
-                              color: cs.primary,
+                              color: accentColor,
                             ),
                             textAlign: TextAlign.right,
                           ),
@@ -1110,6 +1112,7 @@ class _BudgetHero extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final accentColor = cs.brightness == Brightness.dark ? cs.primary : cs.onSurface;
 
     if (summary.budgetAmount == 0) {
       return Padding(
@@ -1136,7 +1139,7 @@ class _BudgetHero extends StatelessWidget {
     }
 
     final isOver = summary.isOverBudget;
-    final heroColor = isOver ? cs.error : cs.primary;
+    final heroColor = isOver ? cs.error : accentColor;
     final pct = summary.spentPercentage.clamp(0.0, 1.0);
 
     return Padding(
@@ -1350,6 +1353,7 @@ class _ExpandableDayGroupState extends State<_ExpandableDayGroup> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final accentColor = cs.brightness == Brightness.dark ? cs.primary : cs.onSurface;
     final group = widget.group;
     final firstCat = group.txs.isNotEmpty
         ? widget.cats
@@ -1401,7 +1405,7 @@ class _ExpandableDayGroupState extends State<_ExpandableDayGroup> {
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: cs.primary,
+                      color: accentColor,
                     ),
                   ),
                 ),
@@ -1412,7 +1416,7 @@ class _ExpandableDayGroupState extends State<_ExpandableDayGroup> {
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                     fontFamily: 'DM Mono',
-                    color: cs.primary,
+                    color: accentColor,
                   ),
                 ),
               ],
