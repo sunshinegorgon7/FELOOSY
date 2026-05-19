@@ -755,7 +755,7 @@ class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
                   : TextButton(
                       onPressed: anyBusy ? null : _signOut,
                       style: TextButton.styleFrom(
-                        foregroundColor: AppTheme.amber,
+                        foregroundColor: cs.primary,
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 4),
                         visualDensity: VisualDensity.compact,
@@ -1072,7 +1072,7 @@ class _SettingsRow extends StatelessWidget {
               child: Text(
                 value!,
                 style: tt.bodySmall?.copyWith(
-                  color: danger ? cs.error : AppTheme.amber,
+                  color: danger ? cs.error : cs.primary,
                   fontFamily: 'DM Mono',
                   fontWeight: FontWeight.w500,
                   fontSize: 13,
@@ -1201,7 +1201,7 @@ class _SectionHeader extends StatelessWidget {
       child: Text(
         title.toUpperCase(),
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: danger ? cs.error.withValues(alpha: 0.8) : AppTheme.amber,
+              color: danger ? cs.error.withValues(alpha: 0.8) : cs.primary,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.10 * 11,
             ),

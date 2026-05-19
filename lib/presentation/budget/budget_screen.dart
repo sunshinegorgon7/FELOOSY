@@ -351,12 +351,12 @@ class _GroupingPicker extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 7),
                 decoration: BoxDecoration(
                   color: selected
-                      ? AppTheme.amber.withValues(alpha: 0.12)
+                      ? cs.primary.withValues(alpha: 0.12)
                       : cs.surfaceContainerLow,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: selected
-                        ? AppTheme.amber.withValues(alpha: 0.55)
+                        ? cs.primary.withValues(alpha: 0.55)
                         : cs.outlineVariant,
                     width: selected ? 1.5 : 1.0,
                   ),
@@ -368,7 +368,7 @@ class _GroupingPicker extends StatelessWidget {
                     fontSize: 12,
                     fontWeight:
                         selected ? FontWeight.w700 : FontWeight.w400,
-                    color: selected ? AppTheme.amber : cs.onSurfaceVariant,
+                    color: selected ? cs.primary : cs.onSurfaceVariant,
                   ),
                 ),
               ),

@@ -1,6 +1,5 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../../app/app_theme.dart';
 import '../../../data/repositories/ai_cache_repository.dart';
 
 class AiInsightsCard extends StatelessWidget {
@@ -21,7 +20,7 @@ class AiInsightsCard extends StatelessWidget {
         color: cs.surfaceContainerLow,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppTheme.amber.withValues(alpha: 0.25),
+          color: cs.primary.withValues(alpha: 0.25),
         ),
       ),
       child: Column(
@@ -30,12 +29,12 @@ class AiInsightsCard extends StatelessWidget {
           // Header
           Row(
             children: [
-              const Icon(Icons.auto_awesome, size: 13, color: AppTheme.amber),
+              Icon(Icons.auto_awesome, size: 13, color: cs.primary),
               const SizedBox(width: 5),
               Text(
                 isAi ? 'AI Insights' : 'Summary',
                 style: tt.labelSmall?.copyWith(
-                  color: AppTheme.amber,
+                  color: cs.primary,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.8,
                   fontSize: 10,
@@ -76,8 +75,8 @@ class AiInsightsCard extends StatelessWidget {
                       child: Container(
                         width: 4,
                         height: 4,
-                        decoration: const BoxDecoration(
-                          color: AppTheme.amber,
+                        decoration: BoxDecoration(
+                          color: cs.primary,
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -110,8 +109,8 @@ class AiInsightsCard extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.lightbulb_outline,
-                      size: 13, color: AppTheme.amber),
+                  Icon(Icons.lightbulb_outline,
+                      size: 13, color: cs.primary),
                   const SizedBox(width: 7),
                   Expanded(
                     child: Text(
@@ -187,17 +186,17 @@ class AiInsightsPreparingCard extends StatelessWidget {
         color: cs.surfaceContainerLow,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppTheme.amber.withValues(alpha: 0.2),
+          color: cs.primary.withValues(alpha: 0.2),
         ),
       ),
       child: Row(
         children: [
-          const SizedBox(
+          SizedBox(
             width: 12,
             height: 12,
             child: CircularProgressIndicator(
               strokeWidth: 1.5,
-              color: AppTheme.amber,
+              color: cs.primary,
             ),
           ),
           const SizedBox(width: 10),
