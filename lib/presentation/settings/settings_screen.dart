@@ -755,7 +755,7 @@ class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
                   : TextButton(
                       onPressed: anyBusy ? null : _signOut,
                       style: TextButton.styleFrom(
-                        foregroundColor: cs.primary,
+                        foregroundColor: cs.brightness == Brightness.dark ? cs.primary : cs.onSurface,
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 4),
                         visualDensity: VisualDensity.compact,
@@ -1033,6 +1033,7 @@ class _SettingsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final accentColor = cs.brightness == Brightness.dark ? cs.primary : cs.onSurface;
 
     final content = Padding(
       padding: EdgeInsets.fromLTRB(
@@ -1072,7 +1073,7 @@ class _SettingsRow extends StatelessWidget {
               child: Text(
                 value!,
                 style: tt.bodySmall?.copyWith(
-                  color: danger ? cs.error : cs.primary,
+                  color: danger ? cs.error : accentColor,
                   fontFamily: 'DM Mono',
                   fontWeight: FontWeight.w500,
                   fontSize: 13,
@@ -1196,12 +1197,13 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final accentColor = cs.brightness == Brightness.dark ? cs.primary : cs.onSurface;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 28, 16, 2),
       child: Text(
         title.toUpperCase(),
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: danger ? cs.error.withValues(alpha: 0.8) : cs.primary,
+              color: danger ? cs.error.withValues(alpha: 0.8) : accentColor,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.10 * 11,
             ),

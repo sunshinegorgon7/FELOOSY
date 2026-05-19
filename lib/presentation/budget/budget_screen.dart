@@ -368,7 +368,9 @@ class _GroupingPicker extends StatelessWidget {
                     fontSize: 12,
                     fontWeight:
                         selected ? FontWeight.w700 : FontWeight.w400,
-                    color: selected ? cs.primary : cs.onSurfaceVariant,
+                    color: selected
+                        ? (cs.brightness == Brightness.dark ? cs.primary : cs.onSurface)
+                        : cs.onSurfaceVariant,
                   ),
                 ),
               ),
@@ -420,6 +422,7 @@ class _MonthCardState extends ConsumerState<_MonthCard> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final accentColor = cs.brightness == Brightness.dark ? cs.primary : cs.onSurface;
 
     final expenseTotal = widget.transactions
         .where((t) => t.type == TransactionType.expense)
@@ -500,7 +503,7 @@ class _MonthCardState extends ConsumerState<_MonthCard> {
                       style: GoogleFonts.dmMono(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
-                        color: cs.primary,
+                        color: accentColor,
                       ),
                     ),
                   const SizedBox(width: 6),

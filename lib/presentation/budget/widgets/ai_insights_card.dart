@@ -12,6 +12,7 @@ class AiInsightsCard extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     final isAi = entry.source == 'ai';
+    final accentColor = cs.brightness == Brightness.dark ? cs.primary : cs.onSurface;
 
     return Container(
       margin: const EdgeInsets.fromLTRB(14, 0, 14, 12),
@@ -29,12 +30,12 @@ class AiInsightsCard extends StatelessWidget {
           // Header
           Row(
             children: [
-              Icon(Icons.auto_awesome, size: 13, color: cs.primary),
+              Icon(Icons.auto_awesome, size: 13, color: accentColor),
               const SizedBox(width: 5),
               Text(
                 isAi ? 'AI Insights' : 'Summary',
                 style: tt.labelSmall?.copyWith(
-                  color: cs.primary,
+                  color: accentColor,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.8,
                   fontSize: 10,
@@ -76,7 +77,7 @@ class AiInsightsCard extends StatelessWidget {
                         width: 4,
                         height: 4,
                         decoration: BoxDecoration(
-                          color: cs.primary,
+                          color: accentColor,
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -110,7 +111,7 @@ class AiInsightsCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Icon(Icons.lightbulb_outline,
-                      size: 13, color: cs.primary),
+                      size: 13, color: accentColor),
                   const SizedBox(width: 7),
                   Expanded(
                     child: Text(
@@ -178,6 +179,7 @@ class AiInsightsPreparingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final accentColor = cs.brightness == Brightness.dark ? cs.primary : cs.onSurface;
 
     return Container(
       margin: const EdgeInsets.fromLTRB(14, 0, 14, 12),
@@ -196,7 +198,7 @@ class AiInsightsPreparingCard extends StatelessWidget {
             height: 12,
             child: CircularProgressIndicator(
               strokeWidth: 1.5,
-              color: cs.primary,
+              color: accentColor,
             ),
           ),
           const SizedBox(width: 10),

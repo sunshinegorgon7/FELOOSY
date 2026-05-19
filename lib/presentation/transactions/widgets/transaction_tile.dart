@@ -27,8 +27,9 @@ class TransactionTile extends ConsumerWidget {
 
     final cs = Theme.of(context).colorScheme;
     final isExpense = transaction.type == TransactionType.expense;
-    final amountColor =
-        isExpense ? cs.primary : AppTheme.incomeColor;
+    final amountColor = isExpense
+        ? (cs.brightness == Brightness.dark ? cs.primary : cs.onSurface)
+        : AppTheme.incomeColor;
     final amountText = settings != null
         ? CurrencyFormatter.format(transaction.amount, settings)
         : transaction.amount.toStringAsFixed(2);
