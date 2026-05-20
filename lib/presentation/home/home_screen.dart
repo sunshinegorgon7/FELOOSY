@@ -683,59 +683,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
 
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-              child: Row(
-                children: _HomeListView.values.map((v) {
-                  final selected = v == _listView;
-                  final label = switch (v) {
-                    _HomeListView.byDay      => 'By Day',
-                    _HomeListView.byCategory => 'By Category',
-                  };
-                  return Expanded(
-                    child: GestureDetector(
-                      onTap: () => setState(() {
-                        _listView = v;
-                        if (v != _HomeListView.byCategory) _selectedDay = null;
-                      }),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 150),
-                        margin: const EdgeInsets.symmetric(horizontal: 3),
-                        padding: const EdgeInsets.symmetric(vertical: 7),
-                        decoration: BoxDecoration(
-                          color: selected
-                              ? cs.primary.withValues(alpha: 0.12)
-                              : cs.surfaceContainerLow,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: selected
-                                ? cs.primary.withValues(alpha: 0.55)
-                                : cs.outlineVariant,
-                            width: selected ? 1.5 : 1.0,
-                          ),
-                        ),
-                        child: Text(
-                          label,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: selected
-                                ? FontWeight.w600
-                                : FontWeight.w400,
-                            color: selected
-                                ? accentColor
-                                : cs.onSurfaceVariant,
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-          ),
-
           if (_listView == _HomeListView.byCategory) ...[
             SliverToBoxAdapter(
               child: _MonthCalendar(
@@ -748,6 +695,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 }),
               ),
             ),
+            _buildViewToggle(cs, accentColor),
             if (catGroups.isEmpty)
               SliverFillRemaining(
                 hasScrollBody: false,
@@ -846,6 +794,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               ),
           ] else ...[
+            _buildViewToggle(cs, accentColor),
             if (categoryFilteredTxs.isEmpty)
               SliverFillRemaining(
                 hasScrollBody: false,
@@ -940,6 +889,58 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
           const SliverToBoxAdapter(child: SizedBox(height: 96)),
         ],
+      ),
+    );
+  }
+
+  SliverToBoxAdapter _buildViewToggle(ColorScheme cs, Color accentColor) {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+        child: Row(
+          children: _HomeListView.values.map((v) {
+            final selected = v == _listView;
+            final label = switch (v) {
+              _HomeListView.byDay      => 'By Day',
+              _HomeListView.byCategory => 'By Category',
+            };
+            return Expanded(
+              child: GestureDetector(
+                onTap: () => setState(() {
+                  _listView = v;
+                  if (v != _HomeListView.byCategory) _selectedDay = null;
+                }),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  padding: const EdgeInsets.symmetric(vertical: 7),
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? cs.primary.withValues(alpha: 0.12)
+                        : cs.surfaceContainerLow,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: selected
+                          ? cs.primary.withValues(alpha: 0.55)
+                          : cs.outlineVariant,
+                      width: selected ? 1.5 : 1.0,
+                    ),
+                  ),
+                  child: Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight:
+                          selected ? FontWeight.w600 : FontWeight.w400,
+                      color: selected ? accentColor : cs.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
       ),
     );
   }
