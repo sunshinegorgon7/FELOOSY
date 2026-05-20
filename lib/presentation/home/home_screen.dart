@@ -77,6 +77,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   String? _selectedCategoryFilter;
   _HomeListView _listView = _HomeListView.byDay;
+  DateTime? _selectedDay;
   bool _tutorialDismissed = false;
   final _addFabKey = GlobalKey();
   final _settingsIconKey = GlobalKey();
@@ -468,8 +469,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     final groups = _groupByDate(categoryFilteredTxs);
     _visibleGroups = groups;
+    final txDays = filteredTxs
+        .map((tx) => DateUtils.dateOnly(tx.transactionDate))
+        .toSet();
+    final dayFilteredTxs = _selectedDay != null
+        ? filteredTxs
+              .where((tx) =>
+                  DateUtils.dateOnly(tx.transactionDate) == _selectedDay)
+              .toList()
+        : filteredTxs;
     final catGroups = _listView == _HomeListView.byCategory
-        ? _groupByCategory(filteredTxs, cats)
+        ? _groupByCategory(dayFilteredTxs, cats)
         : const <_CatGroup>[];
 
     // Compute all expense categories for the current period, sorted by amount.
@@ -682,7 +692,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   };
                   return Expanded(
                     child: GestureDetector(
-                      onTap: () => setState(() => _listView = v),
+                      onTap: () => setState(() {
+                        _listView = v;
+                        if (v != _HomeListView.byCategory) _selectedDay = null;
+                      }),
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 150),
                         margin: const EdgeInsets.symmetric(horizontal: 3),
@@ -721,6 +734,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
 
           if (_listView == _HomeListView.byCategory) ...[
+            SliverToBoxAdapter(
+              child: _MonthCalendar(
+                year: period.budgetYear,
+                month: period.budgetMonth,
+                txDays: txDays,
+                selectedDay: _selectedDay,
+                onDayTap: (day) => setState(() {
+                  _selectedDay = _selectedDay == day ? null : day;
+                }),
+              ),
+            ),
             if (catGroups.isEmpty)
               SliverFillRemaining(
                 hasScrollBody: false,
@@ -1625,100 +1649,250 @@ class _TopCategoriesChartState extends State<_TopCategoriesChart> {
     });
   }
 
+  Widget _barColumn(
+    _CatStat stat,
+    double maxAmount,
+    double barAreaHeight,
+    Color accentColor,
+  ) {
+    const barWidth = 64.0;
+    final color = Color(stat.category.colorValue);
+    final targetH =
+        (barAreaHeight * (stat.amount / maxAmount)).clamp(4.0, barAreaHeight);
+    final barH = _entered ? targetH : 0.0;
+    final hasSelection = widget.selectedCategoryUuid != null;
+    final isSelected = stat.category.uuid == widget.selectedCategoryUuid;
+    final isDeselected = hasSelection && !isSelected;
+
+    return SizedBox(
+      width: barWidth,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => widget.onTap?.call(stat.category.uuid),
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 180),
+          opacity: isDeselected ? 0.3 : 1.0,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                height: barAreaHeight + 26,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    AnimatedPositioned(
+                      duration: const Duration(milliseconds: 500),
+                      bottom: barH + 4,
+                      left: 0,
+                      right: 0,
+                      child: Text(
+                        widget.summary.formatAmount(stat.amount),
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500,
+                          fontFamily: 'DM Mono',
+                          color: accentColor,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    AnimatedPositioned(
+                      duration: const Duration(milliseconds: 500),
+                      bottom: 0,
+                      left: 10,
+                      right: 10,
+                      height: barH,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: color,
+                          borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(6)),
+                          border: isSelected
+                              ? Border.all(
+                                  color: color.withValues(alpha: 0.55),
+                                )
+                              : null,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                stat.category.name,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: accentColor,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final accentColor = AppTheme.primaryText(cs);
+    if (widget.stats.isEmpty) return const SizedBox.shrink();
+    final accentColor = AppTheme.primaryText(Theme.of(context).colorScheme);
     const barAreaHeight = 100.0;
     final maxAmount = widget.stats.first.amount;
-    final hasSelection = widget.selectedCategoryUuid != null;
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: widget.stats.map((stat) {
-          const barWidth = 64.0;
-          final color = Color(stat.category.colorValue);
-          final targetH =
-              (barAreaHeight * (stat.amount / maxAmount)).clamp(4.0, barAreaHeight);
-          final barH = _entered ? targetH : 0.0;
-          final isSelected = stat.category.uuid == widget.selectedCategoryUuid;
-          final isDeselected = hasSelection && !isSelected;
-
-          return SizedBox(
-            width: barWidth,
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => widget.onTap?.call(stat.category.uuid),
-              child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 180),
-                opacity: isDeselected ? 0.3 : 1.0,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
-                      height: barAreaHeight + 26,
-                      child: Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          AnimatedPositioned(
-                            duration: const Duration(milliseconds: 500),
-                            bottom: barH + 4,
-                            left: 0,
-                            right: 0,
-                            child: Text(
-                              widget.summary.formatAmount(stat.amount),
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w500,
-                                fontFamily: 'DM Mono',
-                                color: accentColor,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                          AnimatedPositioned(
-                            duration: const Duration(milliseconds: 500),
-                            bottom: 0,
-                            left: 10,
-                            right: 10,
-                            height: barH,
-                            child: DecoratedBox(
-                              decoration: BoxDecoration(
-                                color: color,
-                                borderRadius: const BorderRadius.vertical(
-                                    top: Radius.circular(6)),
-                                border: isSelected
-                                    ? Border.all(
-                                        color: color.withValues(alpha: 0.55),
-                                      )
-                                    : null,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      stat.category.name,
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight:
-                            isSelected ? FontWeight.w700 : FontWeight.w500,
-                        color: accentColor,
-                      ),
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                ],
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        // First bar is always visible — acts as the fixed reference.
+        _barColumn(widget.stats.first, maxAmount, barAreaHeight, accentColor),
+        if (widget.stats.length > 1)
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: widget.stats
+                    .skip(1)
+                    .map((s) =>
+                        _barColumn(s, maxAmount, barAreaHeight, accentColor))
+                    .toList(),
               ),
             ),
           ),
-        );
-      }).toList(),
+      ],
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Month calendar — shown in By Category mode
+// ---------------------------------------------------------------------------
+
+class _MonthCalendar extends StatelessWidget {
+  final int year;
+  final int month;
+  final Set<DateTime> txDays;
+  final DateTime? selectedDay;
+  final void Function(DateTime) onDayTap;
+
+  const _MonthCalendar({
+    required this.year,
+    required this.month,
+    required this.txDays,
+    required this.selectedDay,
+    required this.onDayTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    final accentColor = AppTheme.primaryText(cs);
+
+    final firstDay = DateTime(year, month, 1);
+    final daysInMonth = DateTime(year, month + 1, 0).day;
+    // weekday: 1=Mon…7=Sun → column index 0–6
+    final startOffset = firstDay.weekday - 1;
+    final rows = ((startOffset + daysInMonth) / 7).ceil();
+
+    final today = DateUtils.dateOnly(DateTime.now());
+
+    const headers = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: headers
+                .map((h) => Expanded(
+                      child: Text(
+                        h,
+                        textAlign: TextAlign.center,
+                        style: tt.labelSmall?.copyWith(
+                          color: cs.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ))
+                .toList(),
+          ),
+          const SizedBox(height: 4),
+          for (int row = 0; row < rows; row++)
+            Row(
+              children: List.generate(7, (col) {
+                final day = row * 7 + col - startOffset + 1;
+                if (day < 1 || day > daysInMonth) {
+                  return const Expanded(child: SizedBox(height: 36));
+                }
+                final date = DateTime(year, month, day);
+                final hasTx = txDays.contains(date);
+                final isSelected = selectedDay == date;
+                final isToday = date == today;
+
+                return Expanded(
+                  child: GestureDetector(
+                    onTap: hasTx ? () => onDayTap(date) : null,
+                    child: SizedBox(
+                      height: 36,
+                      child: Center(
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          width: 30,
+                          height: 30,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: isSelected
+                                ? cs.primary.withValues(alpha: 0.85)
+                                : null,
+                            border: isToday && !isSelected
+                                ? Border.all(
+                                    color: cs.primary.withValues(alpha: 0.4),
+                                  )
+                                : null,
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                '$day',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: hasTx
+                                      ? FontWeight.w600
+                                      : FontWeight.w400,
+                                  color: isSelected
+                                      ? cs.onPrimary
+                                      : hasTx
+                                          ? accentColor
+                                          : cs.onSurface
+                                              .withValues(alpha: 0.3),
+                                ),
+                              ),
+                              if (hasTx && !isSelected)
+                                Container(
+                                  width: 4,
+                                  height: 4,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: accentColor.withValues(alpha: 0.6),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ),
+        ],
       ),
     );
   }
