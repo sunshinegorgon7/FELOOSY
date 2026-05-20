@@ -52,3 +52,14 @@ android {
 flutter {
     source = "../.."
 }
+
+// home_widget 0.9.x transitively pulls in glance-appwidget:1.3.0-alpha01
+// which requires AGP 9.1.0 and compileSdk 37. Force the stable 1.1.0
+// that is compatible with AGP 8.x.
+configurations.all {
+    resolutionStrategy.force(
+        "androidx.glance:glance:1.1.0",
+        "androidx.glance:glance-appwidget:1.1.0",
+        "androidx.glance:glance-preview:1.1.0",
+    )
+}
