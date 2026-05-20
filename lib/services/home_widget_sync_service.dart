@@ -51,8 +51,10 @@ Future<void> _sync(WidgetRef ref) async {
     accountId: account!.id,
   );
   double spentThisMonth = 0;
+  double incomeThisMonth = 0;
   for (final tx in monthTxs) {
     if (tx.type == TransactionType.expense) spentThisMonth += tx.amount;
+    if (tx.type == TransactionType.income) incomeThisMonth += tx.amount;
   }
   final budget = await budgetRepo.getForPeriod(
     period.budgetYear,
@@ -60,7 +62,7 @@ Future<void> _sync(WidgetRef ref) async {
     accountId: account.id!,
   );
   final monthlyBudget = budget?.amount ?? account.defaultMonthlyBudget ?? 0;
-  final available = monthlyBudget - spentThisMonth;
+  final available = monthlyBudget + incomeThisMonth - spentThisMonth;
 
   // --- Bar/legend: this month's expenses by category ---
   final Map<String, double> byCategory = {};

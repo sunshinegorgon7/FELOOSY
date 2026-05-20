@@ -20,7 +20,7 @@ import 'set_budget_sheet.dart';
 import '../../providers/ai_analysis_provider.dart';
 import 'widgets/ai_insights_card.dart';
 
-enum _LedgerGrouping { day, week, month, year }
+enum _LedgerGrouping { month, year }
 
 class BudgetScreen extends ConsumerStatefulWidget {
   const BudgetScreen({super.key});
@@ -213,67 +213,9 @@ class _MonthGroup {
 
 List<_MonthGroup> _group(List<Transaction> txs, _LedgerGrouping g) =>
     switch (g) {
-      _LedgerGrouping.day   => _groupByDay(txs),
-      _LedgerGrouping.week  => _groupByWeek(txs),
       _LedgerGrouping.month => _groupByMonth(txs),
       _LedgerGrouping.year  => _groupByYear(txs),
     };
-
-List<_MonthGroup> _groupByDay(List<Transaction> txs) {
-  final keys = <String>[];
-  final map = <String, List<Transaction>>{};
-  final now = DateTime.now();
-  for (final tx in txs) {
-    final key = DateFormat('yyyy-MM-dd').format(tx.transactionDate);
-    if (!map.containsKey(key)) keys.add(key);
-    map.putIfAbsent(key, () => []).add(tx);
-  }
-  return [
-    for (final k in keys)
-      _MonthGroup(
-        DateFormat('EEE, d MMM yyyy').format(DateFormat('yyyy-MM-dd').parse(k)),
-        map[k]!,
-        DateFormat('yyyy-MM-dd')
-            .parse(k)
-            .isBefore(DateTime(now.year, now.month, now.day)),
-      ),
-  ];
-}
-
-List<_MonthGroup> _groupByWeek(List<Transaction> txs) {
-  final keys = <String>[];
-  final map = <String, List<Transaction>>{};
-  final now = DateTime.now();
-  for (final tx in txs) {
-    final dt = tx.transactionDate;
-    final monday = dt.subtract(Duration(days: dt.weekday - 1));
-    final key = DateFormat('yyyy-MM-dd').format(monday);
-    if (!map.containsKey(key)) keys.add(key);
-    map.putIfAbsent(key, () => []).add(tx);
-  }
-  return [
-    for (final k in keys)
-      _MonthGroup(
-        _weekLabel(DateFormat('yyyy-MM-dd').parse(k)),
-        map[k]!,
-        DateFormat('yyyy-MM-dd')
-            .parse(k)
-            .add(const Duration(days: 6))
-            .isBefore(now),
-      ),
-  ];
-}
-
-String _weekLabel(DateTime monday) {
-  final sunday = monday.add(const Duration(days: 6));
-  if (monday.month == sunday.month) {
-    return '${DateFormat('d').format(monday)}–${DateFormat('d MMM yyyy').format(sunday)}';
-  } else if (monday.year == sunday.year) {
-    return '${DateFormat('d MMM').format(monday)}–${DateFormat('d MMM yyyy').format(sunday)}';
-  } else {
-    return '${DateFormat('d MMM yy').format(monday)}–${DateFormat('d MMM yy').format(sunday)}';
-  }
-}
 
 List<_MonthGroup> _groupByMonth(List<Transaction> txs) {
   final keys = <String>[];
@@ -338,8 +280,6 @@ class _GroupingPicker extends StatelessWidget {
         children: _LedgerGrouping.values.map((g) {
           final selected = g == value;
           final label = switch (g) {
-            _LedgerGrouping.day   => 'Day',
-            _LedgerGrouping.week  => 'Week',
             _LedgerGrouping.month => 'Month',
             _LedgerGrouping.year  => 'Year',
           };

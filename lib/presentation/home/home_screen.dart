@@ -28,6 +28,38 @@ String _dayLabel(DateTime date) {
   return DateFormat('EEEE, MMMM d').format(date);
 }
 
+enum _HomeListView { byDay, byCategory }
+
+class _CatGroup {
+  final Category category;
+  final double net;
+  final int count;
+  final List<Transaction> txs;
+  _CatGroup(this.category, this.net, this.count, this.txs);
+}
+
+List<_CatGroup> _groupByCategory(
+    List<Transaction> txs, List<Category> cats) {
+  final map = <String, List<Transaction>>{};
+  for (final tx in txs) {
+    map.putIfAbsent(tx.categoryUuid, () => []).add(tx);
+  }
+  final groups = <_CatGroup>[];
+  for (final entry in map.entries) {
+    final cat = cats.where((c) => c.uuid == entry.key).firstOrNull;
+    if (cat == null) continue;
+    final net = entry.value.fold(
+      0.0,
+      (sum, tx) => tx.type == TransactionType.income
+          ? sum + tx.amount
+          : sum - tx.amount,
+    );
+    groups.add(_CatGroup(cat, net, entry.value.length, entry.value));
+  }
+  groups.sort((a, b) => b.net.abs().compareTo(a.net.abs()));
+  return groups;
+}
+
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -44,6 +76,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Set<int> _cachedPeriodOffsets = const {};
 
   String? _selectedCategoryFilter;
+  _HomeListView _listView = _HomeListView.byDay;
   bool _tutorialDismissed = false;
   final _addFabKey = GlobalKey();
   final _settingsIconKey = GlobalKey();
@@ -435,6 +468,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     final groups = _groupByDate(categoryFilteredTxs);
     _visibleGroups = groups;
+    final catGroups = _listView == _HomeListView.byCategory
+        ? _groupByCategory(filteredTxs, cats)
+        : const <_CatGroup>[];
 
     // Compute top 5 expense categories for the current period
     final expenseTotals = <String, double>{};
@@ -580,7 +616,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             _selectedCategoryFilter == uuid ? null : uuid;
                       }),
                     ),
-                    if (_selectedCategoryFilter != null) ...[
+                    if (_selectedCategoryFilter != null &&
+                        _listView == _HomeListView.byDay) ...[
                       const SizedBox(height: 10),
                       Builder(builder: (ctx) {
                         final selStat = top5
@@ -634,94 +671,246 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
 
-          if (categoryFilteredTxs.isEmpty)
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Center(
-                  child: Text(
-                    _selectedCategoryFilter != null
-                        ? 'No transactions in this\ncategory for this period.'
-                        : 'No transactions yet.\nTap + to add one.',
-                    textAlign: TextAlign.center,
-                    style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
-                  ),
-                ),
-              ),
-            )
-          else
-            SliverList(
-              delegate: SliverChildBuilderDelegate((context, index) {
-                final group = groups[index];
-                if (_selectedCategoryFilter != null || _isSearching) {
-                  return _ExpandableDayGroup(
-                    key: ValueKey(group.day),
-                    group: group,
-                    cats: cats,
-                    summary: summary,
-                    initiallyExpanded: true,
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+              child: Row(
+                children: _HomeListView.values.map((v) {
+                  final selected = v == _listView;
+                  final label = switch (v) {
+                    _HomeListView.byDay      => 'By Day',
+                    _HomeListView.byCategory => 'By Category',
+                  };
+                  return Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _listView = v),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        margin: const EdgeInsets.symmetric(horizontal: 3),
+                        padding: const EdgeInsets.symmetric(vertical: 7),
+                        decoration: BoxDecoration(
+                          color: selected
+                              ? cs.primary.withValues(alpha: 0.12)
+                              : cs.surfaceContainerLow,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: selected
+                                ? cs.primary.withValues(alpha: 0.55)
+                                : cs.outlineVariant,
+                            width: selected ? 1.5 : 1.0,
+                          ),
+                        ),
+                        child: Text(
+                          label,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: selected
+                                ? FontWeight.w600
+                                : FontWeight.w400,
+                            color: selected
+                                ? accentColor
+                                : cs.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                    ),
                   );
-                }
-                return InkWell(
-                  onTap: () => _showDayOverlay(
-                    context,
-                    group,
-                    cats,
-                    summary,
-                    scopedTxs: _searchQuery.isNotEmpty ? filteredTxs : null,
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 13),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            group.label,
-                            style: tt.bodyMedium?.copyWith(
-                              color: cs.onSurface,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                        Container(
-                          width: 22,
-                          height: 22,
-                          decoration: BoxDecoration(
-                            color: cs.primary.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(11),
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            '${group.txs.length}',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: accentColor,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        SizedBox(
-                          width: 88,
-                          child: Text(
-                            summary.formatAmount(group.dayNet.abs()),
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              fontFamily: 'DM Mono',
-                              color: accentColor,
-                            ),
-                            textAlign: TextAlign.right,
-                          ),
-                        ),
-                      ],
+                }).toList(),
+              ),
+            ),
+          ),
+
+          if (_listView == _HomeListView.byCategory) ...[
+            if (catGroups.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Center(
+                    child: Text(
+                      'No transactions yet.\nTap + to add one.',
+                      textAlign: TextAlign.center,
+                      style: tt.bodyMedium?.copyWith(
+                          color: cs.onSurfaceVariant),
                     ),
                   ),
-                );
-              }, childCount: groups.length),
-            ),
+                ),
+              )
+            else
+              SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final catGroup = catGroups[index];
+                    final catColor =
+                        Color(catGroup.category.colorValue);
+                    return InkWell(
+                      onTap: () => _showCategoryTimeline(
+                          context, catGroup, cats, summary),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 13),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 28,
+                              height: 28,
+                              decoration: BoxDecoration(
+                                color: catColor.withValues(alpha: 0.14),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              alignment: Alignment.center,
+                              child: Icon(
+                                IconData(
+                                  catGroup.category.iconCodePoint,
+                                  fontFamily:
+                                      catGroup.category.iconFontFamily,
+                                ),
+                                size: 15,
+                                color: catColor,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                catGroup.category.name,
+                                style: tt.bodyMedium?.copyWith(
+                                  color: cs.onSurface,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            Container(
+                              width: 22,
+                              height: 22,
+                              decoration: BoxDecoration(
+                                color: cs.primary.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(11),
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                '${catGroup.count}',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: accentColor,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            SizedBox(
+                              width: 88,
+                              child: Text(
+                                summary.formatAmount(catGroup.net.abs()),
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  fontFamily: 'DM Mono',
+                                  color: accentColor,
+                                ),
+                                textAlign: TextAlign.right,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                  childCount: catGroups.length,
+                ),
+              ),
+          ] else ...[
+            if (categoryFilteredTxs.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Center(
+                    child: Text(
+                      _selectedCategoryFilter != null
+                          ? 'No transactions in this\ncategory for this period.'
+                          : 'No transactions yet.\nTap + to add one.',
+                      textAlign: TextAlign.center,
+                      style: tt.bodyMedium?.copyWith(
+                          color: cs.onSurfaceVariant),
+                    ),
+                  ),
+                ),
+              )
+            else
+              SliverList(
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  final group = groups[index];
+                  if (_selectedCategoryFilter != null || _isSearching) {
+                    return _ExpandableDayGroup(
+                      key: ValueKey(group.day),
+                      group: group,
+                      cats: cats,
+                      summary: summary,
+                      initiallyExpanded: true,
+                    );
+                  }
+                  return InkWell(
+                    onTap: () => _showDayOverlay(
+                      context,
+                      group,
+                      cats,
+                      summary,
+                      scopedTxs:
+                          _searchQuery.isNotEmpty ? filteredTxs : null,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 13),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              group.label,
+                              style: tt.bodyMedium?.copyWith(
+                                color: cs.onSurface,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            width: 22,
+                            height: 22,
+                            decoration: BoxDecoration(
+                              color: cs.primary.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(11),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              '${group.txs.length}',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: accentColor,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          SizedBox(
+                            width: 88,
+                            child: Text(
+                              summary.formatAmount(group.dayNet.abs()),
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'DM Mono',
+                                color: accentColor,
+                              ),
+                              textAlign: TextAlign.right,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }, childCount: groups.length),
+              ),
+          ],
 
           const SliverToBoxAdapter(child: SizedBox(height: 96)),
         ],
@@ -848,31 +1037,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
       ];
 
-  List<_DayGroup> _groupByDate(List<Transaction> txs) {
-    if (txs.isEmpty) return [];
-
-    final groupTxs = <DateTime, List<Transaction>>{};
-    final groupOrder = <DateTime>[];
-
-    for (final tx in txs) {
-      final day = DateUtils.dateOnly(tx.transactionDate);
-      if (!groupTxs.containsKey(day)) {
-        groupTxs[day] = [];
-        groupOrder.add(day);
-      }
-      groupTxs[day]!.add(tx);
-    }
-
-    return groupOrder.map((day) {
-      final dayTxs = groupTxs[day]!;
-      final dayNet = dayTxs.fold(
-        0.0,
-        (sum, tx) => tx.type == TransactionType.income
-            ? sum + tx.amount
-            : sum - tx.amount,
-      );
-      return _DayGroup(day, _dayLabel(day), dayNet, dayTxs);
-    }).toList();
+  void _showCategoryTimeline(
+    BuildContext context,
+    _CatGroup catGroup,
+    List<Category> cats,
+    BudgetSummary summary,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _CategoryTimeline(
+        category: catGroup.category,
+        cats: cats,
+        summary: summary,
+      ),
+    );
   }
 }
 
@@ -882,6 +1062,236 @@ class _DayGroup {
   final double dayNet;
   final List<Transaction> txs;
   _DayGroup(this.day, this.label, this.dayNet, this.txs);
+}
+
+List<_DayGroup> _groupByDate(List<Transaction> txs) {
+  if (txs.isEmpty) return [];
+  final groupTxs = <DateTime, List<Transaction>>{};
+  final groupOrder = <DateTime>[];
+  for (final tx in txs) {
+    final day = DateUtils.dateOnly(tx.transactionDate);
+    if (!groupTxs.containsKey(day)) {
+      groupTxs[day] = [];
+      groupOrder.add(day);
+    }
+    groupTxs[day]!.add(tx);
+  }
+  return groupOrder.map((day) {
+    final dayTxs = groupTxs[day]!;
+    final dayNet = dayTxs.fold(
+      0.0,
+      (sum, tx) => tx.type == TransactionType.income
+          ? sum + tx.amount
+          : sum - tx.amount,
+    );
+    return _DayGroup(day, _dayLabel(day), dayNet, dayTxs);
+  }).toList();
+}
+
+// ---------------------------------------------------------------------------
+// Category timeline — bottom sheet showing one category's transactions by day
+// ---------------------------------------------------------------------------
+
+class _CategoryTimeline extends ConsumerStatefulWidget {
+  final Category category;
+  final List<Category> cats;
+  final BudgetSummary summary;
+
+  const _CategoryTimeline({
+    required this.category,
+    required this.cats,
+    required this.summary,
+  });
+
+  @override
+  ConsumerState<_CategoryTimeline> createState() =>
+      _CategoryTimelineState();
+}
+
+class _CategoryTimelineState extends ConsumerState<_CategoryTimeline> {
+  Future<void> _delete(Transaction tx) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete transaction?'),
+        content: Text('"${tx.description}" will be permanently removed.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: FilledButton.styleFrom(
+                backgroundColor: Theme.of(ctx).colorScheme.error),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) {
+      await ref.read(transactionsProvider.notifier).remove(tx.uuid);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    final cat = widget.category;
+    final catColor = Color(cat.colorValue);
+
+    final allTxs =
+        ref.watch(transactionsProvider).asData?.value ?? const <Transaction>[];
+    final catTxs = allTxs
+        .where((tx) => tx.categoryUuid == cat.uuid)
+        .toList()
+      ..sort((a, b) => b.transactionDate.compareTo(a.transactionDate));
+
+    if (catTxs.isEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) Navigator.pop(context);
+      });
+    }
+
+    final dayGroups = _groupByDate(catTxs);
+
+    // Flatten into a mixed list of headers + transactions for the ListView.
+    final items = <Object>[];
+    for (final g in dayGroups) {
+      items.add(g.label);
+      items.addAll(g.txs);
+    }
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.75,
+      minChildSize: 0.4,
+      maxChildSize: 1.0,
+      expand: false,
+      builder: (ctx, scrollController) => Container(
+        decoration: BoxDecoration(
+          color: cs.surface,
+          borderRadius:
+              const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          children: [
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(0, 12, 0, 4),
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: cs.onSurfaceVariant.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 4, 8, 8),
+              child: Row(
+                children: [
+                  Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: catColor.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(
+                      IconData(cat.iconCodePoint,
+                          fontFamily: cat.iconFontFamily),
+                      size: 15,
+                      color: catColor,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    cat.name,
+                    style: tt.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+            Divider(height: 1, color: cs.outlineVariant),
+            Expanded(
+              child: catTxs.isEmpty
+                  ? Center(
+                      child: Text(
+                        'No transactions.',
+                        style: tt.bodyMedium
+                            ?.copyWith(color: cs.onSurfaceVariant),
+                      ),
+                    )
+                  : ListView.builder(
+                      controller: scrollController,
+                      itemCount: items.length,
+                      itemBuilder: (ctx, i) {
+                        final item = items[i];
+                        if (item is String) {
+                          return Padding(
+                            padding:
+                                const EdgeInsets.fromLTRB(20, 14, 20, 4),
+                            child: Text(
+                              item,
+                              style: tt.labelSmall?.copyWith(
+                                color: cs.onSurfaceVariant,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          );
+                        }
+                        final tx = item as Transaction;
+                        final txCat = widget.cats
+                            .where((c) => c.uuid == tx.categoryUuid)
+                            .firstOrNull;
+                        return Slidable(
+                          key: ValueKey(tx.uuid),
+                          endActionPane: ActionPane(
+                            motion: const DrawerMotion(),
+                            extentRatio: 0.25,
+                            children: [
+                              SlidableAction(
+                                onPressed: (_) => _delete(tx),
+                                backgroundColor:
+                                    Theme.of(ctx).colorScheme.error,
+                                foregroundColor:
+                                    Theme.of(ctx).colorScheme.onError,
+                                icon: Icons.delete_outline,
+                                label: 'Delete',
+                                borderRadius: const BorderRadius.horizontal(
+                                  right: Radius.circular(12),
+                                ),
+                              ),
+                            ],
+                          ),
+                          child: TransactionTile(
+                            transaction: tx,
+                            category: txCat,
+                            compact: true,
+                            onTap: () =>
+                                context.push('/transactions/edit', extra: tx),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+            SizedBox(height: MediaQuery.paddingOf(context).bottom),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 // ---------------------------------------------------------------------------
