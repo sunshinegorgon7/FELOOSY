@@ -78,6 +78,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   String? _selectedCategoryFilter;
   _HomeListView _listView = _HomeListView.byDay;
   DateTime? _selectedDay;
+  final _scrollController = ScrollController();
   bool _tutorialDismissed = false;
   final _addFabKey = GlobalKey();
   final _settingsIconKey = GlobalKey();
@@ -87,6 +88,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   void dispose() {
     _searchCtrl.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -534,6 +536,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         }
       },
       child: CustomScrollView(
+        controller: _scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
           // Period navigation header
@@ -600,7 +603,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
           const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
-          if (allCatStats.isNotEmpty)
+          if (allCatStats.isNotEmpty && _listView == _HomeListView.byDay)
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
