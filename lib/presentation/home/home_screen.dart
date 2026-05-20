@@ -472,7 +472,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ? _groupByCategory(filteredTxs, cats)
         : const <_CatGroup>[];
 
-    // Compute top 5 expense categories for the current period
+    // Compute all expense categories for the current period, sorted by amount.
     final expenseTotals = <String, double>{};
     for (final tx in txs.where((t) => t.type == TransactionType.expense)) {
       expenseTotals[tx.categoryUuid] =
@@ -480,8 +480,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
     final sortedExpenses = expenseTotals.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
-    final top5 = sortedExpenses
-        .take(5)
+    final allCatStats = sortedExpenses
         .map((e) {
           final cat = cats.where((c) => c.uuid == e.key).firstOrNull;
           return cat != null ? _CatStat(cat, e.value) : null;
@@ -591,7 +590,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
           const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
-          if (top5.isNotEmpty)
+          if (allCatStats.isNotEmpty)
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
@@ -608,7 +607,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                     const SizedBox(height: 10),
                     _TopCategoriesChart(
-                      stats: top5,
+                      stats: allCatStats,
                       summary: summary,
                       selectedCategoryUuid: _selectedCategoryFilter,
                       onTap: (uuid) => setState(() {
@@ -620,7 +619,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         _listView == _HomeListView.byDay) ...[
                       const SizedBox(height: 10),
                       Builder(builder: (ctx) {
-                        final selStat = top5
+                        final selStat = allCatStats
                             .where(
                               (s) => s.category.uuid == _selectedCategoryFilter,
                             )
@@ -1634,88 +1633,93 @@ class _TopCategoriesChartState extends State<_TopCategoriesChart> {
     final maxAmount = widget.stats.first.amount;
     final hasSelection = widget.selectedCategoryUuid != null;
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: widget.stats.map((stat) {
-        final color = Color(stat.category.colorValue);
-        final targetH =
-            (barAreaHeight * (stat.amount / maxAmount)).clamp(4.0, barAreaHeight);
-        final barH = _entered ? targetH : 0.0;
-        final isSelected = stat.category.uuid == widget.selectedCategoryUuid;
-        final isDeselected = hasSelection && !isSelected;
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: widget.stats.map((stat) {
+          const barWidth = 64.0;
+          final color = Color(stat.category.colorValue);
+          final targetH =
+              (barAreaHeight * (stat.amount / maxAmount)).clamp(4.0, barAreaHeight);
+          final barH = _entered ? targetH : 0.0;
+          final isSelected = stat.category.uuid == widget.selectedCategoryUuid;
+          final isDeselected = hasSelection && !isSelected;
 
-        return Expanded(
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () => widget.onTap?.call(stat.category.uuid),
-            child: AnimatedOpacity(
-              duration: const Duration(milliseconds: 180),
-              opacity: isDeselected ? 0.3 : 1.0,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(
-                    height: barAreaHeight + 26,
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        AnimatedPositioned(
-                          duration: const Duration(milliseconds: 500),
-                          bottom: barH + 4,
-                          left: 0,
-                          right: 0,
-                          child: Text(
-                            widget.summary.formatAmount(stat.amount),
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w500,
-                              fontFamily: 'DM Mono',
-                              color: accentColor,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                        AnimatedPositioned(
-                          duration: const Duration(milliseconds: 500),
-                          bottom: 0,
-                          left: 10,
-                          right: 10,
-                          height: barH,
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              color: color,
-                              borderRadius: const BorderRadius.vertical(
-                                  top: Radius.circular(6)),
-                              border: isSelected
-                                  ? Border.all(
-                                      color: color.withValues(alpha: 0.55),
-                                    )
-                                  : null,
+          return SizedBox(
+            width: barWidth,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => widget.onTap?.call(stat.category.uuid),
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 180),
+                opacity: isDeselected ? 0.3 : 1.0,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      height: barAreaHeight + 26,
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          AnimatedPositioned(
+                            duration: const Duration(milliseconds: 500),
+                            bottom: barH + 4,
+                            left: 0,
+                            right: 0,
+                            child: Text(
+                              widget.summary.formatAmount(stat.amount),
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'DM Mono',
+                                color: accentColor,
+                              ),
+                              textAlign: TextAlign.center,
                             ),
                           ),
-                        ),
-                      ],
+                          AnimatedPositioned(
+                            duration: const Duration(milliseconds: 500),
+                            bottom: 0,
+                            left: 10,
+                            right: 10,
+                            height: barH,
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                color: color,
+                                borderRadius: const BorderRadius.vertical(
+                                    top: Radius.circular(6)),
+                                border: isSelected
+                                    ? Border.all(
+                                        color: color.withValues(alpha: 0.55),
+                                      )
+                                    : null,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    stat.category.name,
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight:
-                          isSelected ? FontWeight.w700 : FontWeight.w500,
-                      color: accentColor,
+                    const SizedBox(height: 6),
+                    Text(
+                      stat.category.name,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight:
+                            isSelected ? FontWeight.w700 : FontWeight.w500,
+                        color: accentColor,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
                 ],
               ),
             ),
           ),
         );
       }).toList(),
+      ),
     );
   }
 }
