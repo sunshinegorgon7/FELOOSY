@@ -1,7 +1,7 @@
 import 'package:go_router/go_router.dart';
 import '../data/models/category.dart';
 import '../data/models/transaction.dart';
-import '../presentation/budget/budget_screen.dart';
+import '../presentation/budget/history_screen.dart';
 import '../presentation/budget/set_budget_sheet.dart';
 import '../presentation/categories/categories_screen.dart';
 import '../presentation/categories/edit_category_screen.dart';
@@ -22,7 +22,7 @@ final appRouter = GoRouter(
 
     GoRoute(
       path: '/budget',
-      builder: (context, state) => const BudgetScreen(),
+      builder: (context, state) => const HistoryScreen(),
     ),
 
     GoRoute(

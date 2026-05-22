@@ -4,39 +4,29 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../app/app_theme.dart';
-import '../../core/utils/currency_formatter.dart';
-import '../../data/models/budget.dart';
 import '../../data/models/category.dart';
 import '../../data/models/transaction.dart';
-import '../../domain/entities/budget_summary.dart';
-import '../../providers/budget_period_provider.dart';
-import '../../providers/budget_provider.dart';
-import '../../providers/budget_summary_provider.dart';
 import '../../providers/accounts_provider.dart';
 import '../../providers/categories_provider.dart';
 import '../../providers/transactions_provider.dart';
 import '../transactions/widgets/transaction_tile.dart';
-import 'set_budget_sheet.dart';
 import '../../providers/ai_analysis_provider.dart';
 import 'widgets/ai_insights_card.dart';
 
 enum _LedgerGrouping { month, year }
 
-class BudgetScreen extends ConsumerStatefulWidget {
-  const BudgetScreen({super.key});
+class HistoryScreen extends ConsumerStatefulWidget {
+  const HistoryScreen({super.key});
 
   @override
-  ConsumerState<BudgetScreen> createState() => _BudgetScreenState();
+  ConsumerState<HistoryScreen> createState() => _HistoryScreenState();
 }
 
-class _BudgetScreenState extends ConsumerState<BudgetScreen> {
+class _HistoryScreenState extends ConsumerState<HistoryScreen> {
   _LedgerGrouping _grouping = _LedgerGrouping.month;
 
   @override
   Widget build(BuildContext context) {
-    final period = ref.watch(currentBudgetPeriodProvider);
-    final budgetAsync = ref.watch(currentBudgetProvider);
-    final summaryAsync = ref.watch(budgetSummaryProvider);
     final allTxAsync = ref.watch(allTransactionsForAccountProvider);
     final cats =
         ref.watch(categoriesProvider).asData?.value ?? const <Category>[];
@@ -44,7 +34,6 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
 
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final accentColor = AppTheme.primaryText(cs);
     final bottomPad = MediaQuery.paddingOf(context).bottom;
 
     return Scaffold(
@@ -87,79 +76,8 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
           }
 
           return ListView(
-            padding: EdgeInsets.fromLTRB(16, 12, 16, bottomPad + 80),
+            padding: EdgeInsets.fromLTRB(16, 16, 16, bottomPad + 80),
             children: [
-              // ── Current period budget card ───────────────────────────
-              Card(
-                margin: const EdgeInsets.only(bottom: 8),
-                clipBehavior: Clip.antiAlias,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 22,
-                            height: 22,
-                            decoration: BoxDecoration(
-                              color: cs.primary.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            alignment: Alignment.center,
-                            child: Icon(Icons.calendar_month,
-                                color: accentColor, size: 13),
-                          ),
-                          const SizedBox(width: 7),
-                          Text(
-                            'CURRENT PERIOD',
-                            style: tt.labelSmall?.copyWith(
-                              color: accentColor,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.10 * 11,
-                              fontSize: 10,
-                            ),
-                          ),
-                          const Spacer(),
-                          Text(
-                            '${DateFormat('MMM d').format(period.start)} – '
-                            '${DateFormat('MMM d').format(period.end)}',
-                            style: tt.bodySmall?.copyWith(
-                              color: cs.onSurfaceVariant,
-                              fontSize: 11,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        period.label,
-                        style: tt.titleLarge?.copyWith(
-                          color: cs.onSurface,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 22,
-                          letterSpacing: -0.3,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      budgetAsync.when(
-                        loading: () => const LinearProgressIndicator(),
-                        error: (e, _) => Text('$e'),
-                        data: (budget) => budget == null
-                            ? _NoBudget(onSet: () => _showSetBudget(context))
-                            : _BudgetInfo(
-                                budget: budget,
-                                summaryAsync: summaryAsync,
-                                onEdit: () => _showSetBudget(context),
-                              ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // ── Period cards ─────────────────────────────────────────
               if (allTxs.isEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top: 32),
@@ -185,17 +103,6 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
           );
         },
       ),
-    );
-  }
-
-  void _showSetBudget(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => const SetBudgetSheet(),
     );
   }
 }
@@ -289,7 +196,7 @@ class _GroupingPicker extends StatelessWidget {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 150),
                 margin: const EdgeInsets.symmetric(horizontal: 3),
-                padding: const EdgeInsets.symmetric(vertical: 7),
+                padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
                   color: selected
                       ? cs.primary.withValues(alpha: 0.12)
@@ -401,7 +308,7 @@ class _MonthCardState extends ConsumerState<_MonthCard> {
     final cacheAsync = ref.watch(aiCacheForHashProvider(hash));
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 14),
       clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -414,13 +321,13 @@ class _MonthCardState extends ConsumerState<_MonthCard> {
             }),
             child: Padding(
               padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
               child: Row(
                 children: [
                   Text(
                     widget.monthLabel.toUpperCase(),
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: 13,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 1.0,
                       color: cs.onSurface,
@@ -431,7 +338,7 @@ class _MonthCardState extends ConsumerState<_MonthCard> {
                     Text(
                       '+${_fmt(incomeTotal)}',
                       style: GoogleFonts.dmMono(
-                        fontSize: 11,
+                        fontSize: 13,
                         fontWeight: FontWeight.w500,
                         color: AppTheme.incomeText(cs),
                       ),
@@ -442,7 +349,7 @@ class _MonthCardState extends ConsumerState<_MonthCard> {
                     Text(
                       '−${_fmt(expenseTotal)}',
                       style: GoogleFonts.dmMono(
-                        fontSize: 11,
+                        fontSize: 13,
                         fontWeight: FontWeight.w500,
                         color: accentColor,
                       ),
@@ -615,7 +522,7 @@ class _MonthBarChartState extends State<_MonthBarChart> {
 
   @override
   Widget build(BuildContext context) {
-    const barAreaH = 72.0;
+    const barAreaH = 90.0;
     final cs = Theme.of(context).colorScheme;
     final maxAmount = widget.stats.first.amount;
     final hasSelection = widget.selectedCategoryUuid != null;
@@ -653,7 +560,7 @@ class _MonthBarChartState extends State<_MonthBarChart> {
                           child: Text(
                             _fmt(stat.amount),
                             style: TextStyle(
-                              fontSize: 9,
+                              fontSize: 10,
                               fontWeight: FontWeight.w500,
                               fontFamily: 'DM Mono',
                               color: cs.onSurfaceVariant,
@@ -687,7 +594,7 @@ class _MonthBarChartState extends State<_MonthBarChart> {
                   Text(
                     stat.category.name,
                     style: TextStyle(
-                      fontSize: 9,
+                      fontSize: 10,
                       fontWeight:
                           isSelected ? FontWeight.w700 : FontWeight.w500,
                       color: isSelected
@@ -705,162 +612,6 @@ class _MonthBarChartState extends State<_MonthBarChart> {
         );
       }).toList(),
     );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Budget card sub-widgets (current period)
-// ---------------------------------------------------------------------------
-
-class _NoBudget extends StatelessWidget {
-  final VoidCallback onSet;
-  const _NoBudget({required this.onSet});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Text(
-          'No budget set',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant),
-        ),
-        const SizedBox(width: 12),
-        FilledButton.icon(
-          onPressed: onSet,
-          icon: const Icon(Icons.add, size: 14),
-          label: const Text('Set Budget'),
-          style: FilledButton.styleFrom(
-            visualDensity: VisualDensity.compact,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _BudgetInfo extends ConsumerWidget {
-  final Budget budget;
-  final AsyncValue summaryAsync;
-  final VoidCallback onEdit;
-
-  const _BudgetInfo({
-    required this.budget,
-    required this.summaryAsync,
-    required this.onEdit,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final cs = Theme.of(context).colorScheme;
-    final accentColor = AppTheme.primaryText(cs);
-    final account = ref.watch(activeAccountProvider);
-
-    final formattedBudget = account == null
-        ? budget.amount.toStringAsFixed(2)
-        : CurrencyFormatter.formatWith(
-            amount: budget.amount,
-            symbol: account.currencySymbol,
-            symbolLeading: account.currencySymbolLeading,
-          );
-
-    return summaryAsync.whenOrNull(data: (s) {
-          final summary = s as BudgetSummary;
-          final progress = summary.spentPercentage.clamp(0.0, 1.0);
-          final isOver = summary.isOverBudget;
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          formattedBudget,
-                          style: GoogleFonts.dmMono(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w500,
-                            color: cs.onSurface,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          isOver
-                              ? '${summary.formatAmount(summary.totalExpenses)} spent · over budget'
-                              : '${summary.formatAmount(summary.remaining)} remaining · ${(progress * 100).round()}% spent',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: isOver
-                                ? cs.error
-                                : cs.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  OutlinedButton(
-                    onPressed: onEdit,
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(
-                          color: cs.primary.withValues(alpha: 0.4),
-                          width: 1.5),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
-                      visualDensity: VisualDensity.compact,
-                      shape: const StadiumBorder(),
-                    ),
-                    child: Text('Change',
-                        style: TextStyle(
-                            color: AppTheme.primaryText(cs), fontSize: 12)),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(3),
-                child: LinearProgressIndicator(
-                  value: progress,
-                  minHeight: 5,
-                  backgroundColor: cs.outlineVariant,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    isOver ? cs.error : accentColor,
-                  ),
-                ),
-              ),
-            ],
-          );
-        }) ??
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                formattedBudget,
-                style: GoogleFonts.dmMono(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w500,
-                  color: cs.onSurface,
-                ),
-              ),
-            ),
-            OutlinedButton(
-              onPressed: onEdit,
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(
-                    color: cs.primary.withValues(alpha: 0.4), width: 1.5),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                visualDensity: VisualDensity.compact,
-                shape: const StadiumBorder(),
-              ),
-              child: Text('Change',
-                  style: TextStyle(color: accentColor, fontSize: 12)),
-            ),
-          ],
-        );
   }
 }
 
