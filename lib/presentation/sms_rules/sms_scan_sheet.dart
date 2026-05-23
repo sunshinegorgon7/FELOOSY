@@ -132,7 +132,7 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
     if (range != null && mounted) {
       setState(() {
         _customRange = range;
-        _preset = 4;
+        _preset = 5;
       });
     }
   }
