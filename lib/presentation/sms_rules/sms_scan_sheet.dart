@@ -173,6 +173,7 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
         final amount = SmsParserService.extractAmount(
           msg.body,
           customRegex: rule.amountRegex,
+          requireCurrencyCode: rule.amountRegex == null,
         );
         if (amount == null || amount <= 0) continue;
 

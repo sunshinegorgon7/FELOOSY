@@ -9,8 +9,21 @@ class SmsParserService {
   static const _amountPattern = r'[\d,]+(?:\.\d{1,2})?';
 
   /// Extracts the most prominent monetary amount from an SMS body.
-  /// Tries the custom regex first if provided, then built-in patterns.
-  static double? extractAmount(String body, {String? customRegex}) {
+  ///
+  /// Tries the custom regex first if provided, then built-in patterns in order:
+  ///   1. CURRENCY AMOUNT  (e.g. "EGP 150.00", "AED250")
+  ///   2. AMOUNT CURRENCY  (e.g. "150.00 EGP", "250AED")
+  ///   3. Fallback: any decimal number with exactly 2 d.p. (e.g. "150.00")
+  ///
+  /// Pass [requireCurrencyCode] = true to skip the fallback pattern (3) and
+  /// only accept amounts that are explicitly paired with a recognised currency
+  /// code. Use this when bulk-scanning historical SMS to avoid false positives
+  /// from timestamps, reference numbers, and other incidental decimal values.
+  static double? extractAmount(
+    String body, {
+    String? customRegex,
+    bool requireCurrencyCode = false,
+  }) {
     if (customRegex != null && customRegex.isNotEmpty) {
       try {
         final match = RegExp(customRegex).firstMatch(body);
@@ -45,10 +58,14 @@ class SmsParserService {
     }
 
     // Pattern 3: Fallback — any decimal number with exactly 2 d.p.
-    final p3 = RegExp(r'\b([\d,]+\.\d{2})\b');
-    final m3 = p3.firstMatch(body);
-    if (m3 != null) {
-      return double.tryParse(m3.group(1)!.replaceAll(',', ''));
+    // Skipped when requireCurrencyCode is true to prevent false positives from
+    // timestamps (e.g. "9.30 PM"), reference codes, or other casual numbers.
+    if (!requireCurrencyCode) {
+      final p3 = RegExp(r'\b([\d,]+\.\d{2})\b');
+      final m3 = p3.firstMatch(body);
+      if (m3 != null) {
+        return double.tryParse(m3.group(1)!.replaceAll(',', ''));
+      }
     }
 
     return null;
