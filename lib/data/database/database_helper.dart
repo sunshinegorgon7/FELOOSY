@@ -26,7 +26,7 @@ class DatabaseHelper {
     final dbPath = p.join(docDir.path, AppFlavor.databaseName);
     return openDatabase(
       dbPath,
-      version: 15,
+      version: 16,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -139,6 +139,7 @@ class DatabaseHelper {
       CREATE TABLE sms_rules (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         keyword TEXT NOT NULL,
+        description TEXT,
         category_uuid TEXT NOT NULL,
         transaction_type TEXT NOT NULL,
         account_id INTEGER NOT NULL DEFAULT 1,
@@ -409,6 +410,11 @@ class DatabaseHelper {
           created_at INTEGER NOT NULL
         )
       ''');
+    }
+    if (oldVersion < 16) {
+      await db.execute(
+        'ALTER TABLE sms_rules ADD COLUMN description TEXT',
+      );
     }
   }
 

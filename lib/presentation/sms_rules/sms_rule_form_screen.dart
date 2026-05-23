@@ -19,6 +19,7 @@ class SmsRuleFormScreen extends ConsumerStatefulWidget {
 
 class _SmsRuleFormScreenState extends ConsumerState<SmsRuleFormScreen> {
   late final TextEditingController _keywordCtrl;
+  late final TextEditingController _descCtrl;
   late final TextEditingController _regexCtrl;
 
   String _type = 'expense';
@@ -33,6 +34,7 @@ class _SmsRuleFormScreenState extends ConsumerState<SmsRuleFormScreen> {
     super.initState();
     final rule = widget.rule;
     _keywordCtrl = TextEditingController(text: rule?.keyword ?? '');
+    _descCtrl = TextEditingController(text: rule?.description ?? '');
     _regexCtrl = TextEditingController(text: rule?.amountRegex ?? '');
     _type = rule?.transactionType ?? 'expense';
     _categoryUuid = rule?.categoryUuid;
@@ -42,6 +44,7 @@ class _SmsRuleFormScreenState extends ConsumerState<SmsRuleFormScreen> {
   @override
   void dispose() {
     _keywordCtrl.dispose();
+    _descCtrl.dispose();
     _regexCtrl.dispose();
     super.dispose();
   }
@@ -72,9 +75,12 @@ class _SmsRuleFormScreenState extends ConsumerState<SmsRuleFormScreen> {
       final accountId = _accountId ?? 1;
       final regex = _regexCtrl.text.trim();
 
+      final desc = _descCtrl.text.trim();
       if (_isEditing) {
         final updated = widget.rule!.copyWith(
           keyword: keyword,
+          description: desc.isEmpty ? null : desc,
+          clearDescription: desc.isEmpty,
           categoryUuid: _categoryUuid,
           transactionType: _type,
           accountId: accountId,
@@ -85,6 +91,7 @@ class _SmsRuleFormScreenState extends ConsumerState<SmsRuleFormScreen> {
       } else {
         final rule = SmsRule(
           keyword: keyword,
+          description: desc.isEmpty ? null : desc,
           categoryUuid: _categoryUuid!,
           transactionType: _type,
           accountId: accountId,
@@ -232,6 +239,21 @@ class _SmsRuleFormScreenState extends ConsumerState<SmsRuleFormScreen> {
               hintText: 'e.g. Carrefour, VODAFONE, Uber',
               border: OutlineInputBorder(),
               helperText: 'Case-insensitive match anywhere in the SMS body.',
+              helperMaxLines: 2,
+            ),
+          ),
+
+          const SizedBox(height: 24),
+          const _SectionLabel('Transaction Label'),
+          const SizedBox(height: 6),
+          TextField(
+            controller: _descCtrl,
+            textCapitalization: TextCapitalization.sentences,
+            decoration: const InputDecoration(
+              hintText: 'e.g. Gas, Coffee, Groceries (leave blank to use keyword)',
+              border: OutlineInputBorder(),
+              helperText:
+                  'Shown as the transaction description. Defaults to the keyword.',
               helperMaxLines: 2,
             ),
           ),

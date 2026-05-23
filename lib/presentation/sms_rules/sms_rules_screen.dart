@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../app/app_theme.dart';
@@ -9,6 +10,7 @@ import '../../data/models/category.dart';
 import '../../data/models/sms_rule.dart';
 import '../../providers/categories_provider.dart';
 import '../../providers/sms_rules_provider.dart';
+import 'sms_scan_sheet.dart';
 
 class SmsRulesScreen extends ConsumerStatefulWidget {
   const SmsRulesScreen({super.key});
@@ -47,7 +49,16 @@ class _SmsRulesScreenState extends ConsumerState<SmsRulesScreen> {
 
     return Scaffold(
       backgroundColor: cs.surface,
-      appBar: AppBar(title: const Text('SMS Rules')),
+      appBar: AppBar(
+        title: const Text('SMS Rules'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.manage_search_outlined),
+            tooltip: 'Scan past SMS',
+            onPressed: _smsPermission.isGranted ? _openScanSheet : null,
+          ),
+        ],
+      ),
       body: Column(
         children: [
           if (!_smsPermission.isGranted) _PermissionBanner(onGrant: _requestPermission),
@@ -86,6 +97,28 @@ class _SmsRulesScreenState extends ConsumerState<SmsRulesScreen> {
 
   void _navigateToAdd() => context.push('/sms-rules/edit');
   void _navigateToEdit(SmsRule rule) => context.push('/sms-rules/edit', extra: rule);
+
+  void _openScanSheet() {
+    showSmsScanSheet(context, onImported: (count, dates) {
+      if (!mounted) return;
+      String msg;
+      if (count == 0) {
+        msg = 'No transactions imported.';
+      } else {
+        final uniqueDays = dates.map(DateUtils.dateOnly).toSet().toList()
+          ..sort();
+        final dateStr = uniqueDays.length == 1
+            ? DateFormat('MMM d').format(uniqueDays.first)
+            : '${DateFormat('MMM d').format(uniqueDays.first)} – '
+              '${DateFormat('MMM d').format(uniqueDays.last)}';
+        msg = 'Created $count transaction${count == 1 ? '' : 's'} '
+            '— dated $dateStr (scroll back to find them).';
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg), duration: const Duration(seconds: 5)),
+      );
+    });
+  }
 
   Future<void> _confirmDelete(SmsRule rule) async {
     final cs = Theme.of(context).colorScheme;
@@ -236,25 +269,36 @@ class _RuleTile extends StatelessWidget {
             color: rule.isActive ? null : cs.onSurfaceVariant,
           ),
         ),
-        subtitle: Row(
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              category?.name ?? 'Unknown category',
-              style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              '·',
-              style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              typeLabel,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: rule.isActive ? typeColor : cs.onSurfaceVariant,
+            if (rule.description != null && rule.description!.isNotEmpty)
+              Text(
+                rule.description!,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: rule.isActive ? cs.onSurface : cs.onSurfaceVariant,
+                ),
               ),
+            Row(
+              children: [
+                Text(
+                  category?.name ?? 'Unknown category',
+                  style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                ),
+                const SizedBox(width: 6),
+                Text('·', style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
+                const SizedBox(width: 6),
+                Text(
+                  typeLabel,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: rule.isActive ? typeColor : cs.onSurfaceVariant,
+                  ),
+                ),
+              ],
             ),
           ],
         ),

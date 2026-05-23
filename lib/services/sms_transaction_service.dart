@@ -57,7 +57,7 @@ class SmsTransactionService {
       type: matched.transactionType == 'income'
           ? TransactionType.income
           : TransactionType.expense,
-      description: matched.keyword,
+      description: matched.transactionDescription,
       categoryUuid: matched.categoryUuid,
       transactionDate: now,
       createdAt: now,
