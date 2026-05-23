@@ -21,6 +21,7 @@ import '../../providers/settings_provider.dart';
 import '../../providers/transactions_provider.dart';
 import '../../providers/accounts_provider.dart';
 import '../../providers/purchase_provider.dart';
+import '../../providers/sms_subscription_provider.dart';
 
 class SettingsScreen extends ConsumerWidget {
   final bool isModal;
@@ -58,9 +59,10 @@ class _SettingsBody extends ConsumerWidget {
 
   void _navigateCategories(BuildContext context) {
     if (isModal) {
+      final router = GoRouter.of(context);
       Navigator.of(context).pop();
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (context.mounted) context.push('/categories');
+        router.push('/categories');
       });
     } else {
       context.push('/categories');
@@ -116,6 +118,11 @@ class _SettingsBody extends ConsumerWidget {
           title: 'Manage wallets',
           onTap: () => context.push('/settings/accounts'),
         ),
+
+        if (AppFlavor.isDev) ...[
+          const _SectionHeader('Automations'),
+          _SmsRulesTile(isModal: isModal),
+        ],
 
         const _SectionHeader('Data'),
         _DriveBackupTile(isModal: isModal),
@@ -631,9 +638,10 @@ class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
 
   void _navigateToPaywall(BuildContext context) {
     if (widget.isModal) {
+      final router = GoRouter.of(context);
       Navigator.of(context).pop();
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (context.mounted) context.push('/paywall');
+        router.push('/paywall');
       });
     } else {
       context.push('/paywall');
@@ -803,9 +811,10 @@ class _LocalBackupTileState extends ConsumerState<_LocalBackupTile> {
 
   void _navigateToPaywall(BuildContext context) {
     if (widget.isModal) {
+      final router = GoRouter.of(context);
       Navigator.of(context).pop();
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (context.mounted) context.push('/paywall');
+        router.push('/paywall');
       });
     } else {
       context.push('/paywall');
@@ -943,6 +952,48 @@ class _LocalBackupTileState extends ConsumerState<_LocalBackupTile> {
           onTap: busy ? null : _pickAndImport,
         ),
       ],
+    );
+  }
+}
+
+// ── SMS Rules tile ────────────────────────────────────────────────────────────
+
+class _SmsRulesTile extends ConsumerWidget {
+  final bool isModal;
+  const _SmsRulesTile({this.isModal = false});
+
+  void _navigate(BuildContext context, WidgetRef ref) {
+    final isSubscribed =
+        ref.read(smsSubscriptionProvider).asData?.value ?? AppFlavor.isDev;
+    if (!isSubscribed) {
+      if (isModal) {
+        final router = GoRouter.of(context);
+        Navigator.of(context).pop();
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          router.push('/paywall');
+        });
+      } else {
+        context.push('/paywall');
+      }
+      return;
+    }
+    if (isModal) {
+      final router = GoRouter.of(context);
+      Navigator.of(context).pop();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        router.push('/sms-rules');
+      });
+    } else {
+      context.push('/sms-rules');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return _SettingsRow(
+      title: 'SMS Rules',
+      subtitle: 'Auto-create transactions from incoming messages',
+      onTap: () => _navigate(context, ref),
     );
   }
 }

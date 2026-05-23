@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../app/app_theme.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../data/models/category.dart';
+import '../../../data/models/sms_rule.dart';
 import '../../../data/models/transaction.dart';
 import '../../../providers/settings_provider.dart';
+import '../../../providers/sms_rules_provider.dart';
 
 class TransactionTile extends ConsumerWidget {
   final Transaction transaction;
@@ -44,6 +47,12 @@ class TransactionTile extends ConsumerWidget {
         ? IconData(category!.iconCodePoint,
             fontFamily: category!.iconFontFamily)
         : Icons.receipt_outlined;
+
+    SmsRule? smsRule;
+    if (transaction.isFromSms) {
+      final rules = ref.watch(smsRulesProvider).asData?.value ?? [];
+      smsRule = rules.where((r) => r.id == transaction.smsRuleId).firstOrNull;
+    }
 
     if (compact) {
       return ListTile(
@@ -89,12 +98,37 @@ class TransactionTile extends ConsumerWidget {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
-      subtitle: Text(
-        category?.name ?? 'No category',
-        style: TextStyle(
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
-          fontSize: 12,
-        ),
+      subtitle: Row(
+        children: [
+          Text(
+            category?.name ?? 'No category',
+            style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12),
+          ),
+          if (transaction.isFromSms) ...[
+            const SizedBox(width: 6),
+            GestureDetector(
+              onTap: smsRule != null
+                  ? () => context.push('/sms-rules/edit', extra: smsRule)
+                  : null,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                decoration: BoxDecoration(
+                  color: cs.primaryContainer,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  'SMS',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: cs.onPrimaryContainer,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ],
       ),
       trailing: Text(
         amountText,

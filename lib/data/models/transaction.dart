@@ -11,6 +11,7 @@ class Transaction {
   final DateTime transactionDate;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final String source;
 
   const Transaction({
     this.id,
@@ -23,6 +24,7 @@ class Transaction {
     required this.transactionDate,
     required this.createdAt,
     required this.updatedAt,
+    this.source = 'manual',
   });
 
   Transaction copyWith({
@@ -46,6 +48,13 @@ class Transaction {
     );
   }
 
+  bool get isFromSms => source.startsWith('sms_rule:');
+
+  int? get smsRuleId {
+    if (!isFromSms) return null;
+    return int.tryParse(source.split(':').last);
+  }
+
   factory Transaction.fromMap(Map<String, dynamic> map) {
     return Transaction(
       id: map['id'] as int?,
@@ -63,6 +72,7 @@ class Transaction {
           DateTime.fromMillisecondsSinceEpoch(map['created_at'] as int),
       updatedAt:
           DateTime.fromMillisecondsSinceEpoch(map['updated_at'] as int),
+      source: map['source'] as String? ?? 'manual',
     );
   }
 
@@ -77,6 +87,7 @@ class Transaction {
       'transaction_date': transactionDate.millisecondsSinceEpoch,
       'created_at': createdAt.millisecondsSinceEpoch,
       'updated_at': updatedAt.millisecondsSinceEpoch,
+      'source': source,
     };
     if (id != null) m['id'] = id;
     return m;

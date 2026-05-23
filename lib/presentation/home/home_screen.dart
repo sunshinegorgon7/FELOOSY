@@ -1168,14 +1168,15 @@ class _CategoryTimelineState extends ConsumerState<_CategoryTimeline> {
     final cat = widget.category;
     final catColor = Color(cat.colorValue);
 
+    final allTxsAsync = ref.watch(transactionsProvider);
     final allTxs =
-        ref.watch(transactionsProvider).asData?.value ?? const <Transaction>[];
+        allTxsAsync.asData?.value ?? const <Transaction>[];
     final catTxs = allTxs
         .where((tx) => tx.categoryUuid == cat.uuid)
         .toList()
       ..sort((a, b) => b.transactionDate.compareTo(a.transactionDate));
 
-    if (catTxs.isEmpty) {
+    if (catTxs.isEmpty && !allTxsAsync.isLoading) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) Navigator.pop(context);
       });

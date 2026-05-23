@@ -4,6 +4,7 @@ import '../data/repositories/budget_repository.dart';
 import '../data/repositories/category_repository.dart';
 import '../data/repositories/account_repository.dart';
 import '../data/repositories/settings_repository.dart';
+import '../data/repositories/sms_rule_repository.dart';
 import '../data/repositories/transaction_repository.dart';
 
 final databaseHelperProvider = Provider<DatabaseHelper>((ref) {
@@ -28,4 +29,8 @@ final budgetRepositoryProvider = Provider<BudgetRepository>((ref) {
 
 final transactionRepositoryProvider = Provider<TransactionRepository>((ref) {
   return TransactionRepository(ref.watch(databaseHelperProvider));
+});
+
+final smsRuleRepositoryProvider = Provider<SmsRuleRepository>((ref) {
+  return SmsRuleRepository(ref.watch(databaseHelperProvider));
 });

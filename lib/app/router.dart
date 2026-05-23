@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 import '../data/models/category.dart';
+import '../data/models/sms_rule.dart';
 import '../data/models/transaction.dart';
 import '../presentation/budget/history_screen.dart';
 import '../presentation/budget/set_budget_sheet.dart';
@@ -8,6 +9,8 @@ import '../presentation/categories/edit_category_screen.dart';
 import '../presentation/home/home_screen.dart';
 import '../presentation/settings/settings_screen.dart';
 import '../presentation/settings/manage_accounts_screen.dart';
+import '../presentation/sms_rules/sms_rule_form_screen.dart';
+import '../presentation/sms_rules/sms_rules_screen.dart';
 import '../presentation/transactions/add_transaction_screen.dart';
 import '../presentation/paywall/paywall_screen.dart';
 import 'package:flutter/material.dart';
@@ -72,6 +75,18 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/paywall',
       builder: (context, state) => const PaywallScreen(),
+    ),
+
+    GoRoute(
+      path: '/sms-rules',
+      builder: (context, state) => const SmsRulesScreen(),
+    ),
+    GoRoute(
+      path: '/sms-rules/edit',
+      builder: (context, state) {
+        final extra = state.extra;
+        return SmsRuleFormScreen(rule: extra is SmsRule ? extra : null);
+      },
     ),
 
     GoRoute(

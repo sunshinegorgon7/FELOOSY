@@ -26,7 +26,7 @@ class DatabaseHelper {
     final dbPath = p.join(docDir.path, AppFlavor.databaseName);
     return openDatabase(
       dbPath,
-      version: 14,
+      version: 15,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -73,7 +73,8 @@ class DatabaseHelper {
         category_uuid TEXT NOT NULL,
         transaction_date INTEGER NOT NULL,
         created_at INTEGER NOT NULL,
-        updated_at INTEGER NOT NULL
+        updated_at INTEGER NOT NULL,
+        source TEXT NOT NULL DEFAULT 'manual'
       )
     ''');
 
@@ -133,6 +134,19 @@ class DatabaseHelper {
       )
       ''',
     );
+
+    await db.execute('''
+      CREATE TABLE sms_rules (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        keyword TEXT NOT NULL,
+        category_uuid TEXT NOT NULL,
+        transaction_type TEXT NOT NULL,
+        account_id INTEGER NOT NULL DEFAULT 1,
+        amount_regex TEXT,
+        is_active INTEGER NOT NULL DEFAULT 1,
+        created_at INTEGER NOT NULL
+      )
+    ''');
 
     await _seed(db);
   }
@@ -378,6 +392,23 @@ class DatabaseHelper {
           [colorValue, uuid],
         );
       }
+    }
+    if (oldVersion < 15) {
+      await db.execute(
+        "ALTER TABLE transactions ADD COLUMN source TEXT NOT NULL DEFAULT 'manual'",
+      );
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS sms_rules (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          keyword TEXT NOT NULL,
+          category_uuid TEXT NOT NULL,
+          transaction_type TEXT NOT NULL,
+          account_id INTEGER NOT NULL DEFAULT 1,
+          amount_regex TEXT,
+          is_active INTEGER NOT NULL DEFAULT 1,
+          created_at INTEGER NOT NULL
+        )
+      ''');
     }
   }
 

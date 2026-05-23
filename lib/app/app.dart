@@ -10,6 +10,7 @@ import '../providers/google_auth_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/transactions_provider.dart';
 import '../services/home_widget_sync_service.dart';
+import '../services/sms_transaction_service.dart';
 import 'app_flavor.dart';
 import 'app_theme.dart';
 import 'router.dart';
@@ -24,6 +25,7 @@ class FeloosyApp extends ConsumerStatefulWidget {
 class _FeloosyAppState extends ConsumerState<FeloosyApp>
     with WidgetsBindingObserver {
   Timer? _widgetSyncDebounce;
+  final _smsService = SmsTransactionService();
 
   void _scheduleWidgetSync() {
     _widgetSyncDebounce?.cancel();
@@ -42,11 +44,13 @@ class _FeloosyAppState extends ConsumerState<FeloosyApp>
     ref.listenManual(transactionsProvider, (_, _) => _scheduleWidgetSync());
     ref.listenManual(currentBudgetProvider, (_, _) => _scheduleWidgetSync());
     ref.listenManual(settingsProvider, (_, _) => _scheduleWidgetSync());
+    if (AppFlavor.isDev) _smsService.start(ref);
   }
 
   @override
   void dispose() {
     _widgetSyncDebounce?.cancel();
+    _smsService.stop();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
