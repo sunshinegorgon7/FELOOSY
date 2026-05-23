@@ -73,14 +73,15 @@ class _SmsScanSheet extends ConsumerStatefulWidget {
 
 class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
   static const _presets = [
+    (label: 'Today',     days: 0),
     (label: 'Yesterday', days: 1),
-    (label: '3 days', days: 3),
-    (label: '7 days', days: 7),
-    (label: '30 days', days: 30),
+    (label: '3 days',   days: 3),
+    (label: '7 days',   days: 7),
+    (label: '30 days',  days: 30),
   ];
 
   _Step _step = _Step.range;
-  int _preset = 1; // default: 3 days
+  int _preset = 0; // default: Today
   DateTimeRange? _customRange;
   List<_Candidate> _candidates = [];
   bool _importing = false;
@@ -91,7 +92,7 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
   DateTimeRange _computeRange() {
     final now = DateTime.now();
     final endOfToday = DateTime(now.year, now.month, now.day, 23, 59, 59, 999);
-    if (_preset == 4 && _customRange != null) {
+    if (_preset == 5 && _customRange != null) {
       return DateTimeRange(
         start: DateTime(
           _customRange!.start.year,
@@ -107,6 +108,13 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
       );
     }
     final days = _preset < _presets.length ? _presets[_preset].days : 3;
+    if (days == 0) {
+      // Today: from midnight to right now
+      return DateTimeRange(
+        start: DateTime(now.year, now.month, now.day),
+        end: now,
+      );
+    }
     return DateTimeRange(
       start: endOfToday.subtract(Duration(days: days)),
       end: endOfToday,
@@ -313,7 +321,7 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
       );
 
   Widget _buildRangeStep(ColorScheme cs, TextTheme tt) {
-    final hasCustom = _preset == 4 && _customRange != null;
+    final hasCustom = _preset == 5 && _customRange != null;
     final customLabel = hasCustom
         ? '${DateFormat('MMM d').format(_customRange!.start)} – '
           '${DateFormat('MMM d').format(_customRange!.end)}'
@@ -369,7 +377,7 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
                 ),
               _RangeChip(
                 label: customLabel,
-                selected: _preset == 4,
+                selected: _preset == 5,
                 onTap: _pickCustomRange,
                 icon: Icons.calendar_month_outlined,
               ),
