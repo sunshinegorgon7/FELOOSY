@@ -32,9 +32,9 @@ struct FWData {
             todayEmpty: false,
             todayTotal: 595,
             categories: [
-                FWCategory(name: "Coffee",    amount: 200, color: Color(argb: "#FF8A6F5C")),
-                FWCategory(name: "Transport", amount: 295, color: Color(argb: "#FF5F7F8A")),
-                FWCategory(name: "Dining",    amount: 100, color: Color(argb: "#FF8F7A4F")),
+                FWCategory(name: "Coffee",    amount: 200, color: Color(argb: "#FF0F4C81")),
+                FWCategory(name: "Transport", amount: 295, color: Color(argb: "#FFFF6F61")),
+                FWCategory(name: "Dining",    amount: 100, color: Color(argb: "#FF88B04B")),
             ]
         )
     }
@@ -55,7 +55,7 @@ struct FWData {
             for obj in arr {
                 let catName   = obj["name"]   as? String ?? "Other"
                 let catAmount = obj["amount"] as? Double ?? 0
-                let catColor  = obj["color"]  as? String ?? "#FF6E8790"
+                let catColor  = obj["color"]  as? String ?? "#FF0F4C81"
                 cats.append(FWCategory(name: catName, amount: catAmount,
                                        color: Color(argb: catColor)))
             }
@@ -131,27 +131,27 @@ struct FeloosyWidgetEntryView: View {
     }
 
     // Adaptive palette — mirrors AppTheme dark/light palettes
-    private var bg:          Color { isDark ? Color(argb: "#FF1E2E3D") : Color(argb: "#FFF4F7F1") }
-    private var textColor:   Color { isDark ? Color(argb: "#FFC4D0DC") : Color(argb: "#FF2C2C2C") }
-    private var mutedColor:  Color { isDark ? Color(argb: "#FF9AB0C4") : Color(argb: "#FF4A5E40") }
-    private var accentColor: Color { isDark ? Color(argb: "#FF7AAECF") : Color(argb: "#FF3F6329") }
+    private var bg:          Color { isDark ? Color(argb: "#FF1C1C1E") : Color(argb: "#FFF7F3E8") }
+    private var textColor:   Color { isDark ? Color(argb: "#FFE7E8EA") : Color(argb: "#FF25282C") }
+    private var mutedColor:  Color { isDark ? Color(argb: "#FFB6B6BE") : Color(argb: "#FF5F584C") }
+    private var accentColor: Color { isDark ? Color(argb: "#FF45B8AC") : Color(argb: "#FF88B04B") }
     private var overColor:   Color { isDark ? Color(argb: "#FFF07171") : Color(argb: "#FFB23636") }
-    private var primaryFill: Color { isDark ? Color(argb: "#FF4D7FA8") : Color(argb: "#FF639922") }
-    private var onPrimary:   Color { isDark ? Color(argb: "#FF060C11") : Color(argb: "#FF162008") }
-    // Button text is dark in both modes so the primary circle stays readable.
+    private var primaryFill: Color { isDark ? Color(argb: "#FF45B8AC") : Color(argb: "#FF0F4C81") }
+    private var onPrimary:   Color { isDark ? Color(argb: "#FF101820") : Color(argb: "#FFF7F3E8") }
+    // Button text follows the active fill so the primary circle stays readable.
 
     // Static category palettes (applied by index, ignoring per-category DB colors)
     private let catColorsLight: [Color] = [
-        Color(argb: "#FF6E8F68"), // Soft Sage
-        Color(argb: "#FF8F7A4F"), // Ledger Ochre
-        Color(argb: "#FF7C7796"), // Dust Violet
-        Color(argb: "#FF67849A"), // Steel Water
+        Color(argb: "#FF0F4C81"), // Primary blue
+        Color(argb: "#FFFF6F61"), // Coral secondary
+        Color(argb: "#FF88B04B"), // Olive accent
+        Color(argb: "#FF5F584C"), // Warm neutral
     ]
     private let catColorsDark: [Color] = [
-        Color(argb: "#FF9BB09B"), // Pale Sage
-        Color(argb: "#FFC0A86A"), // Muted Ochre
-        Color(argb: "#FFA99FC8"), // Pale Violet
-        Color(argb: "#FF8FB2C8"), // Steel Water
+        Color(argb: "#FF45B8AC"), // Teal accent
+        Color(argb: "#FF5F4B8B"), // Purple secondary
+        Color(argb: "#FF8B79B7"), // Lifted purple
+        Color(argb: "#FFB6B6BE"), // Cool neutral
     ]
     private var catPalette: [Color] { isDark ? catColorsDark : catColorsLight }
 
