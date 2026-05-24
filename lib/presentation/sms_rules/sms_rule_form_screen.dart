@@ -23,7 +23,6 @@ class _SmsRuleFormScreenState extends ConsumerState<SmsRuleFormScreen> {
   late final TextEditingController _keywordCtrl;
   late final TextEditingController _regexCtrl;
   TextEditingController? _descFieldCtrl;
-  bool _descInitialized = false;
 
   String _type = 'expense';
   String? _categoryUuid;
@@ -253,13 +252,6 @@ class _SmsRuleFormScreenState extends ConsumerState<SmsRuleFormScreen> {
             repo: ref.read(transactionRepositoryProvider),
             onControllerReady: (controller) {
               _descFieldCtrl = controller;
-              if (!_descInitialized &&
-                  widget.rule?.description?.isNotEmpty == true) {
-                _descInitialized = true;
-                controller.text = widget.rule!.description!;
-                controller.selection = TextSelection.collapsed(
-                    offset: controller.text.length);
-              }
             },
             onSuggestionSelected: (suggestion) {
               setState(() => _categoryUuid = suggestion.categoryUuid);
@@ -475,10 +467,10 @@ class _Segment extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Description field with autocomplete from past transactions
+// Description field with inline suggestions from past transactions
 // ---------------------------------------------------------------------------
 
-class _DescriptionAutocomplete extends StatelessWidget {
+class _DescriptionAutocomplete extends StatefulWidget {
   final String? initialDescription;
   final List<Category> categories;
   final TransactionRepository repo;
@@ -494,90 +486,57 @@ class _DescriptionAutocomplete extends StatelessWidget {
   });
 
   @override
+  State<_DescriptionAutocomplete> createState() =>
+      _DescriptionAutocompleteState();
+}
+
+class _DescriptionAutocompleteState extends State<_DescriptionAutocomplete> {
+  late final TextEditingController _ctrl;
+  List<DescriptionSuggestion> _suggestions = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = TextEditingController(text: widget.initialDescription ?? '');
+    _ctrl.addListener(_onChanged);
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => widget.onControllerReady(_ctrl));
+  }
+
+  @override
+  void dispose() {
+    _ctrl.removeListener(_onChanged);
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  void _onChanged() {
+    final text = _ctrl.text.trim();
+    if (text.length < 2) {
+      if (_suggestions.isNotEmpty) setState(() => _suggestions = []);
+      return;
+    }
+    widget.repo.getDescriptionSuggestions(text).then((results) {
+      if (mounted) setState(() => _suggestions = results);
+    });
+  }
+
+  void _select(DescriptionSuggestion suggestion) {
+    _ctrl.text = suggestion.description;
+    _ctrl.selection =
+        TextSelection.collapsed(offset: _ctrl.text.length);
+    setState(() => _suggestions = []);
+    widget.onSuggestionSelected(suggestion);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-
-    return Autocomplete<DescriptionSuggestion>(
-      optionsBuilder: (textEditingValue) async {
-        final text = textEditingValue.text.trim();
-        if (text.length < 2) return const [];
-        return repo.getDescriptionSuggestions(text);
-      },
-      displayStringForOption: (opt) => opt.description,
-      onSelected: onSuggestionSelected,
-      optionsViewBuilder: (context, onSelected, options) {
-        return Align(
-          alignment: Alignment.topLeft,
-          child: Material(
-            elevation: 4,
-            borderRadius: BorderRadius.circular(12),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 200),
-              child: ListView.separated(
-                padding: EdgeInsets.zero,
-                shrinkWrap: true,
-                itemCount: options.length,
-                separatorBuilder: (_, _) =>
-                    Divider(height: 1, color: cs.surfaceContainerHighest),
-                itemBuilder: (context, index) {
-                  final opt = options.elementAt(index);
-                  final cat = categories
-                      .where((c) => c.uuid == opt.categoryUuid)
-                      .firstOrNull;
-                  final iconColor =
-                      cat != null ? Color(cat.colorValue) : cs.onSurfaceVariant;
-                  final iconData = cat != null
-                      ? IconData(cat.iconCodePoint,
-                          fontFamily: cat.iconFontFamily)
-                      : Icons.receipt_outlined;
-                  return InkWell(
-                    onTap: () => onSelected(opt),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 10),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 14,
-                            backgroundColor:
-                                iconColor.withValues(alpha: 0.15),
-                            child:
-                                Icon(iconData, color: iconColor, size: 14),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(opt.description,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.w500)),
-                                if (cat != null)
-                                  Text(cat.name,
-                                      style: TextStyle(
-                                          fontSize: 12,
-                                          color: cs.onSurfaceVariant)),
-                              ],
-                            ),
-                          ),
-                          Icon(Icons.north_west,
-                              size: 14, color: cs.onSurfaceVariant),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-        );
-      },
-      fieldViewBuilder: (context, controller, focusNode, _) {
-        WidgetsBinding.instance
-            .addPostFrameCallback((_) => onControllerReady(controller));
-        return TextField(
-          controller: controller,
-          focusNode: focusNode,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextField(
+          controller: _ctrl,
           textCapitalization: TextCapitalization.sentences,
           decoration: const InputDecoration(
             hintText:
@@ -587,8 +546,86 @@ class _DescriptionAutocomplete extends StatelessWidget {
                 'Shown as the transaction description. Defaults to the keyword.',
             helperMaxLines: 2,
           ),
-        );
-      },
+        ),
+        if (_suggestions.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Material(
+            elevation: 3,
+            borderRadius: BorderRadius.circular(10),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              children: [
+                for (int i = 0; i < _suggestions.length; i++) ...[
+                  if (i > 0)
+                    Divider(
+                        height: 1, color: cs.surfaceContainerHighest),
+                  _SuggestionTile(
+                    suggestion: _suggestions[i],
+                    categories: widget.categories,
+                    onTap: () => _select(_suggestions[i]),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _SuggestionTile extends StatelessWidget {
+  final DescriptionSuggestion suggestion;
+  final List<Category> categories;
+  final VoidCallback onTap;
+
+  const _SuggestionTile({
+    required this.suggestion,
+    required this.categories,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final cat =
+        categories.where((c) => c.uuid == suggestion.categoryUuid).firstOrNull;
+    final iconColor =
+        cat != null ? Color(cat.colorValue) : cs.onSurfaceVariant;
+    final iconData = cat != null
+        ? IconData(cat.iconCodePoint, fontFamily: cat.iconFontFamily)
+        : Icons.receipt_outlined;
+
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 14,
+              backgroundColor: iconColor.withValues(alpha: 0.15),
+              child: Icon(iconData, color: iconColor, size: 14),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(suggestion.description,
+                      style:
+                          const TextStyle(fontWeight: FontWeight.w500)),
+                  if (cat != null)
+                    Text(cat.name,
+                        style: TextStyle(
+                            fontSize: 12, color: cs.onSurfaceVariant)),
+                ],
+              ),
+            ),
+            Icon(Icons.north_west, size: 14, color: cs.onSurfaceVariant),
+          ],
+        ),
+      ),
     );
   }
 }
