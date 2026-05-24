@@ -12,6 +12,7 @@ import '../../providers/accounts_provider.dart';
 import '../../providers/budget_period_provider.dart';
 import '../../providers/categories_provider.dart';
 import '../../providers/sms_rules_provider.dart';
+import '../home/home_screen.dart' show smsImportCompletedProvider;
 import 'sms_scan_sheet.dart';
 
 class SmsRulesScreen extends ConsumerStatefulWidget {
@@ -104,11 +105,12 @@ class _SmsRulesScreenState extends ConsumerState<SmsRulesScreen> {
     showSmsScanSheet(context, onImported: (count, dates) {
       if (!mounted) return;
       if (count > 0) {
-        // Ensure the home screen will show the imported transactions:
-        // reset to the current period and clear any wallet filter so nothing
-        // is hidden by an account or period mismatch.
+        // Reset the home screen: clear any account/period filter so the
+        // imported transactions aren't hidden, then signal the home screen
+        // to also clear its local filter state and scroll to top.
         ref.read(selectedPeriodOffsetProvider.notifier).reset();
         ref.read(selectedHomeAccountIdProvider.notifier).select(null);
+        ref.read(smsImportCompletedProvider.notifier).fire();
       }
       String msg;
       if (count == 0) {

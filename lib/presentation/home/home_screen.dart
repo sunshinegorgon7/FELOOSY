@@ -19,6 +19,18 @@ import '../settings/settings_screen.dart';
 import '../transactions/widgets/transaction_tile.dart';
 import '../tutorial/tutorial_overlay.dart';
 
+/// Incremented after a batch SMS import. The home screen listens to this and
+/// clears all local filter state + scrolls to top so the imported transactions
+/// are immediately visible regardless of what view the user was in.
+class _ImportSignalNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+  void fire() => state++;
+}
+
+final smsImportCompletedProvider =
+    NotifierProvider<_ImportSignalNotifier, int>(_ImportSignalNotifier.new);
+
 String _dayLabel(DateTime date) {
   final now = DateTime.now();
   final today = DateTime(now.year, now.month, now.day);
@@ -136,6 +148,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<int>(smsImportCompletedProvider, (prev, next) {
+      setState(() {
+        _selectedCategoryFilter = null;
+        _selectedDay = null;
+        _listView = _HomeListView.byDay;
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_scrollController.hasClients) _scrollController.jumpTo(0);
+      });
+    });
+
     final summaryAsync = ref.watch(budgetSummaryProvider);
     final txAsync = ref.watch(transactionsProvider);
     final catAsync = ref.watch(categoriesProvider);
