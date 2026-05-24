@@ -5,6 +5,7 @@ class BudgetSummary {
   static final _nf = NumberFormat('#,##0.00');
 
   final double budgetAmount;
+  final double carryOverAmount;
   final double totalExpenses;
   final double totalIncome;
   final String currencyCode;
@@ -15,6 +16,7 @@ class BudgetSummary {
 
   const BudgetSummary({
     required this.budgetAmount,
+    this.carryOverAmount = 0.0,
     required this.totalExpenses,
     required this.totalIncome,
     required this.currencyCode,
@@ -24,10 +26,12 @@ class BudgetSummary {
     required this.transactionCount,
   });
 
-  double get remaining => budgetAmount - totalExpenses + totalIncome;
+  double get remaining => budgetAmount + carryOverAmount - totalExpenses + totalIncome;
 
-  double get spentPercentage =>
-      budgetAmount == 0 ? 0 : (totalExpenses - totalIncome) / budgetAmount;
+  double get spentPercentage {
+    final effective = budgetAmount + carryOverAmount;
+    return effective == 0 ? 0 : (totalExpenses - totalIncome) / effective;
+  }
 
   bool get isOverBudget => remaining < 0;
 

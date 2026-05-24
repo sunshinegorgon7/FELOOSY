@@ -1077,6 +1077,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           padding: 16,
         ),
         TutorialStep(
+          title: 'Carry Over Surplus',
+          body:
+              'Enable carry-over in Settings → Manage Wallets for any wallet. Unused budget from last month rolls into this month automatically.',
+          spotlightKey: _settingsIconKey,
+          padding: 18,
+        ),
+        TutorialStep(
           title: 'Add a Transaction',
           body:
               'Tap the + button to record a purchase, bill, or income. Pick a category to see where your money goes.',
@@ -1638,6 +1645,13 @@ class _BudgetHero extends StatelessWidget {
                 : 'remaining this month · ${(pct * 100).round()}% spent',
             style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
           ),
+          if (summary.carryOverAmount > 0) ...[
+            const SizedBox(height: 2),
+            Text(
+              '+ ${summary.formatAmount(summary.carryOverAmount)} carried from last month',
+              style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+            ),
+          ],
           const SizedBox(height: 14),
           ClipRRect(
             borderRadius: BorderRadius.circular(2),

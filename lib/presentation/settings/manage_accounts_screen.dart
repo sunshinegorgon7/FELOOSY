@@ -86,6 +86,7 @@ class ManageAccountsScreen extends ConsumerWidget {
     var selectedCurrency = kCurrencies.where((c) => c.code == account?.currencyCode).firstOrNull ?? kCurrencies.first;
     // null = use app default
     int? selectedMonthStartDay = account?.monthStartDay;
+    bool carryOverEnabled = account?.carryOverEnabled ?? false;
     String? nameError;
 
     await showDialog<void>(
@@ -148,6 +149,13 @@ class ManageAccountsScreen extends ConsumerWidget {
                   ],
                   onChanged: (value) => setState(() => selectedMonthStartDay = value),
                 ),
+                SwitchListTile(
+                  title: const Text('Carry over unused budget'),
+                  subtitle: const Text('Surplus rolls into the next month'),
+                  value: carryOverEnabled,
+                  onChanged: (v) => setState(() => carryOverEnabled = v),
+                  contentPadding: EdgeInsets.zero,
+                ),
               ],
             ),
           ),
@@ -177,6 +185,7 @@ class ManageAccountsScreen extends ConsumerWidget {
                         currency: selectedCurrency,
                         defaultMonthlyBudget: budget,
                         monthStartDay: selectedMonthStartDay,
+                        carryOverEnabled: carryOverEnabled,
                       );
                 } else {
                   await ref.read(accountsProvider.notifier).save(
@@ -189,6 +198,7 @@ class ManageAccountsScreen extends ConsumerWidget {
                           clearDefaultMonthlyBudget: budget == null,
                           monthStartDay: selectedMonthStartDay,
                           clearMonthStartDay: selectedMonthStartDay == null,
+                          carryOverEnabled: carryOverEnabled,
                         ),
                       );
                 }

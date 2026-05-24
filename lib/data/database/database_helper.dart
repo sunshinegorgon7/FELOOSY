@@ -26,7 +26,7 @@ class DatabaseHelper {
     final dbPath = p.join(docDir.path, AppFlavor.databaseName);
     return openDatabase(
       dbPath,
-      version: 17,
+      version: 18,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -43,6 +43,7 @@ class DatabaseHelper {
         default_monthly_budget REAL,
         is_favorite INTEGER NOT NULL DEFAULT 0,
         month_start_day INTEGER,
+        carry_over_enabled INTEGER NOT NULL DEFAULT 0,
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL
       )
@@ -450,6 +451,11 @@ class DatabaseHelper {
           updated_at INTEGER NOT NULL
         )
       ''');
+    }
+    if (oldVersion < 18) {
+      await db.execute(
+        'ALTER TABLE accounts ADD COLUMN carry_over_enabled INTEGER NOT NULL DEFAULT 0',
+      );
     }
   }
 

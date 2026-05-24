@@ -7,6 +7,7 @@ class Account {
   final double? defaultMonthlyBudget;
   final bool isFavorite;
   final int? monthStartDay;
+  final bool carryOverEnabled;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -19,6 +20,7 @@ class Account {
     required this.defaultMonthlyBudget,
     required this.isFavorite,
     this.monthStartDay,
+    this.carryOverEnabled = false,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -33,6 +35,7 @@ class Account {
     bool? isFavorite,
     int? monthStartDay,
     bool clearMonthStartDay = false,
+    bool? carryOverEnabled,
   }) {
     return Account(
       id: id,
@@ -46,6 +49,7 @@ class Account {
           : (defaultMonthlyBudget ?? this.defaultMonthlyBudget),
       isFavorite: isFavorite ?? this.isFavorite,
       monthStartDay: clearMonthStartDay ? null : (monthStartDay ?? this.monthStartDay),
+      carryOverEnabled: carryOverEnabled ?? this.carryOverEnabled,
       createdAt: createdAt,
       updatedAt: DateTime.now(),
     );
@@ -62,6 +66,7 @@ class Account {
           (map['default_monthly_budget'] as num?)?.toDouble(),
       isFavorite: (map['is_favorite'] as int? ?? 0) == 1,
       monthStartDay: map['month_start_day'] as int?,
+      carryOverEnabled: (map['carry_over_enabled'] as int? ?? 0) == 1,
       createdAt:
           DateTime.fromMillisecondsSinceEpoch(map['created_at'] as int),
       updatedAt:
@@ -78,6 +83,7 @@ class Account {
       'default_monthly_budget': defaultMonthlyBudget,
       'is_favorite': isFavorite ? 1 : 0,
       'month_start_day': monthStartDay,
+      'carry_over_enabled': carryOverEnabled ? 1 : 0,
       'created_at': createdAt.millisecondsSinceEpoch,
       'updated_at': updatedAt.millisecondsSinceEpoch,
     };

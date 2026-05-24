@@ -9,6 +9,7 @@ class BudgetService {
     required List<Transaction> transactions,
     required AppSettings settings,
     required BudgetPeriod period,
+    double carryOverAmount = 0.0,
   }) {
     double totalExpenses = 0;
     double totalIncome = 0;
@@ -23,6 +24,7 @@ class BudgetService {
 
     return BudgetSummary(
       budgetAmount: budgetAmount,
+      carryOverAmount: carryOverAmount,
       totalExpenses: totalExpenses,
       totalIncome: totalIncome,
       currencyCode: settings.currencyCode,

@@ -14,6 +14,7 @@ class AccountsNotifier extends AsyncNotifier<List<Account>> {
     required CurrencyOption currency,
     double? defaultMonthlyBudget,
     int? monthStartDay,
+    bool carryOverEnabled = false,
   }) async {
     final now = DateTime.now();
     final account = Account(
@@ -24,6 +25,7 @@ class AccountsNotifier extends AsyncNotifier<List<Account>> {
       defaultMonthlyBudget: defaultMonthlyBudget,
       isFavorite: false,
       monthStartDay: monthStartDay,
+      carryOverEnabled: carryOverEnabled,
       createdAt: now,
       updatedAt: now,
     );
