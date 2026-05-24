@@ -8,6 +8,8 @@ import 'package:permission_handler/permission_handler.dart';
 import '../../app/app_theme.dart';
 import '../../data/models/category.dart';
 import '../../data/models/sms_rule.dart';
+import '../../providers/accounts_provider.dart';
+import '../../providers/budget_period_provider.dart';
 import '../../providers/categories_provider.dart';
 import '../../providers/sms_rules_provider.dart';
 import 'sms_scan_sheet.dart';
@@ -101,6 +103,13 @@ class _SmsRulesScreenState extends ConsumerState<SmsRulesScreen> {
   void _openScanSheet() {
     showSmsScanSheet(context, onImported: (count, dates) {
       if (!mounted) return;
+      if (count > 0) {
+        // Ensure the home screen will show the imported transactions:
+        // reset to the current period and clear any wallet filter so nothing
+        // is hidden by an account or period mismatch.
+        ref.read(selectedPeriodOffsetProvider.notifier).reset();
+        ref.read(selectedHomeAccountIdProvider.notifier).select(null);
+      }
       String msg;
       if (count == 0) {
         msg = 'No transactions imported.';
@@ -111,8 +120,8 @@ class _SmsRulesScreenState extends ConsumerState<SmsRulesScreen> {
             ? DateFormat('MMM d').format(uniqueDays.first)
             : '${DateFormat('MMM d').format(uniqueDays.first)} – '
               '${DateFormat('MMM d').format(uniqueDays.last)}';
-        msg = 'Created $count transaction${count == 1 ? '' : 's'} '
-            '— dated $dateStr (scroll back to find them).';
+        msg = 'Created $count transaction${count == 1 ? '' : 's'} on $dateStr '
+            '— go back to the home screen to see them.';
       }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(msg), duration: const Duration(seconds: 5)),
