@@ -6,6 +6,7 @@ import 'accounts_provider.dart';
 import 'budget_period_provider.dart';
 import 'budget_provider.dart';
 import 'database_provider.dart';
+import 'recurring_rules_provider.dart';
 import 'settings_provider.dart';
 
 class TransactionsNotifier extends AsyncNotifier<List<Transaction>> {
@@ -32,7 +33,23 @@ class TransactionsNotifier extends AsyncNotifier<List<Transaction>> {
   }
 
   Future<void> remove(String uuid) async {
-    await ref.read(transactionRepositoryProvider).delete(uuid);
+    final txRepo = ref.read(transactionRepositoryProvider);
+    final tx = await txRepo.getByUuid(uuid);
+    await txRepo.delete(uuid);
+
+    if (tx != null && tx.isRecurring) {
+      final ruleUuid = tx.recurringRuleUuid!;
+      final remaining = await txRepo.getByRecurringRule(ruleUuid);
+      if (remaining.isEmpty) {
+        final ruleRepo = ref.read(recurringRuleRepositoryProvider);
+        final rule = await ruleRepo.getByUuid(ruleUuid);
+        if (rule != null) {
+          await ruleRepo.update(rule.copyWith(isActive: false));
+        }
+        ref.invalidate(recurringRulesProvider);
+      }
+    }
+
     ref.invalidateSelf();
     ref.invalidate(transactionPeriodOffsetsProvider);
   }

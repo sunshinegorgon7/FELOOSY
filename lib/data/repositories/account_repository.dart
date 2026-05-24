@@ -44,6 +44,8 @@ class AccountRepository {
     await db.transaction((txn) async {
       await txn.delete('transactions',
           where: 'account_id = ?', whereArgs: [accountId]);
+      await txn.delete('recurring_rules',
+          where: 'account_id = ?', whereArgs: [accountId]);
       await txn.delete('budgets', where: 'account_id = ?', whereArgs: [accountId]);
       await txn.delete('accounts', where: 'id = ?', whereArgs: [accountId]);
     });

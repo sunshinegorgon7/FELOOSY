@@ -6,14 +6,17 @@ import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import '../../app/app_theme.dart';
 import '../../data/models/category.dart';
+import '../../data/models/recurring_rule.dart';
 import '../../data/models/transaction.dart';
 import '../../data/repositories/transaction_repository.dart';
 import '../../providers/categories_provider.dart';
 import '../../providers/accounts_provider.dart';
 import '../../providers/database_provider.dart';
+import '../../providers/recurring_rules_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/purchase_provider.dart';
 import '../../providers/transactions_provider.dart';
+import '../../services/recurring_transaction_service.dart';
 
 const _windowChannel = MethodChannel('com.feloosy/window');
 
@@ -43,6 +46,8 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   DateTime _date = DateTime.now();
   String? _selectedCategoryUuid;
   bool _saving = false;
+  bool _isRecurring = false;
+  RecurringFrequency _frequency = RecurringFrequency.monthly;
 
   bool get _isEditing => widget.initialTransaction != null;
 
@@ -54,6 +59,14 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
 
   void _onFieldChanged() {
     if (mounted) setState(() {});
+  }
+
+  Future<void> _loadRecurringRule() async {
+    final ruleUuid = widget.initialTransaction?.recurringRuleUuid;
+    if (ruleUuid == null) return;
+    final rule =
+        await ref.read(recurringRuleRepositoryProvider).getByUuid(ruleUuid);
+    if (rule != null && mounted) setState(() => _frequency = rule.frequency);
   }
 
   @override
@@ -69,6 +82,10 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
       _amountController.text = initial.amount.toStringAsFixed(2);
       _date = initial.transactionDate;
       _selectedCategoryUuid = initial.categoryUuid;
+      if (initial.isRecurring) {
+        _isRecurring = true;
+        _loadRecurringRule();
+      }
     }
 
     if (_isEditing) _amountController.addListener(_onFieldChanged);
@@ -154,7 +171,12 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
       );
       return;
     }
-    _commit(amount: amount, description: desc);
+    final initial = widget.initialTransaction;
+    if (initial != null && initial.isRecurring) {
+      _showEditScopeDialog(amount: amount, description: desc);
+    } else {
+      _commit(amount: amount, description: desc);
+    }
   }
 
   Future<void> _commit({
@@ -195,23 +217,159 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
             return;
           }
         }
-        await ref.read(transactionsProvider.notifier).add(
-              Transaction(
-                uuid: const Uuid().v4(),
-                accountId: account?.id ?? 1,
-                amount: amount,
-                type: _type,
-                description: description,
-                categoryUuid: _selectedCategoryUuid!,
-                transactionDate: _date,
-                createdAt: now,
-                updatedAt: now,
-              ),
-            );
+        if (_isRecurring) {
+          final ruleUuid = const Uuid().v4();
+          final rule = RecurringRule(
+            uuid: ruleUuid,
+            accountId: account?.id ?? 1,
+            amount: amount,
+            type: _type.name,
+            description: description,
+            categoryUuid: _selectedCategoryUuid!,
+            frequency: _frequency,
+            startDate: DateUtils.dateOnly(_date),
+            isActive: true,
+            createdAt: now,
+            updatedAt: now,
+          );
+          await ref.read(recurringRuleRepositoryProvider).insert(rule);
+          await RecurringTransactionService.generatePending(
+            txRepo: ref.read(transactionRepositoryProvider),
+            ruleRepo: ref.read(recurringRuleRepositoryProvider),
+          );
+          ref.invalidate(transactionsProvider);
+          ref.invalidate(recurringRulesProvider);
+        } else {
+          await ref.read(transactionsProvider.notifier).add(
+                Transaction(
+                  uuid: const Uuid().v4(),
+                  accountId: account?.id ?? 1,
+                  amount: amount,
+                  type: _type,
+                  description: description,
+                  categoryUuid: _selectedCategoryUuid!,
+                  transactionDate: _date,
+                  createdAt: now,
+                  updatedAt: now,
+                ),
+              );
+        }
       }
       if (mounted) {
         if (context.canPop()) { context.pop(); }
         else { context.go('/'); }
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  Future<void> _showEditScopeDialog({
+    required double amount,
+    required String description,
+  }) async {
+    final scope = await showDialog<_EditScope>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Edit recurring transaction'),
+        content: const Text('How would you like to apply this change?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, _EditScope.thisOnly),
+            child: const Text('Only this'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, _EditScope.thisAndFuture),
+            child: const Text('This & future'),
+          ),
+        ],
+      ),
+    );
+    if (scope == null) return;
+    await _commitWithScope(scope: scope, amount: amount, description: description);
+  }
+
+  Future<void> _commitWithScope({
+    required _EditScope scope,
+    required double amount,
+    required String description,
+  }) async {
+    if (_saving) return;
+    setState(() => _saving = true);
+    try {
+      final now = DateTime.now();
+      final initial = widget.initialTransaction!;
+
+      if (scope == _EditScope.thisOnly) {
+        // Detach this occurrence from the rule — it becomes a standalone tx.
+        final updated = Transaction(
+          id: initial.id,
+          uuid: initial.uuid,
+          accountId: initial.accountId,
+          amount: amount,
+          type: _type,
+          description: description,
+          categoryUuid: _selectedCategoryUuid!,
+          transactionDate: _date,
+          createdAt: initial.createdAt,
+          updatedAt: now,
+          source: 'manual',
+        );
+        await ref.read(transactionsProvider.notifier).edit(updated);
+      } else {
+        // Save this occurrence (keep source so the badge stays).
+        final updatedTx = Transaction(
+          id: initial.id,
+          uuid: initial.uuid,
+          accountId: initial.accountId,
+          amount: amount,
+          type: _type,
+          description: description,
+          categoryUuid: _selectedCategoryUuid!,
+          transactionDate: _date,
+          createdAt: initial.createdAt,
+          updatedAt: now,
+          source: initial.source,
+        );
+        await ref.read(transactionsProvider.notifier).edit(updatedTx);
+
+        // Update the rule and trim future occurrences.
+        final ruleUuid = initial.recurringRuleUuid!;
+        final ruleRepo = ref.read(recurringRuleRepositoryProvider);
+        final rule = await ruleRepo.getByUuid(ruleUuid);
+        if (rule != null) {
+          final thisDate = DateUtils.dateOnly(_date);
+          final updatedRule = RecurringRule(
+            uuid: rule.uuid,
+            accountId: rule.accountId,
+            amount: amount,
+            type: _type.name,
+            description: description,
+            categoryUuid: _selectedCategoryUuid!,
+            frequency: _frequency,
+            startDate: rule.startDate,
+            lastGeneratedDate: thisDate,
+            isActive: rule.isActive,
+            createdAt: rule.createdAt,
+            updatedAt: now,
+          );
+          await ruleRepo.update(updatedRule);
+          await ruleRepo.deleteFutureOccurrences(ruleUuid, thisDate);
+          ref.invalidate(recurringRulesProvider);
+        }
+        ref.invalidate(transactionsProvider);
+      }
+
+      if (mounted) {
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          context.go('/');
+        }
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -332,6 +490,21 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                       ),
                     ],
                   ),
+
+                  // Recurring toggle (create mode) / frequency picker (edit mode)
+                  if (!_isEditing || _isRecurring) ...[
+                    const SizedBox(height: 10),
+                    _RecurringToggleRow(
+                      isRecurring: _isRecurring,
+                      frequency: _frequency,
+                      isEditing: _isEditing,
+                      onToggle: _isEditing
+                          ? null
+                          : (v) => setState(() => _isRecurring = v),
+                      onFrequencyChanged: (f) =>
+                          setState(() => _frequency = f),
+                    ),
+                  ],
                   const SizedBox(height: 16),
 
                   // Amount row: currency label left, DM Mono number right
@@ -490,6 +663,140 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     if (d == today) return 'Today';
     if (d == today.subtract(const Duration(days: 1))) return 'Yesterday';
     return DateFormat('MMM d').format(date);
+  }
+}
+
+enum _EditScope { thisOnly, thisAndFuture }
+
+// ---------------------------------------------------------------------------
+// Recurring toggle + frequency chips
+// ---------------------------------------------------------------------------
+
+class _RecurringToggleRow extends StatelessWidget {
+  final bool isRecurring;
+  final RecurringFrequency frequency;
+  final bool isEditing;
+  final ValueChanged<bool>? onToggle;
+  final ValueChanged<RecurringFrequency> onFrequencyChanged;
+
+  const _RecurringToggleRow({
+    required this.isRecurring,
+    required this.frequency,
+    required this.isEditing,
+    required this.onToggle,
+    required this.onFrequencyChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
+    const freqLabels = {
+      RecurringFrequency.daily: 'Daily',
+      RecurringFrequency.weekly: 'Weekly',
+      RecurringFrequency.monthly: 'Monthly',
+      RecurringFrequency.annually: 'Annually',
+    };
+
+    Widget frequencyChips() => SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: RecurringFrequency.values.map((f) {
+              final selected = f == frequency;
+              return Padding(
+                padding: const EdgeInsets.only(right: 6),
+                child: GestureDetector(
+                  onTap: () => onFrequencyChanged(f),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? cs.primary.withValues(alpha: 0.12)
+                          : cs.surfaceContainerLow,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: selected
+                            ? cs.primary
+                            : cs.outlineVariant,
+                        width: selected ? 1.5 : 1.0,
+                      ),
+                    ),
+                    child: Text(
+                      freqLabels[f]!,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: selected
+                            ? FontWeight.w600
+                            : FontWeight.w400,
+                        color: selected
+                            ? cs.primary
+                            : cs.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        );
+
+    // Edit mode: just show the frequency picker with a label.
+    if (isEditing) {
+      return Row(
+        children: [
+          Icon(Icons.repeat_rounded, size: 16, color: cs.primary),
+          const SizedBox(width: 6),
+          Text(
+            'Repeats',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: cs.primary,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(child: frequencyChips()),
+        ],
+      );
+    }
+
+    // Create mode: toggle + chips when active.
+    return Row(
+      children: [
+        GestureDetector(
+          onTap: () => onToggle?.call(!isRecurring),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                isRecurring
+                    ? Icons.repeat_rounded
+                    : Icons.repeat_outlined,
+                size: 16,
+                color: isRecurring ? cs.primary : cs.onSurfaceVariant,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'Recurring',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: isRecurring
+                      ? FontWeight.w600
+                      : FontWeight.w400,
+                  color: isRecurring ? cs.primary : cs.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (isRecurring) ...[
+          const SizedBox(width: 10),
+          Expanded(child: frequencyChips()),
+        ],
+      ],
+    );
   }
 }
 

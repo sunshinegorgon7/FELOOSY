@@ -125,6 +125,16 @@ class TransactionRepository {
         .toList();
   }
 
+  Future<List<model.Transaction>> getByRecurringRule(String ruleUuid) async {
+    final db = await _db.database;
+    final rows = await db.query(
+      'transactions',
+      where: "source = ?",
+      whereArgs: ['recurring:$ruleUuid'],
+    );
+    return rows.map(model.Transaction.fromMap).toList();
+  }
+
   Future<int> count() async {
     final db = await _db.database;
     final rows = await db.rawQuery('SELECT COUNT(*) as c FROM transactions');

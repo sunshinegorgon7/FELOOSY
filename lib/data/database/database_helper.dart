@@ -26,7 +26,7 @@ class DatabaseHelper {
     final dbPath = p.join(docDir.path, AppFlavor.databaseName);
     return openDatabase(
       dbPath,
-      version: 16,
+      version: 17,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -146,6 +146,23 @@ class DatabaseHelper {
         amount_regex TEXT,
         is_active INTEGER NOT NULL DEFAULT 1,
         created_at INTEGER NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE recurring_rules (
+        uuid TEXT PRIMARY KEY,
+        account_id INTEGER NOT NULL,
+        amount REAL NOT NULL,
+        type TEXT NOT NULL,
+        description TEXT NOT NULL,
+        category_uuid TEXT NOT NULL,
+        frequency TEXT NOT NULL,
+        start_date INTEGER NOT NULL,
+        last_generated_date INTEGER,
+        is_active INTEGER NOT NULL DEFAULT 1,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
       )
     ''');
 
@@ -416,6 +433,24 @@ class DatabaseHelper {
         'ALTER TABLE sms_rules ADD COLUMN description TEXT',
       );
     }
+    if (oldVersion < 17) {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS recurring_rules (
+          uuid TEXT PRIMARY KEY,
+          account_id INTEGER NOT NULL,
+          amount REAL NOT NULL,
+          type TEXT NOT NULL,
+          description TEXT NOT NULL,
+          category_uuid TEXT NOT NULL,
+          frequency TEXT NOT NULL,
+          start_date INTEGER NOT NULL,
+          last_generated_date INTEGER,
+          is_active INTEGER NOT NULL DEFAULT 1,
+          created_at INTEGER NOT NULL,
+          updated_at INTEGER NOT NULL
+        )
+      ''');
+    }
   }
 
   Future<void> _seed(Database db) async {
@@ -445,6 +480,7 @@ class DatabaseHelper {
     final db = await database;
     await db.transaction((txn) async {
       await txn.delete('transactions');
+      await txn.delete('recurring_rules');
       await txn.delete('budgets');
       await txn.delete('categories');
       await txn.delete('app_settings');

@@ -33,6 +33,7 @@ class Transaction {
     String? description,
     String? categoryUuid,
     DateTime? transactionDate,
+    String? source,
   }) {
     return Transaction(
       id: id,
@@ -45,6 +46,7 @@ class Transaction {
       transactionDate: transactionDate ?? this.transactionDate,
       createdAt: createdAt,
       updatedAt: DateTime.now(),
+      source: source ?? this.source,
     );
   }
 
@@ -54,6 +56,11 @@ class Transaction {
     if (!isFromSms) return null;
     return int.tryParse(source.split(':').last);
   }
+
+  bool get isRecurring => source.startsWith('recurring:');
+
+  String? get recurringRuleUuid =>
+      isRecurring ? source.split(':').last : null;
 
   factory Transaction.fromMap(Map<String, dynamic> map) {
     return Transaction(

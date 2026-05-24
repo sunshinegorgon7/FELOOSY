@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../data/models/transaction.dart';
 import '../../providers/categories_provider.dart';
+import '../../providers/database_provider.dart';
+import '../../providers/recurring_rules_provider.dart';
 import '../../providers/transactions_provider.dart';
 import 'widgets/transaction_tile.dart';
 
@@ -132,6 +134,10 @@ class TransactionListScreen extends ConsumerWidget {
 
   Future<void> _confirmDelete(
       BuildContext context, WidgetRef ref, Transaction tx) async {
+    if (tx.isRecurring) {
+      await _showDeleteScopeDialog(context, ref, tx);
+      return;
+    }
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -144,7 +150,8 @@ class TransactionListScreen extends ConsumerWidget {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: FilledButton.styleFrom(backgroundColor: Theme.of(ctx).colorScheme.error),
+            style: FilledButton.styleFrom(
+                backgroundColor: Theme.of(ctx).colorScheme.error),
             child: const Text('Delete'),
           ),
         ],
@@ -154,7 +161,53 @@ class TransactionListScreen extends ConsumerWidget {
       await ref.read(transactionsProvider.notifier).remove(tx.uuid);
     }
   }
+
+  Future<void> _showDeleteScopeDialog(
+      BuildContext context, WidgetRef ref, Transaction tx) async {
+    final scope = await showDialog<_DeleteScope>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete recurring transaction'),
+        content: const Text('How would you like to delete this?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, _DeleteScope.thisOnly),
+            child: const Text('Only this'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, _DeleteScope.thisAndFuture),
+            style: FilledButton.styleFrom(
+                backgroundColor: Theme.of(ctx).colorScheme.error),
+            child: const Text('This & future'),
+          ),
+        ],
+      ),
+    );
+    if (scope == null) return;
+
+    if (scope == _DeleteScope.thisOnly) {
+      await ref.read(transactionsProvider.notifier).remove(tx.uuid);
+    } else {
+      final ruleUuid = tx.recurringRuleUuid!;
+      final ruleRepo = ref.read(recurringRuleRepositoryProvider);
+      // Delete this occurrence and all future ones.
+      await ruleRepo.deleteFromOccurrences(ruleUuid, tx.transactionDate);
+      // Deactivate the rule so no new occurrences are generated.
+      final rule = await ruleRepo.getByUuid(ruleUuid);
+      if (rule != null) {
+        await ruleRepo.update(rule.copyWith(isActive: false));
+      }
+      ref.invalidate(recurringRulesProvider);
+      ref.invalidate(transactionsProvider);
+    }
+  }
 }
+
+enum _DeleteScope { thisOnly, thisAndFuture }
 
 class _DateHeader {
   final String label;

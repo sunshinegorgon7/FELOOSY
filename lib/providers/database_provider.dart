@@ -3,6 +3,7 @@ import '../data/database/database_helper.dart';
 import '../data/repositories/budget_repository.dart';
 import '../data/repositories/category_repository.dart';
 import '../data/repositories/account_repository.dart';
+import '../data/repositories/recurring_rule_repository.dart';
 import '../data/repositories/settings_repository.dart';
 import '../data/repositories/sms_rule_repository.dart';
 import '../data/repositories/transaction_repository.dart';
@@ -33,4 +34,8 @@ final transactionRepositoryProvider = Provider<TransactionRepository>((ref) {
 
 final smsRuleRepositoryProvider = Provider<SmsRuleRepository>((ref) {
   return SmsRuleRepository(ref.watch(databaseHelperProvider));
+});
+
+final recurringRuleRepositoryProvider = Provider<RecurringRuleRepository>((ref) {
+  return RecurringRuleRepository(ref.watch(databaseHelperProvider));
 });

@@ -5,11 +5,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../dev/seed_snapshot_service.dart';
 import '../providers/accounts_provider.dart';
 import '../providers/budget_provider.dart';
+import '../providers/database_provider.dart';
 import '../providers/drive_backup_provider.dart';
 import '../providers/google_auth_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/transactions_provider.dart';
 import '../services/home_widget_sync_service.dart';
+import '../services/recurring_transaction_service.dart';
 import '../services/sms_transaction_service.dart';
 import 'app_flavor.dart';
 import 'app_theme.dart';
@@ -35,11 +37,24 @@ class _FeloosyAppState extends ConsumerState<FeloosyApp>
     );
   }
 
+  Future<void> _generateRecurring() async {
+    try {
+      await RecurringTransactionService.generatePending(
+        txRepo: ref.read(transactionRepositoryProvider),
+        ruleRepo: ref.read(recurringRuleRepositoryProvider),
+      );
+      ref.invalidate(transactionsProvider);
+    } catch (e) {
+      debugPrint('RecurringTransactionService error: $e');
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     Future<void>.microtask(_scheduleWidgetSync);
+    Future<void>.microtask(_generateRecurring);
     ref.listenManual(accountsProvider, (_, _) => _scheduleWidgetSync());
     ref.listenManual(transactionsProvider, (_, _) => _scheduleWidgetSync());
     ref.listenManual(currentBudgetProvider, (_, _) => _scheduleWidgetSync());
@@ -59,6 +74,7 @@ class _FeloosyAppState extends ConsumerState<FeloosyApp>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _scheduleWidgetSync();
+      _generateRecurring();
     }
     if (state == AppLifecycleState.paused &&
         ref.read(googleAccountProvider) != null) {

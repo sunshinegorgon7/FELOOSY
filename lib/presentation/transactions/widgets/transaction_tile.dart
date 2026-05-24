@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 import '../../../app/app_theme.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../data/models/category.dart';
+import '../../../data/models/recurring_rule.dart';
 import '../../../data/models/sms_rule.dart';
 import '../../../data/models/transaction.dart';
+import '../../../providers/recurring_rules_provider.dart';
 import '../../../providers/settings_provider.dart';
 import '../../../providers/sms_rules_provider.dart';
 
@@ -54,6 +56,20 @@ class TransactionTile extends ConsumerWidget {
       smsRule = rules.where((r) => r.id == transaction.smsRuleId).firstOrNull;
     }
 
+    RecurringRule? recurringRule;
+    if (transaction.isRecurring) {
+      final rules = ref.watch(recurringRulesProvider).asData?.value ?? [];
+      recurringRule = rules
+          .where((r) => r.uuid == transaction.recurringRuleUuid)
+          .firstOrNull;
+    }
+
+    final badgeIcon = transaction.isFromSms
+        ? Icons.bolt_rounded
+        : transaction.isRecurring
+            ? Icons.repeat_rounded
+            : null;
+
     if (compact) {
       return ListTile(
         onTap: onTap,
@@ -65,7 +81,7 @@ class TransactionTile extends ConsumerWidget {
         leading: _AutoAvatar(
           iconData: iconData,
           iconColor: iconColor,
-          isAuto: transaction.isFromSms,
+          badgeIcon: badgeIcon,
           radius: 14,
           iconSize: 14,
           badgeSize: 11,
@@ -96,7 +112,7 @@ class TransactionTile extends ConsumerWidget {
       leading: _AutoAvatar(
         iconData: iconData,
         iconColor: iconColor,
-        isAuto: transaction.isFromSms,
+        badgeIcon: badgeIcon,
         radius: 20,
         iconSize: 20,
         badgeSize: 15,
@@ -116,6 +132,10 @@ class TransactionTile extends ConsumerWidget {
           if (transaction.isFromSms) ...[
             const SizedBox(width: 6),
             _AutoBadge(smsRule: smsRule),
+          ],
+          if (transaction.isRecurring) ...[
+            const SizedBox(width: 6),
+            _RecurringBadge(rule: recurringRule),
           ],
         ],
       ),
@@ -137,7 +157,7 @@ class TransactionTile extends ConsumerWidget {
 class _AutoAvatar extends StatelessWidget {
   final IconData iconData;
   final Color iconColor;
-  final bool isAuto;
+  final IconData? badgeIcon;
   final double radius;
   final double iconSize;
   final double badgeSize;
@@ -146,7 +166,7 @@ class _AutoAvatar extends StatelessWidget {
   const _AutoAvatar({
     required this.iconData,
     required this.iconColor,
-    required this.isAuto,
+    required this.badgeIcon,
     required this.radius,
     required this.iconSize,
     required this.badgeSize,
@@ -164,7 +184,7 @@ class _AutoAvatar extends StatelessWidget {
           backgroundColor: iconColor.withValues(alpha: 0.15),
           child: Icon(iconData, color: iconColor, size: iconSize),
         ),
-        if (isAuto)
+        if (badgeIcon != null)
           Positioned(
             bottom: -2,
             right: -3,
@@ -178,7 +198,7 @@ class _AutoAvatar extends StatelessWidget {
               ),
               child: Center(
                 child: Icon(
-                  Icons.bolt_rounded,
+                  badgeIcon,
                   size: badgeIconSize,
                   color: cs.onPrimary,
                 ),
@@ -241,6 +261,57 @@ class _AutoBadge extends StatelessWidget {
       message: 'Rule: ${smsRule!.keyword}  •  tap to edit',
       preferBelow: false,
       child: badge,
+    );
+  }
+}
+
+// ── Recurring pill badge in the subtitle ─────────────────────────────────────
+
+class _RecurringBadge extends StatelessWidget {
+  final RecurringRule? rule;
+  const _RecurringBadge({required this.rule});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final accentColor = AppTheme.primaryText(cs);
+
+    final label = rule != null
+        ? switch (rule!.frequency) {
+            RecurringFrequency.daily => 'Daily',
+            RecurringFrequency.weekly => 'Weekly',
+            RecurringFrequency.monthly => 'Monthly',
+            RecurringFrequency.annually => 'Annually',
+          }
+        : 'Recurring';
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(4, 2, 6, 2),
+      decoration: BoxDecoration(
+        color: cs.primary.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: cs.primary.withValues(alpha: 0.22),
+          width: 0.75,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.repeat_rounded, size: 10, color: accentColor),
+          const SizedBox(width: 2),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: accentColor,
+              letterSpacing: 0.3,
+              height: 1.1,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
