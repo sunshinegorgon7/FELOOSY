@@ -661,7 +661,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             )
                             .firstOrNull;
                         final catColor = selStat != null
-                            ? Color(selStat.category.colorValue)
+                            ? AppTheme.categoryBarColor(
+                                uuid: selStat.category.uuid,
+                                colorValue: selStat.category.colorValue,
+                                colorScheme: cs,
+                              )
                             : accentColor;
                         return Row(
                           children: [
@@ -1692,10 +1696,14 @@ class _TopCategoriesChartState extends State<_TopCategoriesChart> {
     _CatStat stat,
     double maxAmount,
     double barAreaHeight,
-    Color accentColor,
+    ColorScheme cs,
   ) {
     const barWidth = 64.0;
-    final color = Color(stat.category.colorValue);
+    final color = AppTheme.categoryBarColor(
+      uuid: stat.category.uuid,
+      colorValue: stat.category.colorValue,
+      colorScheme: cs,
+    );
     final targetH =
         (barAreaHeight * (stat.amount / maxAmount)).clamp(4.0, barAreaHeight);
     final barH = _entered ? targetH : 0.0;
@@ -1730,7 +1738,7 @@ class _TopCategoriesChartState extends State<_TopCategoriesChart> {
                           fontSize: 10,
                           fontWeight: FontWeight.w500,
                           fontFamily: 'DM Mono',
-                          color: accentColor,
+                          color: cs.onSurfaceVariant,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -1763,7 +1771,7 @@ class _TopCategoriesChartState extends State<_TopCategoriesChart> {
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  color: accentColor,
+                  color: isSelected ? color : cs.onSurfaceVariant,
                 ),
                 textAlign: TextAlign.center,
                 maxLines: 1,
@@ -1779,7 +1787,7 @@ class _TopCategoriesChartState extends State<_TopCategoriesChart> {
   @override
   Widget build(BuildContext context) {
     if (widget.stats.isEmpty) return const SizedBox.shrink();
-    final accentColor = AppTheme.primaryText(Theme.of(context).colorScheme);
+    final cs = Theme.of(context).colorScheme;
     const barAreaHeight = 100.0;
     final maxAmount = widget.stats.first.amount;
 
@@ -1787,7 +1795,7 @@ class _TopCategoriesChartState extends State<_TopCategoriesChart> {
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         // First bar is always visible — acts as the fixed reference.
-        _barColumn(widget.stats.first, maxAmount, barAreaHeight, accentColor),
+        _barColumn(widget.stats.first, maxAmount, barAreaHeight, cs),
         if (widget.stats.length > 1)
           Expanded(
             child: SingleChildScrollView(
@@ -1796,8 +1804,7 @@ class _TopCategoriesChartState extends State<_TopCategoriesChart> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: widget.stats
                     .skip(1)
-                    .map((s) =>
-                        _barColumn(s, maxAmount, barAreaHeight, accentColor))
+                    .map((s) => _barColumn(s, maxAmount, barAreaHeight, cs))
                     .toList(),
               ),
             ),

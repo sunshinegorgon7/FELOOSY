@@ -398,7 +398,11 @@ class _MonthCardState extends ConsumerState<_MonthCard> {
                                   s.category.uuid == _selectedCategoryUuid)
                               .firstOrNull;
                           final catColor = selStat != null
-                              ? Color(selStat.category.colorValue)
+                              ? AppTheme.categoryBarColor(
+                                  uuid: selStat.category.uuid,
+                                  colorValue: selStat.category.colorValue,
+                                  colorScheme: cs,
+                                )
                               : accentColor;
                           return GestureDetector(
                             onTap: () => setState(
@@ -530,7 +534,11 @@ class _MonthBarChartState extends State<_MonthBarChart> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: widget.stats.map((stat) {
-        final color = Color(stat.category.colorValue);
+        final color = AppTheme.categoryBarColor(
+          uuid: stat.category.uuid,
+          colorValue: stat.category.colorValue,
+          colorScheme: cs,
+        );
         final targetH =
             (barAreaH * (stat.amount / maxAmount)).clamp(4.0, barAreaH);
         final barH = _entered ? targetH : 0.0;
@@ -597,9 +605,7 @@ class _MonthBarChartState extends State<_MonthBarChart> {
                       fontSize: 10,
                       fontWeight:
                           isSelected ? FontWeight.w700 : FontWeight.w500,
-                      color: isSelected
-                          ? cs.onSurface
-                          : cs.onSurfaceVariant,
+                      color: isSelected ? color : cs.onSurfaceVariant,
                     ),
                     textAlign: TextAlign.center,
                     maxLines: 1,

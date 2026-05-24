@@ -69,6 +69,69 @@ class AppTheme {
   static const Color incomeColor = ledgerGreen;
   static const Color warningColor = amberMark;
 
+  static const List<Color> categoryBarsLight = [
+    lightAccent,
+    lightSecondary,
+    Color(0xFF9A6F55),
+    lightPrimary,
+    Color(0xFFB48139),
+    darkSecondary,
+    Color(0xFF4F6B9A),
+    Color(0xFFC65F78),
+    Color(0xFF7E679A),
+    Color(0xFFB66D50),
+    Color(0xFF7C5FA6),
+    Color(0xFF3F8A7E),
+    Color(0xFF3E78A2),
+    lightPrimary,
+    lightAccent,
+    darkAccent,
+    darkSecondary,
+    Color(0xFF7E679A),
+  ];
+
+  static const List<Color> categoryBarsDark = [
+    Color(0xFFA2C56A),
+    Color(0xFFFF8A7F),
+    Color(0xFFC78B6A),
+    Color(0xFF6FA9D4),
+    Color(0xFFC49A55),
+    Color(0xFF8E78C3),
+    Color(0xFF7F96CC),
+    Color(0xFFE1889E),
+    Color(0xFFA78BC5),
+    Color(0xFFC88D72),
+    Color(0xFFA393D6),
+    Color(0xFF65B8AD),
+    Color(0xFF78ACD0),
+    darkAccent,
+    Color(0xFFA2C56A),
+    Color(0xFF65B8AD),
+    Color(0xFF8E78C3),
+    Color(0xFFA78BC5),
+  ];
+
+  static const Map<String, int> _defaultCategoryBarIndex = {
+    '00000000-0000-0000-0000-000000000001': 0,
+    '00000000-0000-0000-0000-000000000002': 1,
+    '00000000-0000-0000-0000-000000000003': 2,
+    '00000000-0000-0000-0000-000000000004': 3,
+    '00000000-0000-0000-0000-000000000005': 4,
+    '00000000-0000-0000-0000-000000000006': 5,
+    '00000000-0000-0000-0000-000000000007': 6,
+    '00000000-0000-0000-0000-000000000008': 7,
+    '00000000-0000-0000-0000-000000000009': 8,
+    '00000000-0000-0000-0000-000000000010': 9,
+    '00000000-0000-0000-0000-000000000011': 10,
+    '00000000-0000-0000-0000-000000000012': 11,
+    '00000000-0000-0000-0000-000000000013': 12,
+    '00000000-0000-0000-0000-000000000014': 13,
+    '00000000-0000-0000-0000-000000000015': 14,
+    '00000000-0000-0000-0000-000000000016': 15,
+    '00000000-0000-0000-0000-000000000017': 16,
+    '00000000-0000-0000-0000-000000000018': 17,
+  };
+
   static final ThemeData dark = _buildDark();
   static final ThemeData light = _buildLight();
 
@@ -92,6 +155,35 @@ class AppTheme {
 
   static Color readableOn(Color background) =>
       background.computeLuminance() > 0.45 ? lightText : lightBackground;
+
+  static Color categoryBarColor({
+    required String uuid,
+    required int colorValue,
+    required ColorScheme colorScheme,
+  }) {
+    final index = _defaultCategoryBarIndex[uuid];
+    if (index != null) {
+      final palette = colorScheme.brightness == Brightness.dark
+          ? categoryBarsDark
+          : categoryBarsLight;
+      return palette[index % palette.length];
+    }
+    return _customCategoryBarColor(Color(colorValue), colorScheme);
+  }
+
+  static Color _customCategoryBarColor(
+    Color base,
+    ColorScheme colorScheme,
+  ) {
+    final luminance = base.computeLuminance();
+    if (colorScheme.brightness == Brightness.dark && luminance < 0.30) {
+      return Color.lerp(base, darkText, 0.36)!;
+    }
+    if (colorScheme.brightness == Brightness.light && luminance > 0.70) {
+      return Color.lerp(base, lightText, 0.22)!;
+    }
+    return base;
+  }
 
   static ThemeData _buildDark() {
     return ThemeData(
