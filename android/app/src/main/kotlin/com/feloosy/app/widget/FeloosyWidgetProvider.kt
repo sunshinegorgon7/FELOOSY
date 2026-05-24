@@ -63,16 +63,16 @@ class FeloosyWidgetProvider : AppWidgetProvider() {
         private data class CategoryData(val name: String, val amount: Double, val color: Int)
 
         private val CAT_COLORS_LIGHT = intArrayOf(
-            Color.parseColor("#0F4C81"), // Primary blue
-            Color.parseColor("#FF6F61"), // Coral secondary
-            Color.parseColor("#88B04B"), // Olive accent
-            Color.parseColor("#5F584C"), // Warm neutral
+            Color.parseColor("#0E3B2E"), // Forest green
+            Color.parseColor("#1E4FA3"), // Royal blue
+            Color.parseColor("#A6192E"), // Ghazel blood
+            Color.parseColor("#647A43"), // Moss green
         )
         private val CAT_COLORS_DARK = intArrayOf(
-            Color.parseColor("#45B8AC"), // Teal accent
-            Color.parseColor("#5F4B8B"), // Purple secondary
-            Color.parseColor("#8B79B7"), // Lifted purple
-            Color.parseColor("#B6B6BE"), // Cool neutral
+            Color.parseColor("#8FD5E6"), // Ice performance blue
+            Color.parseColor("#6F8FEA"), // Lifted royal blue
+            Color.parseColor("#FF7885"), // Ghazel blood
+            Color.parseColor("#A8BE72"), // Moss green
         )
 
         fun buildViews(context: Context): RemoteViews {
@@ -110,11 +110,11 @@ class FeloosyWidgetProvider : AppWidgetProvider() {
                 else    -> (context.resources.configuration.uiMode and
                     Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
             }
-            val colAccent = if (isNight) Color.parseColor("#45B8AC") else Color.parseColor("#88B04B")
-            val colText   = if (isNight) Color.parseColor("#E7E8EA") else Color.parseColor("#25282C")
-            val colMuted  = if (isNight) Color.parseColor("#B6B6BE") else Color.parseColor("#5F584C")
-            val colOver   = if (isNight) Color.parseColor("#F07171") else Color.parseColor("#B23636")
-            val colOnPrimary = if (isNight) Color.parseColor("#101820") else Color.parseColor("#F7F3E8")
+            val colAccent = if (isNight) Color.parseColor("#8FD5E6") else Color.parseColor("#1E4FA3")
+            val colText   = if (isNight) Color.parseColor("#E3ECE8") else Color.parseColor("#202823")
+            val colMuted  = if (isNight) Color.parseColor("#AAB7B1") else Color.parseColor("#566156")
+            val colOver   = if (isNight) Color.parseColor("#FF7885") else Color.parseColor("#A6192E")
+            val colOnPrimary = if (isNight) Color.parseColor("#0E3B2E") else Color.parseColor("#F3F6EF")
             val catPalette = if (isNight) CAT_COLORS_DARK else CAT_COLORS_LIGHT
             val categories = rawCategories.mapIndexed { i, cat ->
                 cat.copy(color = catPalette[i % catPalette.size])

@@ -2,30 +2,37 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // User supplied palette, light theme.
-  static const Color lightPrimary = Color(0xFF0F4C81);
-  static const Color lightSecondary = Color(0xFFFF6F61);
-  static const Color lightBackground = Color(0xFFF7F3E8);
-  static const Color lightAccent = Color(0xFF88B04B);
-  static const Color lightSurfaceLowest = Color(0xFFFFFCF4);
-  static const Color lightSurfaceLow = Color(0xFFF0E8D7);
-  static const Color lightSurfaceHigh = Color(0xFFE3D8C3);
-  static const Color lightText = Color(0xFF25282C);
-  static const Color lightMuted = Color(0xFF5F584C);
-  static const Color lightOutline = Color(0xFF918574);
-  static const Color lightOutlineVariant = Color(0xFFD5C9B4);
+  // Inspiration palette.
+  static const Color forestGreen = Color(0xFF0E3B2E);
+  static const Color icePerformanceBlue = Color(0xFF8FD5E6);
+  static const Color ghazelBlood = Color(0xFFA6192E);
+  static const Color royalBlue = Color(0xFF1E4FA3);
+  static const Color mossGreen = Color(0xFF647A43);
 
-  // User supplied palette, dark theme.
-  static const Color darkPrimary = Color(0xFF101820);
-  static const Color darkSecondary = Color(0xFF5F4B8B);
-  static const Color darkBackground = Color(0xFF1C1C1E);
-  static const Color darkAccent = Color(0xFF45B8AC);
-  static const Color darkSurfaceLow = Color(0xFF252529);
-  static const Color darkSurface = Color(0xFF2B2B30);
-  static const Color darkSurfaceHigh = Color(0xFF34343B);
-  static const Color darkSurfaceHighest = Color(0xFF3D3D46);
-  static const Color darkText = Color(0xFFE7E8EA);
-  static const Color darkMuted = Color(0xFFB6B6BE);
+  // Light theme.
+  static const Color lightPrimary = forestGreen;
+  static const Color lightSecondary = royalBlue;
+  static const Color lightBackground = Color(0xFFF3F6EF);
+  static const Color lightAccent = icePerformanceBlue;
+  static const Color lightSurfaceLowest = Color(0xFFFBFDF8);
+  static const Color lightSurfaceLow = Color(0xFFE8EFE2);
+  static const Color lightSurfaceHigh = Color(0xFFD9E4D1);
+  static const Color lightText = Color(0xFF202823);
+  static const Color lightMuted = Color(0xFF566156);
+  static const Color lightOutline = Color(0xFF81917E);
+  static const Color lightOutlineVariant = Color(0xFFC8D5C3);
+
+  // Dark theme.
+  static const Color darkPrimary = forestGreen;
+  static const Color darkSecondary = Color(0xFF6F8FEA);
+  static const Color darkBackground = Color(0xFF0D1513);
+  static const Color darkAccent = icePerformanceBlue;
+  static const Color darkSurfaceLow = Color(0xFF151E1B);
+  static const Color darkSurface = Color(0xFF1C2824);
+  static const Color darkSurfaceHigh = Color(0xFF24312C);
+  static const Color darkSurfaceHighest = Color(0xFF2C3A34);
+  static const Color darkText = Color(0xFFE3ECE8);
+  static const Color darkMuted = Color(0xFFAAB7B1);
 
   // Backward-compatible aliases used by existing widgets.
   static const Color fern = lightPrimary;
@@ -51,64 +58,64 @@ class AppTheme {
   static const Color mistVariant = darkMuted;
 
   // Semantic colors.
-  static const Color ledgerRed = Color(0xFFD64545);
-  static const Color ledgerGreen = Color(0xFF4A9955);
-  static const Color amberMark = Color(0xFFCC8830);
-  static const Color destructiveColor = Color(0xFFC73535);
+  static const Color ledgerRed = ghazelBlood;
+  static const Color ledgerGreen = mossGreen;
+  static const Color amberMark = Color(0xFFB47A2B);
+  static const Color destructiveColor = Color(0xFFB11C2E);
 
   // Text-safe variants for small semantic text on tinted surfaces.
   static const Color fernText = lightPrimary;
   static const Color iceGlowText = darkAccent;
-  static const Color ledgerRedText = Color(0xFFB23636);
-  static const Color ledgerRedTextDark = Color(0xFFF07171);
-  static const Color ledgerGreenText = Color(0xFF2F7139);
-  static const Color ledgerGreenTextDark = Color(0xFF72B879);
-  static const Color amberText = Color(0xFF8F5F22);
+  static const Color ledgerRedText = ghazelBlood;
+  static const Color ledgerRedTextDark = Color(0xFFFF7885);
+  static const Color ledgerGreenText = Color(0xFF4B612C);
+  static const Color ledgerGreenTextDark = Color(0xFFA8BE72);
+  static const Color amberText = Color(0xFF80531B);
 
   static const Color expenseColor = ledgerRed;
   static const Color incomeColor = ledgerGreen;
   static const Color warningColor = amberMark;
 
   static const List<Color> categoryBarsLight = [
-    lightAccent,
-    lightSecondary,
-    Color(0xFF9A6F55),
-    lightPrimary,
-    Color(0xFFB48139),
-    darkSecondary,
-    Color(0xFF4F6B9A),
-    Color(0xFFC65F78),
-    Color(0xFF7E679A),
-    Color(0xFFB66D50),
-    Color(0xFF7C5FA6),
-    Color(0xFF3F8A7E),
-    Color(0xFF3E78A2),
-    lightPrimary,
-    lightAccent,
-    darkAccent,
-    darkSecondary,
-    Color(0xFF7E679A),
+    forestGreen,
+    royalBlue,
+    Color(0xFF8B6048),
+    Color(0xFF3A7F92),
+    Color(0xFF9B6F2E),
+    mossGreen,
+    Color(0xFF425F8F),
+    ghazelBlood,
+    Color(0xFF7B5D88),
+    Color(0xFF9E654C),
+    Color(0xFF5260A7),
+    Color(0xFF3D8174),
+    Color(0xFF2F6A9B),
+    forestGreen,
+    mossGreen,
+    Color(0xFF3D8174),
+    royalBlue,
+    Color(0xFF7B5D88),
   ];
 
   static const List<Color> categoryBarsDark = [
-    Color(0xFFA2C56A),
-    Color(0xFFFF8A7F),
-    Color(0xFFC78B6A),
-    Color(0xFF6FA9D4),
-    Color(0xFFC49A55),
-    Color(0xFF8E78C3),
-    Color(0xFF7F96CC),
-    Color(0xFFE1889E),
-    Color(0xFFA78BC5),
-    Color(0xFFC88D72),
-    Color(0xFFA393D6),
-    Color(0xFF65B8AD),
-    Color(0xFF78ACD0),
+    Color(0xFF5FAF8A),
+    darkSecondary,
+    Color(0xFFD09A78),
     darkAccent,
-    Color(0xFFA2C56A),
-    Color(0xFF65B8AD),
-    Color(0xFF8E78C3),
-    Color(0xFFA78BC5),
+    Color(0xFFC99A50),
+    Color(0xFFA8BE72),
+    Color(0xFF85A0E8),
+    Color(0xFFFF7885),
+    Color(0xFFB28CC5),
+    Color(0xFFD49276),
+    Color(0xFF9CA8F2),
+    Color(0xFF75C3B3),
+    Color(0xFF78B8E0),
+    Color(0xFF5FAF8A),
+    Color(0xFFA8BE72),
+    Color(0xFF75C3B3),
+    darkSecondary,
+    Color(0xFFB28CC5),
   ];
 
   static const Map<String, int> _defaultCategoryBarIndex = {
@@ -196,17 +203,17 @@ class AppTheme {
         primaryContainer: darkPrimary,
         onPrimaryContainer: darkAccent,
         secondary: darkSecondary,
-        onSecondary: darkText,
-        secondaryContainer: Color(0xFF342B4B),
-        onSecondaryContainer: darkText,
-        tertiary: darkAccent,
-        onTertiary: darkPrimary,
-        tertiaryContainer: Color(0xFF143E3B),
-        onTertiaryContainer: Color(0xFFBDEDE8),
+        onSecondary: darkPrimary,
+        secondaryContainer: Color(0xFF1A2F63),
+        onSecondaryContainer: Color(0xFFD8E2FF),
+        tertiary: Color(0xFFA8BE72),
+        onTertiary: Color(0xFF18230F),
+        tertiaryContainer: Color(0xFF2C3B20),
+        onTertiaryContainer: Color(0xFFDDE9BC),
         error: destructiveColor,
         onError: lightBackground,
-        errorContainer: Color(0xFF5C1A1A),
-        onErrorContainer: Color(0xFFFFDAD6),
+        errorContainer: Color(0xFF5A111C),
+        onErrorContainer: Color(0xFFFFDADC),
         surface: darkBackground,
         onSurface: darkText,
         surfaceContainerLowest: darkPrimary,
@@ -215,11 +222,11 @@ class AppTheme {
         surfaceContainerHigh: darkSurfaceHigh,
         surfaceContainerHighest: darkSurfaceHighest,
         onSurfaceVariant: darkMuted,
-        outline: Color(0xFF67616F),
+        outline: Color(0xFF5A6A64),
         outlineVariant: darkSurfaceHighest,
         inverseSurface: lightBackground,
         onInverseSurface: darkPrimary,
-        inversePrimary: lightPrimary,
+        inversePrimary: forestGreen,
         scrim: darkPrimary,
         shadow: darkPrimary,
       ),
@@ -261,20 +268,20 @@ class AppTheme {
         surfaceTint: Colors.transparent,
         primary: lightPrimary,
         onPrimary: lightBackground,
-        primaryContainer: Color(0xFFD9E7F2),
+        primaryContainer: Color(0xFFD4E3D9),
         onPrimaryContainer: lightPrimary,
         secondary: lightSecondary,
-        onSecondary: Color(0xFF301512),
-        secondaryContainer: Color(0xFFFFDAD5),
-        onSecondaryContainer: lightText,
-        tertiary: lightAccent,
-        onTertiary: Color(0xFF223011),
-        tertiaryContainer: Color(0xFFE6EFCF),
-        onTertiaryContainer: Color(0xFF354B17),
+        onSecondary: lightBackground,
+        secondaryContainer: Color(0xFFDDE6FF),
+        onSecondaryContainer: Color(0xFF17356E),
+        tertiary: mossGreen,
+        onTertiary: lightBackground,
+        tertiaryContainer: Color(0xFFE1EBCD),
+        onTertiaryContainer: Color(0xFF34441F),
         error: destructiveColor,
         onError: lightBackground,
-        errorContainer: Color(0xFFF9DEDC),
-        onErrorContainer: Color(0xFF8C1D18),
+        errorContainer: Color(0xFFFFDADC),
+        onErrorContainer: Color(0xFF6E0E19),
         surface: lightBackground,
         onSurface: lightText,
         surfaceContainerLowest: lightSurfaceLowest,
