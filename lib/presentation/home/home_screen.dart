@@ -703,7 +703,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   padding: const EdgeInsets.all(32),
                   child: Center(
                     child: Text(
-                      'No transactions yet.\nTap + to add one.',
+                      _selectedDay != null
+                          ? 'No transactions on this day.'
+                          : 'No transactions yet.\nTap + to add one.',
                       textAlign: TextAlign.center,
                       style: tt.bodyMedium?.copyWith(
                           color: cs.onSurfaceVariant),
@@ -716,6 +718,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
                     final catGroup = catGroups[index];
+                    if (_selectedDay != null) {
+                      return _ExpandableCatGroup(
+                        key: ValueKey(catGroup.category.uuid),
+                        group: catGroup,
+                        cats: cats,
+                        summary: summary,
+                        initiallyExpanded: true,
+                      );
+                    }
                     final catColor =
                         Color(catGroup.category.colorValue);
                     return InkWell(
@@ -1842,7 +1853,7 @@ class _MonthCalendar extends StatelessWidget {
 
                 return Expanded(
                   child: GestureDetector(
-                    onTap: hasTx ? () => onDayTap(date) : null,
+                    onTap: (hasTx || isToday) ? () => onDayTap(date) : null,
                     child: SizedBox(
                       height: 36,
                       child: Center(
@@ -2002,6 +2013,163 @@ class _ExpandableDayGroupState extends State<_ExpandableDayGroup> {
                     fontWeight: FontWeight.w500,
                     fontFamily: 'DM Mono',
                     color: accentColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        AnimatedSize(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          child: _expanded
+              ? Padding(
+                  padding:
+                      const EdgeInsets.only(left: 32, right: 16, bottom: 8),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border(
+                        left: BorderSide(color: lineColor, width: 2),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: group.txs
+                          .map(
+                            (tx) => _InlineTransactionRow(
+                              tx: tx,
+                              cat: widget.cats
+                                  .where((c) => c.uuid == tx.categoryUuid)
+                                  .firstOrNull,
+                              summary: widget.summary,
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ),
+                )
+              : const SizedBox.shrink(),
+        ),
+      ],
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Expandable category group — shown in By Category mode when a day is selected
+// ---------------------------------------------------------------------------
+
+class _ExpandableCatGroup extends StatefulWidget {
+  final _CatGroup group;
+  final List<Category> cats;
+  final BudgetSummary summary;
+  final bool initiallyExpanded;
+
+  const _ExpandableCatGroup({
+    super.key,
+    required this.group,
+    required this.cats,
+    required this.summary,
+    this.initiallyExpanded = false,
+  });
+
+  @override
+  State<_ExpandableCatGroup> createState() => _ExpandableCatGroupState();
+}
+
+class _ExpandableCatGroupState extends State<_ExpandableCatGroup> {
+  late bool _expanded;
+
+  @override
+  void initState() {
+    super.initState();
+    _expanded = widget.initiallyExpanded;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    final accentColor = AppTheme.primaryText(cs);
+    final group = widget.group;
+    final catColor = Color(group.category.colorValue);
+    final lineColor = catColor.withValues(alpha: 0.45);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        InkWell(
+          onTap: () => setState(() => _expanded = !_expanded),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
+            child: Row(
+              children: [
+                AnimatedRotation(
+                  turns: _expanded ? 0.25 : 0,
+                  duration: const Duration(milliseconds: 180),
+                  child: Icon(
+                    Icons.chevron_right,
+                    size: 16,
+                    color: cs.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: catColor.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(7),
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(
+                    IconData(
+                      group.category.iconCodePoint,
+                      fontFamily: group.category.iconFontFamily,
+                    ),
+                    size: 13,
+                    color: catColor,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    group.category.name,
+                    style: tt.bodyMedium?.copyWith(
+                      color: cs.onSurface,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                Container(
+                  width: 22,
+                  height: 22,
+                  decoration: BoxDecoration(
+                    color: cs.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(11),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    '${group.count}',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: accentColor,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                SizedBox(
+                  width: 88,
+                  child: Text(
+                    widget.summary.formatAmount(group.net.abs()),
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      fontFamily: 'DM Mono',
+                      color: accentColor,
+                    ),
+                    textAlign: TextAlign.right,
                   ),
                 ),
               ],

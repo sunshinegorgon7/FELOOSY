@@ -86,6 +86,7 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
   List<_Candidate> _candidates = [];
   bool _importing = false;
   String? _error;
+  String? _importError;
 
   static const _uuid = Uuid();
 
@@ -249,27 +250,41 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
 
   Future<void> _import() async {
     if (_importing) return;
-    setState(() => _importing = true);
+    setState(() {
+      _importing = true;
+      _importError = null;
+    });
 
     final selected = _candidates.where((c) => c.selected).toList();
     int count = 0;
     final importedDates = <DateTime>[];
+    final notifier = ref.read(transactionsProvider.notifier);
+    String? firstError;
     for (final c in selected) {
       try {
-        // Use the (possibly edited) description rather than the original rule default.
         final tx = c.description == c.transaction.description
             ? c.transaction
             : c.transaction.copyWith(description: c.description);
-        await ref.read(transactionsProvider.notifier).add(tx);
+        await notifier.add(tx);
         count++;
         importedDates.add(c.transaction.transactionDate);
-      } catch (_) {}
+      } catch (e) {
+        firstError ??= e.toString();
+      }
     }
 
-    if (mounted) {
-      Navigator.pop(context);
-      widget.onImported?.call(count, importedDates);
+    if (!mounted) return;
+
+    if (count == 0 && firstError != null) {
+      setState(() {
+        _importing = false;
+        _importError = 'Import failed: $firstError';
+      });
+      return;
     }
+
+    Navigator.pop(context);
+    widget.onImported?.call(count, importedDates);
   }
 
   Future<void> _editDescription(int index) async {
@@ -496,6 +511,21 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
           ),
         ),
         const Divider(height: 1),
+        if (_importError != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: cs.errorContainer.withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                _importError!,
+                style: TextStyle(color: cs.error, fontSize: 13),
+              ),
+            ),
+          ),
         Padding(
           padding: EdgeInsets.fromLTRB(
             20, 12, 20, MediaQuery.paddingOf(context).bottom + 16,
