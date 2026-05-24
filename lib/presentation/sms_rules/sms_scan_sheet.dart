@@ -12,6 +12,7 @@ import '../../data/models/category.dart';
 import '../../data/models/sms_rule.dart';
 import '../../data/models/transaction.dart';
 import '../../domain/services/sms_parser_service.dart';
+import '../../providers/accounts_provider.dart';
 import '../../providers/categories_provider.dart';
 import '../../providers/sms_rules_provider.dart';
 import '../../providers/transactions_provider.dart';
@@ -162,6 +163,10 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
       final rules = ref.read(smsRulesProvider).asData?.value ?? [];
       final cats = ref.read(categoriesProvider).asData?.value ?? [];
       final existing = ref.read(transactionsProvider).asData?.value ?? [];
+      final accounts = ref.read(accountsProvider).asData?.value ?? [];
+      final fallbackAccountId = accounts.isNotEmpty
+          ? (accounts.firstWhere((a) => a.isFavorite, orElse: () => accounts.first).id ?? 1)
+          : 1;
       final activeRules = rules.where((r) => r.isActive).toList();
 
       if (activeRules.isEmpty) {
@@ -197,9 +202,12 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
             tx.transactionDate.difference(msg.date).inDays.abs() <= 3);
 
         final now = DateTime.now();
+        final resolvedAccountId = accounts.any((a) => a.id == rule.accountId)
+            ? rule.accountId
+            : fallbackAccountId;
         final tx = Transaction(
           uuid: _uuid.v4(),
-          accountId: rule.accountId,
+          accountId: resolvedAccountId,
           amount: amount,
           type: rule.transactionType == 'income'
               ? TransactionType.income

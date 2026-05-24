@@ -72,7 +72,11 @@ class _SmsRuleFormScreenState extends ConsumerState<SmsRuleFormScreen> {
     try {
       final notifier = ref.read(smsRulesProvider.notifier);
       final now = DateTime.now();
-      final accountId = _accountId ?? 1;
+      final allAccounts = ref.read(accountsProvider).asData?.value ?? [];
+      final fallbackAccount = allAccounts.isNotEmpty
+          ? allAccounts.firstWhere((a) => a.isFavorite, orElse: () => allAccounts.first)
+          : null;
+      final accountId = _accountId ?? fallbackAccount?.id ?? 1;
       final regex = _regexCtrl.text.trim();
 
       final desc = _descFieldCtrl?.text.trim() ?? '';

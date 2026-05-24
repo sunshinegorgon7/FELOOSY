@@ -7,6 +7,7 @@ import 'package:uuid/uuid.dart';
 
 import '../data/models/transaction.dart';
 import '../domain/services/sms_parser_service.dart';
+import '../providers/accounts_provider.dart';
 import '../providers/sms_rules_provider.dart';
 import '../providers/transactions_provider.dart';
 
@@ -49,10 +50,18 @@ class SmsTransactionService {
     );
     if (amount == null || amount <= 0) return;
 
+    final accounts = ref.read(accountsProvider).asData?.value ?? [];
+    final fallbackAccountId = accounts.isNotEmpty
+        ? (accounts.firstWhere((a) => a.isFavorite, orElse: () => accounts.first).id ?? matched.accountId)
+        : matched.accountId;
+    final resolvedAccountId = accounts.any((a) => a.id == matched.accountId)
+        ? matched.accountId
+        : fallbackAccountId;
+
     final now = DateTime.now();
     final tx = Transaction(
       uuid: _uuid.v4(),
-      accountId: matched.accountId,
+      accountId: resolvedAccountId,
       amount: amount,
       type: matched.transactionType == 'income'
           ? TransactionType.income
