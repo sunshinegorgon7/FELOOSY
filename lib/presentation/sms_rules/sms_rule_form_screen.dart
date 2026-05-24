@@ -5,8 +5,10 @@ import 'package:gap/gap.dart';
 import '../../app/app_theme.dart';
 import '../../data/models/category.dart';
 import '../../data/models/sms_rule.dart';
+import '../../data/repositories/transaction_repository.dart';
 import '../../providers/accounts_provider.dart';
 import '../../providers/categories_provider.dart';
+import '../../providers/database_provider.dart';
 import '../../providers/sms_rules_provider.dart';
 
 class SmsRuleFormScreen extends ConsumerStatefulWidget {
@@ -19,8 +21,9 @@ class SmsRuleFormScreen extends ConsumerStatefulWidget {
 
 class _SmsRuleFormScreenState extends ConsumerState<SmsRuleFormScreen> {
   late final TextEditingController _keywordCtrl;
-  late final TextEditingController _descCtrl;
   late final TextEditingController _regexCtrl;
+  TextEditingController? _descFieldCtrl;
+  bool _descInitialized = false;
 
   String _type = 'expense';
   String? _categoryUuid;
@@ -34,7 +37,6 @@ class _SmsRuleFormScreenState extends ConsumerState<SmsRuleFormScreen> {
     super.initState();
     final rule = widget.rule;
     _keywordCtrl = TextEditingController(text: rule?.keyword ?? '');
-    _descCtrl = TextEditingController(text: rule?.description ?? '');
     _regexCtrl = TextEditingController(text: rule?.amountRegex ?? '');
     _type = rule?.transactionType ?? 'expense';
     _categoryUuid = rule?.categoryUuid;
@@ -44,7 +46,6 @@ class _SmsRuleFormScreenState extends ConsumerState<SmsRuleFormScreen> {
   @override
   void dispose() {
     _keywordCtrl.dispose();
-    _descCtrl.dispose();
     _regexCtrl.dispose();
     super.dispose();
   }
@@ -75,7 +76,7 @@ class _SmsRuleFormScreenState extends ConsumerState<SmsRuleFormScreen> {
       final accountId = _accountId ?? 1;
       final regex = _regexCtrl.text.trim();
 
-      final desc = _descCtrl.text.trim();
+      final desc = _descFieldCtrl?.text.trim() ?? '';
       if (_isEditing) {
         final updated = widget.rule!.copyWith(
           keyword: keyword,
@@ -246,16 +247,23 @@ class _SmsRuleFormScreenState extends ConsumerState<SmsRuleFormScreen> {
           const SizedBox(height: 24),
           const _SectionLabel('Transaction Label'),
           const SizedBox(height: 6),
-          TextField(
-            controller: _descCtrl,
-            textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(
-              hintText: 'e.g. Gas, Coffee, Groceries (leave blank to use keyword)',
-              border: OutlineInputBorder(),
-              helperText:
-                  'Shown as the transaction description. Defaults to the keyword.',
-              helperMaxLines: 2,
-            ),
+          _DescriptionAutocomplete(
+            initialDescription: widget.rule?.description,
+            categories: categories,
+            repo: ref.read(transactionRepositoryProvider),
+            onControllerReady: (controller) {
+              _descFieldCtrl = controller;
+              if (!_descInitialized &&
+                  widget.rule?.description?.isNotEmpty == true) {
+                _descInitialized = true;
+                controller.text = widget.rule!.description!;
+                controller.selection = TextSelection.collapsed(
+                    offset: controller.text.length);
+              }
+            },
+            onSuggestionSelected: (suggestion) {
+              setState(() => _categoryUuid = suggestion.categoryUuid);
+            },
           ),
 
           const SizedBox(height: 24),
@@ -462,6 +470,125 @@ class _Segment extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Description field with autocomplete from past transactions
+// ---------------------------------------------------------------------------
+
+class _DescriptionAutocomplete extends StatelessWidget {
+  final String? initialDescription;
+  final List<Category> categories;
+  final TransactionRepository repo;
+  final ValueChanged<TextEditingController> onControllerReady;
+  final ValueChanged<DescriptionSuggestion> onSuggestionSelected;
+
+  const _DescriptionAutocomplete({
+    required this.categories,
+    required this.repo,
+    required this.onControllerReady,
+    required this.onSuggestionSelected,
+    this.initialDescription,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
+    return Autocomplete<DescriptionSuggestion>(
+      optionsBuilder: (textEditingValue) async {
+        final text = textEditingValue.text.trim();
+        if (text.length < 2) return const [];
+        return repo.getDescriptionSuggestions(text);
+      },
+      displayStringForOption: (opt) => opt.description,
+      onSelected: onSuggestionSelected,
+      optionsViewBuilder: (context, onSelected, options) {
+        return Align(
+          alignment: Alignment.topLeft,
+          child: Material(
+            elevation: 4,
+            borderRadius: BorderRadius.circular(12),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 200),
+              child: ListView.separated(
+                padding: EdgeInsets.zero,
+                shrinkWrap: true,
+                itemCount: options.length,
+                separatorBuilder: (_, _) =>
+                    Divider(height: 1, color: cs.surfaceContainerHighest),
+                itemBuilder: (context, index) {
+                  final opt = options.elementAt(index);
+                  final cat = categories
+                      .where((c) => c.uuid == opt.categoryUuid)
+                      .firstOrNull;
+                  final iconColor =
+                      cat != null ? Color(cat.colorValue) : cs.onSurfaceVariant;
+                  final iconData = cat != null
+                      ? IconData(cat.iconCodePoint,
+                          fontFamily: cat.iconFontFamily)
+                      : Icons.receipt_outlined;
+                  return InkWell(
+                    onTap: () => onSelected(opt),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 14,
+                            backgroundColor:
+                                iconColor.withValues(alpha: 0.15),
+                            child:
+                                Icon(iconData, color: iconColor, size: 14),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(opt.description,
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w500)),
+                                if (cat != null)
+                                  Text(cat.name,
+                                      style: TextStyle(
+                                          fontSize: 12,
+                                          color: cs.onSurfaceVariant)),
+                              ],
+                            ),
+                          ),
+                          Icon(Icons.north_west,
+                              size: 14, color: cs.onSurfaceVariant),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+      },
+      fieldViewBuilder: (context, controller, focusNode, _) {
+        WidgetsBinding.instance
+            .addPostFrameCallback((_) => onControllerReady(controller));
+        return TextField(
+          controller: controller,
+          focusNode: focusNode,
+          textCapitalization: TextCapitalization.sentences,
+          decoration: const InputDecoration(
+            hintText:
+                'e.g. Gas, Coffee, Groceries (leave blank to use keyword)',
+            border: OutlineInputBorder(),
+            helperText:
+                'Shown as the transaction description. Defaults to the keyword.',
+            helperMaxLines: 2,
+          ),
+        );
+      },
     );
   }
 }
