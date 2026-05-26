@@ -50,14 +50,16 @@ final budgetSummaryProvider = FutureProvider<BudgetSummary>((ref) async {
     final prevBudgetAmount =
         prevBudget?.amount ?? account?.defaultMonthlyBudget ?? settings.defaultMonthlyBudget;
 
-    final prevExpenses = prevTxs
-        .where((t) => t.type == TransactionType.expense)
-        .fold(0.0, (s, t) => s + t.amount);
-    final prevIncome = prevTxs
-        .where((t) => t.type == TransactionType.income)
-        .fold(0.0, (s, t) => s + t.amount);
-    final prevRemaining = prevBudgetAmount - prevExpenses + prevIncome;
-    carryOverAmount = prevRemaining > 0 ? prevRemaining : 0.0;
+    if (prevTxs.isNotEmpty) {
+      final prevExpenses = prevTxs
+          .where((t) => t.type == TransactionType.expense)
+          .fold(0.0, (s, t) => s + t.amount);
+      final prevIncome = prevTxs
+          .where((t) => t.type == TransactionType.income)
+          .fold(0.0, (s, t) => s + t.amount);
+      final prevRemaining = prevBudgetAmount - prevExpenses + prevIncome;
+      carryOverAmount = prevRemaining > 0 ? prevRemaining : 0.0;
+    }
   }
 
   return BudgetService.computeSummary(
