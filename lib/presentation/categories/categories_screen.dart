@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../data/models/category.dart';
+import '../../providers/access_tier_provider.dart';
 import '../../providers/categories_provider.dart';
-import '../../providers/purchase_provider.dart';
 import '../../providers/transactions_provider.dart';
 
 class CategoriesScreen extends ConsumerStatefulWidget {
@@ -72,9 +72,7 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen>
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          final isPurchased =
-              ref.read(purchaseProvider).asData?.value ?? false;
-          if (!isPurchased) {
+          if (!ref.read(accessTierProvider).canCustomCategories) {
             context.push('/paywall');
             return;
           }

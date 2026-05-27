@@ -9,6 +9,7 @@ import '../../data/models/category.dart';
 import '../../data/models/account.dart';
 import '../../data/models/transaction.dart';
 import '../../domain/entities/budget_summary.dart';
+import '../../providers/access_tier_provider.dart';
 import '../../providers/accounts_provider.dart';
 import '../../providers/budget_period_provider.dart';
 import '../../providers/budget_summary_provider.dart';
@@ -30,6 +31,166 @@ class _ImportSignalNotifier extends Notifier<int> {
 
 final smsImportCompletedProvider =
     NotifierProvider<_ImportSignalNotifier, int>(_ImportSignalNotifier.new);
+
+// ---------------------------------------------------------------------------
+// First-launch privacy consent sheet
+// ---------------------------------------------------------------------------
+
+class _PrivacyConsentSheet extends StatelessWidget {
+  final VoidCallback onAccept;
+  final VoidCallback onViewPolicy;
+
+  const _PrivacyConsentSheet({
+    required this.onAccept,
+    required this.onViewPolicy,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    final accentColor = AppTheme.primaryText(cs);
+    final bottom = MediaQuery.paddingOf(context).bottom;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: cs.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: EdgeInsets.fromLTRB(24, 12, 24, bottom + 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: cs.outlineVariant,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Icon(Icons.shield_outlined, size: 22, color: accentColor),
+              const SizedBox(width: 10),
+              Text(
+                'Before you start',
+                style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _ConsentPoint(
+            icon: Icons.sms_outlined,
+            title: 'SMS auto-detection',
+            body:
+                'If you grant SMS permission, incoming bank messages are '
+                'matched against your rules in memory. The message text is '
+                'never saved or shared.',
+          ),
+          const SizedBox(height: 12),
+          _ConsentPoint(
+            icon: Icons.phone_android_outlined,
+            title: 'Your data stays on your device',
+            body:
+                'Transactions and budgets are stored locally. We have no '
+                'servers and cannot see your financial data.',
+          ),
+          const SizedBox(height: 12),
+          _ConsentPoint(
+            icon: Icons.auto_awesome_outlined,
+            title: 'AI analysis (optional)',
+            body:
+                'If you use the AI feature, anonymised spending summaries '
+                '(category totals, no raw SMS) are sent to Google Gemini.',
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: onViewPolicy,
+                  child: const Text('Read full policy'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 2,
+                child: FilledButton(
+                  onPressed: onAccept,
+                  child: const Text('Accept & Continue'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ConsentPoint extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String body;
+
+  const _ConsentPoint({
+    required this.icon,
+    required this.title,
+    required this.body,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    final accentColor = AppTheme.primaryText(cs);
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 34,
+          height: 34,
+          decoration: BoxDecoration(
+            color: cs.primary.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, size: 17, color: accentColor),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: tt.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: cs.onSurface,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                body,
+                style: tt.bodySmall?.copyWith(
+                  color: cs.onSurfaceVariant,
+                  height: 1.45,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
 
 String _dayLabel(DateTime date) {
   final now = DateTime.now();
@@ -92,6 +253,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   DateTime? _selectedDay;
   final _scrollController = ScrollController();
   bool _tutorialDismissed = false;
+  bool _privacyConsentScheduled = false;
   final _addFabKey = GlobalKey();
   final _settingsIconKey = GlobalKey();
   final _budgetHeroKey = GlobalKey();
@@ -213,6 +375,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final showTutorial =
         !_tutorialDismissed &&
         settingsAsync.value?.tutorialCompleted == false;
+
+    final needsPrivacyConsent = !_privacyConsentScheduled &&
+        settingsAsync.value != null &&
+        settingsAsync.value!.privacyAcceptedAt == null;
+    if (needsPrivacyConsent) {
+      _privacyConsentScheduled = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _showPrivacyConsent();
+      });
+    }
 
     final scaffold = Scaffold(
       backgroundColor: cs.surface,
@@ -531,16 +703,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ref.watch(transactionPeriodOffsetsProvider).asData?.value;
     if (freshOffsets != null) _cachedPeriodOffsets = freshOffsets;
     final transactionPeriodOffsets = _cachedPeriodOffsets;
+    // Free tier: restrict history to the current month only.
+    final effectiveOffsets = ref.watch(accessTierProvider).hasFullHistory
+        ? transactionPeriodOffsets
+        : const {0};
     final olderPeriodOffset = _olderTransactionPeriodOffset(
       periodOffset,
-      transactionPeriodOffsets,
+      effectiveOffsets,
     );
     // Always allow navigating toward the current period even if it has no
     // transactions — fall back to offset 0 so the right chevron is never
     // disabled while the user is stuck in a past period.
     final newerPeriodOffset = periodOffset == 0
         ? null
-        : (_newerTransactionPeriodOffset(periodOffset, transactionPeriodOffsets) ?? 0);
+        : (_newerTransactionPeriodOffset(periodOffset, effectiveOffsets) ?? 0);
     final periodLabel = DateFormat(
       'MMMM yyyy',
     ).format(DateTime(period.budgetYear, period.budgetMonth));
@@ -1061,6 +1237,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void _completeTutorial() {
     setState(() => _tutorialDismissed = true);
     ref.read(settingsProvider.notifier).markTutorialComplete();
+  }
+
+  void _showPrivacyConsent() {
+    showModalBottomSheet<void>(
+      context: context,
+      isDismissible: false,
+      enableDrag: false,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _PrivacyConsentSheet(
+        onAccept: () {
+          Navigator.of(context).pop();
+          ref.read(settingsProvider.notifier).acceptPrivacy();
+        },
+        onViewPolicy: () {
+          context.push('/settings/privacy');
+        },
+      ),
+    );
   }
 
   List<TutorialStep> _buildTutorialSteps() => [

@@ -141,6 +141,18 @@ class TransactionRepository {
     return rows.first['c'] as int? ?? 0;
   }
 
+  Future<int> countForMonth(int year, int month, int accountId) async {
+    final db = await _db.database;
+    final start = DateTime(year, month, 1);
+    final end = DateTime(year, month + 1, 1);
+    final rows = await db.rawQuery(
+      'SELECT COUNT(*) as c FROM transactions '
+      'WHERE account_id = ? AND transaction_date >= ? AND transaction_date < ?',
+      [accountId, start.millisecondsSinceEpoch, end.millisecondsSinceEpoch],
+    );
+    return rows.first['c'] as int? ?? 0;
+  }
+
   /// Returns category UUIDs ordered by transaction frequency (most used first).
   Future<List<String>> getMostUsedCategoryUuids({int limit = 4, int? accountId}) async {
     final db = await _db.database;

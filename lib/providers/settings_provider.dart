@@ -21,6 +21,13 @@ class SettingsNotifier extends AsyncNotifier<AppSettings> {
     final updated = current.copyWith(tutorialCompleted: true);
     await saveSettings(updated);
   }
+
+  Future<void> acceptPrivacy() async {
+    final current = state.value;
+    if (current == null) return;
+    final updated = current.copyWith(privacyAcceptedAt: DateTime.now());
+    await saveSettings(updated);
+  }
 }
 
 final settingsProvider =

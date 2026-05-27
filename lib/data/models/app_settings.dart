@@ -11,6 +11,7 @@ class AppSettings {
   final DateTime? lastBackupAt;
   final DateTime updatedAt;
   final bool tutorialCompleted;
+  final DateTime? privacyAcceptedAt;
 
   const AppSettings({
     this.id = 1,
@@ -25,6 +26,7 @@ class AppSettings {
     this.lastBackupAt,
     required this.updatedAt,
     this.tutorialCompleted = false,
+    this.privacyAcceptedAt,
   });
 
   static AppSettings get defaults => AppSettings(updatedAt: DateTime.now());
@@ -40,6 +42,7 @@ class AppSettings {
     double? defaultMonthlyBudget,
     DateTime? lastBackupAt,
     bool? tutorialCompleted,
+    DateTime? privacyAcceptedAt,
   }) {
     return AppSettings(
       id: id,
@@ -55,6 +58,7 @@ class AppSettings {
       lastBackupAt: lastBackupAt ?? this.lastBackupAt,
       updatedAt: DateTime.now(),
       tutorialCompleted: tutorialCompleted ?? this.tutorialCompleted,
+      privacyAcceptedAt: privacyAcceptedAt ?? this.privacyAcceptedAt,
     );
   }
 
@@ -76,6 +80,10 @@ class AppSettings {
       updatedAt:
           DateTime.fromMillisecondsSinceEpoch(map['updated_at'] as int),
       tutorialCompleted: (map['tutorial_completed'] as int? ?? 0) == 1,
+      privacyAcceptedAt: map['privacy_accepted_at'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(
+              map['privacy_accepted_at'] as int)
+          : null,
     );
   }
 
@@ -93,6 +101,7 @@ class AppSettings {
       'last_backup_at': lastBackupAt?.millisecondsSinceEpoch,
       'updated_at': updatedAt.millisecondsSinceEpoch,
       'tutorial_completed': tutorialCompleted ? 1 : 0,
+      'privacy_accepted_at': privacyAcceptedAt?.millisecondsSinceEpoch,
     };
   }
 }

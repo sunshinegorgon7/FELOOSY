@@ -14,7 +14,7 @@ import '../../providers/accounts_provider.dart';
 import '../../providers/database_provider.dart';
 import '../../providers/recurring_rules_provider.dart';
 import '../../providers/settings_provider.dart';
-import '../../providers/purchase_provider.dart';
+import '../../providers/access_tier_provider.dart';
 import '../../providers/transactions_provider.dart';
 import '../../services/recurring_transaction_service.dart';
 
@@ -206,13 +206,16 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
               ),
             );
       } else {
-        // Only gate on the paywall when we know for certain the user hasn't
-        // purchased. If the provider is still loading (.value == null), let
-        // the transaction through — treating loading as unpurchased causes a
-        // spurious paywall push on the very first transaction of each session.
-        if (ref.read(purchaseProvider).value == false) {
-          final txCount = await ref.read(transactionRepositoryProvider).count();
-          if (txCount >= 10) {
+        // accessTierProvider is synchronous and resolves to free while async
+        // providers are still loading — same conservative intent as before.
+        final tier = ref.read(accessTierProvider);
+        final limit = tier.monthlyTxPerWallet;
+        if (limit != null) {
+          final now = DateTime.now();
+          final count = await ref
+              .read(transactionRepositoryProvider)
+              .countForMonth(now.year, now.month, account?.id ?? 1);
+          if (count >= limit) {
             if (mounted) context.push('/paywall');
             return;
           }

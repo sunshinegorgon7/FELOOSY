@@ -9,6 +9,7 @@ import '../presentation/categories/edit_category_screen.dart';
 import '../presentation/home/home_screen.dart';
 import '../presentation/settings/settings_screen.dart';
 import '../presentation/settings/manage_accounts_screen.dart';
+import '../presentation/settings/privacy_policy_screen.dart';
 import '../presentation/sms_rules/sms_rule_form_screen.dart';
 import '../presentation/sms_rules/sms_rules_screen.dart';
 import '../presentation/transactions/add_transaction_screen.dart';
@@ -35,6 +36,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/settings/accounts',
       builder: (context, state) => const ManageAccountsScreen(),
+    ),
+    GoRoute(
+      path: '/settings/privacy',
+      builder: (context, state) => const PrivacyPolicyScreen(),
     ),
 
     GoRoute(
@@ -74,7 +79,9 @@ final appRouter = GoRouter(
 
     GoRoute(
       path: '/paywall',
-      builder: (context, state) => const PaywallScreen(),
+      builder: (context, state) => PaywallScreen(
+        focus: state.extra as PaywallFocus? ?? PaywallFocus.pro,
+      ),
     ),
 
     GoRoute(

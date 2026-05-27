@@ -1,142 +1,265 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+FELOOSY is a Flutter personal budgeting app for iOS and Android. Local-first SQLite, no backend. Riverpod state layer, GoRouter navigation, Gemini AI analysis, Google Drive backup, Android SMS auto-parsing. This file is the index — detail lives in [docs/](docs/).
 
-## Project Overview
+---
 
-FELOOSY is a Flutter personal budgeting app targeting iOS and Android. It uses SQLite for local-first persistence with optional Google Drive backup (Google Sign-In required). Firebase/Firestore has been removed.
+## 1. Project Overview & Stack
 
-## Common Commands
+| Layer | Technology | Version |
+|---|---|---|
+| **Language / SDK** | Dart | `^3.11.5` |
+| **Framework** | Flutter | current stable |
+| **App version** | — | `1.4.1+70` (pubspec + app_info.dart must stay in sync) |
+| **State management** | flutter_riverpod | `^3.3.1` |
+| **Codegen** | riverpod_annotation + build_runner + riverpod_generator | `^4.0.2` |
+| **Database** | sqflite (SQLite v18, 18 migrations) | `^2.3.3` |
+| **Navigation** | go_router (12 named routes) | `^17.2.2` |
+| **AI analysis** | google_generative_ai (Gemini 1.5 Flash, JSON mode) | `^0.4.0` |
+| **Authentication** | google_sign_in | `^7.2.0` |
+| **Cloud backup** | googleapis (Drive appDataFolder) | `^16.0.0` |
+| **Monetization** | in_app_purchase | `^3.2.2` |
+| **Secure storage** | flutter_secure_storage | `^10.2.0` |
+| **Charts** | fl_chart | `^1.2.0` |
+| **Icons** | lucide_icons | `^0.257.0` |
+| **Font** | google_fonts (Geist) | `^8.0.2` |
+| **Export/share** | share_plus + file_picker | `^12.0.2` / `^11.0.2` |
+| **Home widget** | home_widget | `^0.9.1` |
+| **SMS (Android only)** | EventChannel + SmsReceiver.kt | native |
+| **Spacing** | gap | `^3.0.1` |
+| **IDs** | uuid | `^4.5.1` |
+| **Crypto** | crypto (SHA-256 for AI cache) | `^3.0.0` |
 
+**What is NOT here:** Firebase, Firestore, REST APIs, Freezed/json_serializable in use (deps exist but annotations unused), i18n/l10n (English-only, intl used only for date + number formatting), IAP receipt validation server.
+
+**Flavors:** Two only — `dev` and `prod`. No UAT.
+- `lib/main_dev.dart` → `Flavor.dev` → `feloosy_dev.db`
+- `lib/main.dart` → `Flavor.prod` → `feloosy.db`
+- Dev always resolves to `AccessTier.subscription` — paywall never appears.
+
+**Common commands:**
 ```bash
-# Run by flavor
-flutter run -t lib/main_dev.dart   # dev  → feloosy_dev.db
-flutter run -t lib/main.dart       # prod → feloosy.db
-
-# Build
+flutter run -t lib/main_dev.dart          # dev run
+flutter run -t lib/main.dart              # prod run
 flutter build apk
 flutter build ios
-
-# Code generation (Freezed, json_serializable, Riverpod generator)
 flutter pub run build_runner build --delete-conflicting-outputs
-
-# Tests
 flutter test
-flutter test test/widget_test.dart   # single file
-
-# Lint
 dart analyze
+git rev-list --count HEAD                 # build number for pubspec
 ```
 
-## Architecture
+---
 
-The app follows a three-layer architecture:
+## 2. Architecture & Import Rules
 
-**`data/`** — SQLite repositories and model serialization. All models use `toMap()`/`fromMap()` (not Freezed/json_serializable, despite those deps being in pubspec). `DatabaseHelper` is a singleton managing schema migrations up to v9.
+**Layer order (data flows down, never up):**
+```
+UI (presentation/) → Providers (providers/) → Repositories (data/repositories/) → DatabaseHelper (data/database/)
+                                            → Services (domain/services/ + services/)
+```
 
-**`domain/`** — Business logic entities (`BudgetSummary`, `BudgetPeriod`) and services (`GoogleDriveBackupService`, `LocalExportService`, `BudgetService`). Services are stateless and called directly from providers.
+**Import rules — read before touching any of these:**
 
-**`presentation/`** — Screens and widgets. All screens are `ConsumerWidget` or `ConsumerStatefulWidget`.
+| Need | Import from | Never duplicate in |
+|---|---|---|
+| DB access | `data/database/database_helper.dart` | Any other file — it's a singleton |
+| Repository instances | `providers/database_provider.dart` | Construct repos inline in notifiers |
+| Theme colors | `app/app_theme.dart` via `Theme.of(context).colorScheme` | Hard-coded hex in widgets |
+| Semantic text colors | `AppTheme.expenseText(cs)` / `incomeText(cs)` / `warningText(cs)` | Custom `TextStyle(color: ...)` for semantic roles |
+| Budget period math | `core/utils/month_calculator.dart` | Inline `DateTime` arithmetic for period boundaries |
+| Currency formatting | `core/utils/currency_formatter.dart` | `NumberFormat` or `intl` directly in widgets |
+| Default category UUIDs | `core/constants/default_categories.dart` → `kDefaultCategoryUuids` | Any hardcoded UUID string in code |
+| Access tier | `providers/access_tier_provider.dart` | Re-reading secure storage directly |
+| Navigation | `app/router.dart` named route constants | Inline string paths in `context.go()` calls |
 
-**`providers/`** — Riverpod state layer. Each feature has an `AsyncNotifierProvider` wrapping the repository. Mutations call `ref.invalidateSelf()` to force reload. `database_provider.dart` handles dependency injection of repositories via `Provider`.
+**Key files to read before touching load-bearing code:**
+- Budget period / month-start: [core/utils/month_calculator.dart](lib/core/utils/month_calculator.dart)
+- Feature gating logic: [providers/access_tier_provider.dart](lib/providers/access_tier_provider.dart) → deeper in [docs/feature-gating.md](docs/feature-gating.md)
+- Carry-over + budget summary: [providers/budget_summary_provider.dart](lib/providers/budget_summary_provider.dart) → see [docs/algorithm-decisions.md](docs/algorithm-decisions.md)
+- All routes: [app/router.dart](lib/app/router.dart)
+- DB migrations: [data/database/database_helper.dart](lib/data/database/database_helper.dart) — currently v18
 
-## Key Patterns
-
-**Data flow**: UI watches a provider → provider calls repository → repository queries `DatabaseHelper`. There is no automatic cloud sync on writes; data lives locally and is backed up to Google Drive on demand.
-
-**Google Drive backup**: `GoogleDriveBackupService` exports all SQLite tables as JSON to the Drive `appDataFolder` scope. It retains up to 5 backups (auto-prunes oldest). Restore replaces all local tables in a single SQLite transaction. The `last_backup_at` timestamp is stored in `app_settings`. Triggered from the Settings screen.
-
-**Google sign-in**: Handled by `GoogleAccountNotifier` in `google_auth_provider.dart` using `GoogleSignIn.instance` directly (no Firebase Auth dependency). Scopes: `email`, `profile`, and `drive.appdata`.
-
-**Navigation**: GoRouter with named routes. Complex objects (e.g., a `Transaction` being edited) are passed via the `extra` parameter. See [app/router.dart](lib/app/router.dart) for all routes.
-
-**Multi-account**: Every `Transaction` and `Budget` is linked to an `account_id`. The home view can filter by account or aggregate across all. The `is_favorite` flag marks the default wallet.
-
-**Categories**: The 16 default categories have stable hardcoded UUIDs in [core/constants/default_categories.dart](lib/core/constants/default_categories.dart). Never change these UUIDs — they're used as foreign keys in existing user databases.
-
-**Flavors**: `AppFlavor` (set at startup) controls the SQLite database filename and debug banner. Dev uses `feloosy_dev.db`, prod uses `feloosy.db`. Entry points: `lib/main_dev.dart` (dev) and `lib/main.dart` (prod). There is no UAT flavor.
-
-**Theme system**: `AppTheme` in `lib/app/app_theme.dart` defines explicit light and dark palettes, plus semantic ledger red/green/amber roles. All colors are exposed as named `static const` values on `AppTheme`. In widgets, access the active palette via `final cs = Theme.of(context).colorScheme;` (the `cs` shorthand is the established pattern throughout the codebase). Use `AppTheme.primaryText(cs)`, `expenseText(cs)`, `incomeText(cs)`, and `warningText(cs)` for small colored text so contrast stays readable. `AppTheme.resolveMode(stored)` converts the `theme_mode` string from `app_settings` to a `ThemeMode`.
-
-**Tutorial**: A one-time first-run tutorial is implemented as `TutorialOverlay` in `lib/presentation/tutorial/tutorial_overlay.dart`. Completion is tracked by the `tutorialCompleted` flag stored in the `app_settings` singleton row.
-
-**Monetization**: The app is free with a $4.99 one-time purchase (product ID: `feloosy_pro_lifetime`) that unlocks: multiple wallets, Google Drive backup, local export, and custom categories. Purchase state is stored in the platform keychain/keystore via `flutter_secure_storage` (key: `feloosy_pro_purchased`), not in SQLite. `purchaseProvider` in `providers/purchase_provider.dart` manages the `in_app_purchase` stream, buy, and restore flows. **Dev flavor always returns purchased = true** — no paywall appears in dev builds. The paywall screen lives at `/paywall` and is pushed from each feature gate; modal settings contexts pop before pushing. Never store the purchase flag in SQLite — it must stay in secure storage to resist tampering.
-
-**Home widget**: `HomeWidgetSyncService` bridges Flutter data to the native home screen widget. `FeloosyApp` listens to provider changes via `ref.listenManual()` to keep the widget in sync.
-
-**Period navigation**: The home screen supports swiping between budget periods (months). Available offsets are cached in `_cachedPeriodOffsets` (a `Set<int>`) when the data loads, so swipe buttons don't disable mid-gesture during account switches. `selectedPeriodOffsetProvider` tracks the current offset.
-
-**Top spending chart**: `_TopCategoriesChart` is an inline widget at the bottom of `home_screen.dart` (also referenced from the budget screen). It renders a vertical bar chart of top expense categories for the current period, using each category's own `colorValue`. Not a separate file.
-
-## Database Schema (v9)
+**Database Schema (SQLite v18):**
 
 | Table | Key columns |
 |---|---|
-| `accounts` | id, name, currency_code, currency_symbol, default_monthly_budget, is_favorite, month_start_day |
-| `transactions` | uuid, account_id, amount, type (expense/income), category_uuid, transaction_date |
-| `budgets` | id, account_id, year, month, amount — unique on (account_id, year, month) |
-| `categories` | uuid, name, color_value, icon_code_point, icon_font_family, is_custom, is_active, sort_order |
-| `app_settings` | singleton row: theme_mode, color_theme, currency, month_start_day, google_backup_enabled, last_backup_at |
+| `accounts` | id, name, currency_code, currency_symbol, currency_symbol_leading, default_monthly_budget, is_favorite, month_start_day, carry_over_enabled |
+| `transactions` | id, uuid, account_id, amount, type (expense/income), description, category_uuid, transaction_date, source (manual/sms_rule:id/recurring:uuid) |
+| `budgets` | id, account_id, year, month, amount, currency_code — unique (account_id, year, month) |
+| `categories` | id, uuid, name, color_value, icon_code_point, icon_font_family, is_custom, is_active, sort_order, transaction_type |
+| `app_settings` | singleton (id=1): theme_mode, color_theme, currency_code, month_start_day, google_backup_enabled, last_backup_at, tutorial_completed, favorite_account_id |
+| `sms_rules` | id, keyword, description, category_uuid, transaction_type, account_id, amount_regex, is_active |
+| `recurring_rules` | uuid (PK), account_id, amount, type, description, category_uuid, frequency (daily/weekly/monthly/annually), start_date, last_generated_date, is_active |
+| `ai_analysis_cache` | hash (PK), group_label, summary, insights (JSON), advice, source, created_at, retry_after |
 
-Migration notes: v8 added `month_start_day` to `accounts`. v9 dropped `pending_sync_ops` (Firestore offline queue — no longer used).
+All timestamps: milliseconds-since-epoch integers. Never store datetimes as ISO strings.
 
-All timestamps are stored as milliseconds-since-epoch integers.
-
-## State Management
-
-Providers live in [providers/](lib/providers/). The pattern is:
-
+**Provider pattern:**
 ```dart
 @riverpod
 class TransactionsNotifier extends _$TransactionsNotifier {
   @override
-  Future<List<Transaction>> build() => ref.read(transactionRepositoryProvider).getAll();
+  Future<List<Transaction>> build() =>
+      ref.read(transactionRepositoryProvider).getAll();
 
   Future<void> add(Transaction t) async {
     await ref.read(transactionRepositoryProvider).insert(t);
-    ref.invalidateSelf();
+    ref.invalidateSelf();   // always invalidate, never patch state manually
   }
 }
 ```
+Read providers synchronously with `ref.read(xProvider)`. Watch with `ref.watch(xProvider)`. Use `.asData?.value ?? safeDefault` for async values in build methods — do not throw or crash on loading state.
 
-`database_provider.dart` exposes repository instances as simple `Provider`s so they can be read synchronously by notifiers.
+**Access tier resolution (read before writing any gate):**
+```dart
+enum AccessTier { free, pro, subscription }
+// Resolved in access_tier_provider.dart from: purchaseProvider + smsSubscriptionProvider + trialProvider
+// Dev flavor always returns subscription.
+```
 
-Additional providers:
-- `google_auth_provider.dart` — `googleAccountProvider` (`NotifierProvider<GoogleAccountNotifier, GoogleSignInAccount?>`) for Google sign-in state. Attempts a lightweight session restore on first build.
-- `drive_backup_provider.dart` — `googleDriveBackupProvider` (simple `Provider`) exposing a `GoogleDriveBackupService` instance.
+**Monetization products:**
+- `feloosy_pro_lifetime` — $4.99 one-time Pro tier
+- `feloosy_sms_monthly` — recurring SMS tier subscription
+- Trial: 14-day trial for SMS features, stored as first-launch timestamp in `flutter_secure_storage`
+- Purchase state: `flutter_secure_storage` ONLY. Never SQLite — it resists tampering.
 
-## Google Drive Backup
+**Android-only features:**
+- SMS auto-parsing: `SmsReceiver.kt` → `SmsSink.kt` → `EventChannel("com.feloosy/sms")` → `SmsTransactionService`
+- SMS inbox scan: `MethodChannel("com.feloosy/sms_inbox")`
+- Home screen widget: `FeloosyWidgetProvider.kt`
+- iOS has none of the above.
 
-Firebase and Firestore have been fully removed from the project. Cloud backup is now handled exclusively via Google Drive.
+---
 
-- Google sign-in uses `GoogleSignIn.instance` directly (no Firebase Auth). See `google_auth_provider.dart`.
-- `GoogleDriveBackupService` in `domain/services/` handles backup, restore, and listing. It stores files in the Drive `appDataFolder` (private, app-only scope — not visible in the user's Drive).
-- Backup format: JSON with a `version` key and a `data` map containing all five tables. Timestamped filename `feloosy_backup_{ms}.json`.
-- Up to 5 backups retained; oldest are pruned automatically after each backup.
-- `restore(fileId)` — atomically replaces all local data in a single SQLite transaction. Irreversible; UI should confirm before calling.
-- `listBackups()` returns `List<BackupEntry>` (id + modifiedTime), sorted newest-first.
-- `firebase_options.dart` may still exist in the repo but Firebase is no longer initialised or used.
+## 3. Conventions That Bite If Ignored
 
-## Home Screen Widget
+**Colors — always use the theme, never hardcode:**
+```dart
+final cs = Theme.of(context).colorScheme;   // cs is the established shorthand
+// Use semantic helpers for text on colored backgrounds:
+AppTheme.expenseText(cs)    // ledger red, contrast-safe
+AppTheme.incomeText(cs)     // ledger green, contrast-safe
+AppTheme.warningText(cs)    // amber, contrast-safe
+AppTheme.primaryText(cs)    // primary-colored text
+// Category bar colors:
+AppTheme.categoryBarColor(colorValue, isDark)
+```
+Never call `AppTheme.ledgerRed` or `AppTheme.forestGreen` directly in a widget — always go through `cs` so dark mode works.
 
-The native widget lives in two places:
-- **Android**: `android/app/src/main/kotlin/com/feloosy/app/widget/FeloosyWidgetProvider.kt` + layout/drawables in `android/app/src/main/res/`
-- **iOS**: `ios/FeloosyWidget/FeloosyWidget.swift`
+**Date handling — always use MonthCalculator for period boundaries:**
+- Budget periods respect per-account `month_start_day` (1–28). Month boundaries are NOT always the 1st.
+- Use `MonthCalculator.periodFor(date, monthStartDay)` to get period start/end.
+- Store dates as `millisecondsSinceEpoch`. Convert on read: `DateTime.fromMillisecondsSinceEpoch(ms)`.
+- For date-only comparisons use `DateUtils.dateOnly(dt)` (Flutter built-in), not `DateTime(y, m, d)`.
+- Never assume "this month" means the calendar month — always query `monthStartDay` from the account.
 
-**Widget / app parity rule**: The widget should generally match any visual or data changes made to the app where the context applies (theme colours, data fields shown, formatting). When making such a change, **always confirm** with the user whether it should also be applied to the widget before doing so.
+**Default category UUIDs — never change, never regenerate:**
+- 18 default categories have stable UUIDs in `kDefaultCategoryUuids` (default_categories.dart).
+- These are used as foreign keys in existing user databases. Changing them breaks all existing data.
+- DB migrations v11–14 relied on positional alignment between `kDefaultCategoryData` and `kDefaultCategoryUuids`. Keep them in sync.
 
-**Theme sync**: The widget palette mirrors `AppTheme` in `lib/app/app_theme.dart`. It adapts to the device's system dark/light mode (not the app's in-app override, since widgets run outside the app process). When `AppTheme` colours change, update the widget colour constants in both the Kotlin provider and the Swift file to match.
+**Feature gates — always default to the restrictive side on loading:**
+```dart
+// Safe pattern: .asData?.value ?? false
+final isPro = ref.watch(purchaseProvider).asData?.value ?? false;
+// Never: ref.watch(purchaseProvider).value! — throws on loading state
+```
 
-## Version Management
+**Provider dependencies — use database_provider.dart:**
+- Repos are provided as `Provider<XRepository>` in `database_provider.dart`.
+- Read them in notifiers with `ref.read(xRepositoryProvider)`.
+- Never instantiate `XRepository(DatabaseHelper.instance)` inline in a notifier.
 
-The canonical version lives in two places and must be kept in sync:
-- `pubspec.yaml` → `version: X.Y.Z+BUILD`
-- `lib/core/constants/app_info.dart` → `kAppVersionLabel = 'X.Y.Z (BUILD)'`
+**Navigation — use named routes:**
+- All route constants are in `router.dart`. Use `context.goNamed(...)` not `context.go('/raw-path')`.
+- Pass complex objects via `extra`. Never serialize them into the path.
+- Paywall: pop any modal context before pushing `/paywall` to avoid navigation stack corruption.
 
-The build number is the total number of git commits (`git rev-list --count HEAD`).
+**Home widget parity:**
+- If you change app colors, data fields shown, or formatting on the home screen, **ask the user** whether the widget should match before touching `FeloosyWidgetProvider.kt` or `FeloosyWidget.swift`.
+- Widget palette is separate from app theme (widget runs outside app process, adapts to system dark/light).
 
-**Rules:**
-- **Major version** (`X.0.0`) — only the repo owner decides when to increment this. Do not bump the major version without explicit instruction.
-- **Minor version** (`X.Y.0`) — bump when a meaningful new feature or capability ships (e.g. a new screen, a new integration, a significant UX addition).
-- **Patch version** (`X.Y.Z`) — bump when shipping a fix or small improvement with no new surface area.
-- Always update both files together in the same commit whenever the version changes.
+**Version bumping:**
+- Always update BOTH `pubspec.yaml` (`version: X.Y.Z+BUILD`) AND `lib/core/constants/app_info.dart` (`kAppVersionLabel`).
+- Do not bump major version without explicit instruction from the repo owner.
+- Build number = `git rev-list --count HEAD`.
+
+**Recurring rules — monthly anchor:**
+- Monthly/annual recurrences anchor to the rule's `start_date` day-of-month, not "30 days from last run". See [docs/algorithm-decisions.md](docs/algorithm-decisions.md) for why.
+
+**AI cache hashing:**
+- The cache hash is SHA-256 of sorted transaction UUIDs + amounts + budget. Sorted because insertion order is arbitrary. See [docs/algorithm-decisions.md](docs/algorithm-decisions.md).
+
+---
+
+## 4. Push Back When I'm Wrong
+
+If a proposed implementation conflicts with an established pattern, a financial correctness principle, a data-integrity rule (especially category UUIDs or purchase storage), or would create a worse UX — **say so once, clearly, before implementing**. State what the problem is and propose an alternative. If I still want the original approach after hearing the objection, implement what I pick without re-arguing.
+
+This applies especially to:
+- Storing purchase state anywhere other than `flutter_secure_storage`
+- Changing default category UUIDs
+- Bypassing `MonthCalculator` for period date math
+- Hardcoding colors instead of using the theme
+- Implementing financial calculations (carry-over, rounding, recurring amounts) without verifying the logic
+
+---
+
+## 5. Financial Accuracy — Research Before Coding
+
+Budgeting and personal finance rules have non-obvious edge cases. Before implementing any new financial calculation or rule:
+
+1. **Verify the math** — carry-over, period boundaries, rounding, currency symbol placement. Don't assume; check against how mainstream personal finance apps handle the case.
+2. **Log non-obvious decisions** in [docs/algorithm-decisions.md](docs/algorithm-decisions.md) with the reasoning and rejected alternatives.
+3. **Flag disagreements** before picking a threshold or formula — e.g., "should carry-over include income surplus or only unused budget?" — ask before assuming.
+4. **Never invent plausible numbers** — e.g., default budget amounts, trial lengths, backup retention counts. Use values explicitly decided by the product owner.
+5. **Cite the decision** in code comments when the choice is non-obvious (e.g., why recurring monthly rules anchor to start_date day rather than calculating from last_generated_date).
+
+Currently decided values (do not change without explicit instruction):
+- Trial length: 14 days
+- Max backups retained: 5
+- Pro product: `feloosy_pro_lifetime` / $4.99
+- SMS product: `feloosy_sms_monthly`
+- DB name (dev): `feloosy_dev.db` / (prod): `feloosy.db`
+
+---
+
+## 6. Deeper Docs
+
+| File | Read before… |
+|---|---|
+| [docs/algorithm-decisions.md](docs/algorithm-decisions.md) | Touching budget period math, carry-over, recurring rule generation, AI cache, SMS parsing |
+| [docs/feature-gating.md](docs/feature-gating.md) | Adding any screen, feature, or limit that differs between tiers |
+| [docs/feature-shipping-checklist.md](docs/feature-shipping-checklist.md) | Starting any new feature — run this checklist top to bottom |
+
+---
+
+## 7. Adding a New Feature
+
+**Workflow (in order):**
+
+1. Read [docs/feature-shipping-checklist.md](docs/feature-shipping-checklist.md) — identify all touch points.
+2. If the feature involves financial logic or a new calculation, log the design decision in [docs/algorithm-decisions.md](docs/algorithm-decisions.md) before writing code.
+3. If the feature has a gating dimension (Free vs Pro vs SMS), update [docs/feature-gating.md](docs/feature-gating.md) and wire the gate in `access_tier_provider.dart`.
+4. Write a spec in `docs/superpowers/specs/` if the feature is non-trivial.
+5. Implement — schema migration first, then repository, then provider, then UI.
+6. Update version in both `pubspec.yaml` and `app_info.dart`.
+7. Check widget parity — does the home screen widget need a matching update?
+8. Add any new lesson to the shipping checklist so the next feature doesn't repeat a mistake.
+
+**Quick checklist:**
+- [ ] Schema migration added and version incremented in `database_helper.dart`
+- [ ] New model has `toMap()` / `fromMap()` and `copyWith()`
+- [ ] Repository added to `database_provider.dart`
+- [ ] Provider follows `AsyncNotifier` pattern with `ref.invalidateSelf()` on mutations
+- [ ] Feature gate added/updated in `access_tier_provider.dart` + `docs/feature-gating.md`
+- [ ] Route added to `router.dart` if new screen
+- [ ] Colors via `cs = Theme.of(context).colorScheme` — no hardcoded hex
+- [ ] Dates stored as millisecondsSinceEpoch, period math via `MonthCalculator`
+- [ ] Backup: new table included in `GoogleDriveBackupService` export/restore
+- [ ] Export: new table/fields included in `LocalExportService` if user-facing data
+- [ ] Version bumped in both `pubspec.yaml` and `app_info.dart`
+- [ ] Widget parity confirmed with user (if home data or colors changed)
+- [ ] Algorithm decision logged in `docs/algorithm-decisions.md` if non-obvious logic
+- [ ] Shipping checklist updated with any new lessons learned

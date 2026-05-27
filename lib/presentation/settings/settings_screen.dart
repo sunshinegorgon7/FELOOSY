@@ -20,8 +20,9 @@ import '../../providers/google_auth_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/transactions_provider.dart';
 import '../../providers/accounts_provider.dart';
-import '../../providers/purchase_provider.dart';
+import '../../providers/access_tier_provider.dart';
 import '../../providers/sms_subscription_provider.dart';
+import '../paywall/paywall_screen.dart' show PaywallFocus;
 
 class SettingsScreen extends ConsumerWidget {
   final bool isModal;
@@ -130,6 +131,10 @@ class _SettingsBody extends ConsumerWidget {
 
         const _SectionHeader('About'),
         const _InfoRow(title: 'Version', value: kAppVersionLabel),
+        _SettingsRow(
+          title: 'Privacy Policy',
+          onTap: () => context.push('/settings/privacy'),
+        ),
 
         if (AppFlavor.isDev) ...[
           const _SectionHeader('Developer Tools'),
@@ -695,9 +700,7 @@ class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
         onTap: anyBusy
             ? null
             : () {
-                final isPurchased =
-                    ref.read(purchaseProvider).asData?.value ?? false;
-                if (!isPurchased) {
+                if (!ref.read(accessTierProvider).canBackup) {
                   _navigateToPaywall(context);
                   return;
                 }
@@ -936,9 +939,7 @@ class _LocalBackupTileState extends ConsumerState<_LocalBackupTile> {
           onTap: busy
               ? null
               : () {
-                  final isPurchased =
-                      ref.read(purchaseProvider).asData?.value ?? false;
-                  if (!isPurchased) {
+                  if (!ref.read(accessTierProvider).canExport) {
                     _navigateToPaywall(context);
                     return;
                   }
@@ -970,10 +971,10 @@ class _SmsRulesTile extends ConsumerWidget {
         final router = GoRouter.of(context);
         Navigator.of(context).pop();
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          router.push('/paywall');
+          router.push('/paywall', extra: PaywallFocus.sms);
         });
       } else {
-        context.push('/paywall');
+        context.push('/paywall', extra: PaywallFocus.sms);
       }
       return;
     }

@@ -5,6 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 
 import '../app/app_flavor.dart';
+import 'trial_provider.dart';
 
 const _subscribedKey = 'feloosy_sms_subscribed';
 const kSmsProductId = 'feloosy_sms_monthly';
@@ -25,7 +26,10 @@ class SmsSubscriptionNotifier extends AsyncNotifier<bool> {
     _sub = InAppPurchase.instance.purchaseStream.listen(_onPurchaseUpdate);
     ref.onDispose(() => _sub?.cancel());
 
-    return await _readStorage();
+    if (await _readStorage()) return true;
+
+    final trial = await ref.watch(trialProvider.future);
+    return trial.isActive;
   }
 
   Future<bool> _readStorage() async {

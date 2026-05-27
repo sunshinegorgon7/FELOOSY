@@ -6,7 +6,7 @@ import '../../app/app_theme.dart';
 import '../../core/constants/currencies.dart';
 import '../../data/models/account.dart';
 import '../../providers/accounts_provider.dart';
-import '../../providers/purchase_provider.dart';
+import '../../providers/access_tier_provider.dart';
 
 class ManageAccountsScreen extends ConsumerWidget {
   const ManageAccountsScreen({super.key});
@@ -14,22 +14,20 @@ class ManageAccountsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final accountsAsync = ref.watch(accountsProvider);
-    final purchaseAsync = ref.watch(purchaseProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Manage Wallets')),
       floatingActionButton: FloatingActionButton(
-        onPressed: purchaseAsync.isLoading
-            ? null
-            : () {
-                final accounts = accountsAsync.value ?? [];
-                final isPurchased = purchaseAsync.value ?? false;
-                if (!isPurchased && accounts.isNotEmpty) {
-                  context.push('/paywall');
-                  return;
-                }
-                _showAccountEditor(context, ref);
-              },
+        onPressed: () {
+          final accounts = accountsAsync.value ?? [];
+          final tier = ref.read(accessTierProvider);
+          final max = tier.maxWallets;
+          if (max != null && accounts.length >= max) {
+            context.push('/paywall');
+            return;
+          }
+          _showAccountEditor(context, ref);
+        },
         child: const Icon(Icons.add),
       ),
       body: accountsAsync.when(

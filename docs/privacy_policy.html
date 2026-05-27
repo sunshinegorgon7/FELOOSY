@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Feloosy – Privacy Policy</title>
+  <style>
+    :root {
+      --bg: #f3f6ef;
+      --surface: #ffffff;
+      --primary: #0e3b2e;
+      --text: #202823;
+      --muted: #566156;
+      --border: #d4ddd0;
+      --accent-bg: #e8f0e6;
+      --radius: 12px;
+      --max-w: 740px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1513;
+        --surface: #161e1b;
+        --primary: #8fd5e6;
+        --text: #e3ece8;
+        --muted: #aab7b1;
+        --border: #2a3630;
+        --accent-bg: #1a2922;
+      }
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.65;
+      padding: 24px 16px 64px;
+    }
+    .wrapper {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 40px 40px 48px;
+    }
+    @media (max-width: 600px) {
+      .wrapper { padding: 24px 20px 36px; }
+    }
+
+    /* Header */
+    .header { margin-bottom: 32px; }
+    .logo-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: var(--primary);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .logo-icon svg { fill: #f3f6ef; width: 20px; height: 20px; }
+    .app-name { font-size: 20px; font-weight: 700; color: var(--text); }
+    h1 { font-size: 28px; font-weight: 800; color: var(--text); margin-bottom: 6px; }
+    .effective { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+    .summary-box {
+      background: var(--accent-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .summary-box .icon { font-size: 18px; flex-shrink: 0; margin-top: 2px; }
+    .summary-box p { font-size: 14px; color: var(--muted); }
+
+    /* Sections */
+    section { margin-top: 36px; }
+    h2 {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+    p { font-size: 14.5px; color: var(--muted); margin-bottom: 12px; }
+    ul { padding-left: 20px; margin-bottom: 12px; }
+    ul li { font-size: 14.5px; color: var(--muted); margin-bottom: 6px; }
+    strong { color: var(--text); }
+
+    /* Language toggle */
+    .lang-toggle {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 28px;
+    }
+    .lang-btn {
+      padding: 6px 18px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .lang-btn.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #f3f6ef;
+      font-weight: 600;
+    }
+    [lang="ar"] { display: none; }
+    body.arabic [lang="en"] { display: none; }
+    body.arabic [lang="ar"] { display: block; }
+    body.arabic { direction: rtl; }
+
+    /* Footer */
+    footer {
+      margin-top: 48px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+
+  <div class="lang-toggle">
+    <button class="lang-btn active" onclick="setLang('en')">English</button>
+    <button class="lang-btn" onclick="setLang('ar')">العربية</button>
+  </div>
+
+  <!-- ── ENGLISH ─────────────────────────────────────────────────── -->
+  <div lang="en">
+    <div class="header">
+      <div class="logo-row">
+        <div class="logo-icon">
+          <!-- wallet icon SVG -->
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21 7H3a1 1 0 0 0-1 1v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a1 1 0 0 0-1-1zm-1 11H4V9h16v9zm-5-4a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0zM20 5H4a1 1 0 0 1 0-2h16a1 1 0 0 1 0 2z"/>
+          </svg>
+        </div>
+        <span class="app-name">Feloosy</span>
+      </div>
+      <h1>Privacy Policy</h1>
+      <p class="effective">Effective Date: May 27, 2026</p>
+      <div class="summary-box">
+        <span class="icon">🔒</span>
+        <p>
+          <strong>Short version:</strong> Your financial data stays on your device.
+          We have no servers and cannot see your transactions. SMS messages are
+          processed in memory and never stored or transmitted. External data flows
+          are optional — Drive backup goes to your own Google Drive, and AI analysis
+          sends only anonymised spending summaries to Google Gemini.
+        </p>
+      </div>
+    </div>
+
+    <section>
+      <h2>1. Data We Store Locally</h2>
+      <p>All of the following is stored only on your device in a private SQLite database:</p>
+      <ul>
+        <li>Transactions (amounts, dates, descriptions, categories)</li>
+        <li>Budget amounts per month</li>
+        <li>Wallet names and currency settings</li>
+        <li>Category names, icons, and colours</li>
+        <li>App preferences (theme, month-start day)</li>
+        <li>SMS parsing rules (keywords and patterns)</li>
+        <li>Recurring transaction rules</li>
+      </ul>
+      <p>Uninstalling the app permanently deletes all of this data from your device.</p>
+    </section>
+
+    <section>
+      <h2>2. SMS Permission</h2>
+      <p>
+        Feloosy requests <strong>READ_SMS</strong> and <strong>RECEIVE_SMS</strong>
+        permissions on Android so that it can detect bank transaction notifications automatically.
+      </p>
+      <p><strong>How SMS data is used:</strong></p>
+      <ul>
+        <li>Each incoming or manually scanned SMS is matched in memory against your rules to identify the sender and extract a transaction amount.</li>
+        <li>If a match is found, only the extracted amount and matched rule metadata are saved as a transaction record.</li>
+        <li><strong>The raw SMS text is never written to our database, never sent to any server, and never shared with any third party.</strong></li>
+      </ul>
+      <p>
+        You can revoke SMS permission at any time in your device
+        <em>Settings → Apps → Feloosy → Permissions</em>.
+        Revoking permission disables automatic SMS detection but does not affect existing data.
+      </p>
+    </section>
+
+    <section>
+      <h2>3. Financial Data &amp; Local Storage</h2>
+      <p>
+        All budget and transaction data is stored locally on your device using SQLite.
+        We operate no servers and have no ability to access your financial data remotely.
+        Your data never leaves your device unless you explicitly enable Google Drive backup
+        or the AI analysis feature.
+      </p>
+    </section>
+
+    <section>
+      <h2>4. Google Drive Backup (Optional)</h2>
+      <p>
+        If you sign in with Google and enable Drive backup, Feloosy uploads a JSON snapshot
+        of your data to the private <strong>appDataFolder</strong> of your own Google Drive account.
+        This folder is accessible only to you and to the Feloosy app.
+      </p>
+      <ul>
+        <li>Data in transit is encrypted via HTTPS.</li>
+        <li>Backups are stored under your Google account and governed by <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google's Privacy Policy</a>.</li>
+        <li>You can delete all backups at any time via <em>drive.google.com → Storage → Hidden app data</em>.</li>
+        <li>Feloosy automatically keeps at most 5 backups and deletes the oldest when a new one is created.</li>
+      </ul>
+      <p>We never access your Google Drive beyond the Feloosy appDataFolder.</p>
+    </section>
+
+    <section>
+      <h2>5. AI Spending Analysis (Optional — Pro / SMS tier)</h2>
+      <p>
+        The AI analysis feature sends a summarised snapshot of your spending to
+        <strong>Google's Gemini API</strong> to generate personalised insights.
+      </p>
+      <p><strong>What is sent:</strong></p>
+      <ul>
+        <li>Category names and aggregated spending amounts for the period</li>
+        <li>Your total budget for the period</li>
+      </ul>
+      <p><strong>What is NOT sent:</strong></p>
+      <ul>
+        <li>Raw SMS message content</li>
+        <li>Your name or email address</li>
+        <li>Individual transaction descriptions</li>
+        <li>Any device identifiers</li>
+      </ul>
+      <p>
+        Analysis results are cached locally and reused until your data changes.
+        Google's use of API data is governed by their
+        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Privacy Policy</a>
+        and <a href="https://ai.google.dev/gemini-api/terms" target="_blank" rel="noopener">API Terms of Service</a>.
+      </p>
+    </section>
+
+    <section>
+      <h2>6. In-App Purchases</h2>
+      <p>
+        Feloosy offers optional paid tiers (Pro lifetime and SMS subscription) processed
+        through <strong>Google Play Billing</strong>. We receive only a purchase confirmation
+        token — payment details and card information are handled entirely by Google.
+        Purchase status is stored locally in your device's encrypted secure storage.
+      </p>
+    </section>
+
+    <section>
+      <h2>7. Third-Party Data Sharing</h2>
+      <p>
+        We do not sell, rent, or share your personal data with third parties for advertising
+        or any commercial purpose. We have no advertising networks, analytics SDKs,
+        or crash-reporting services integrated in this app.
+      </p>
+      <p>The only third-party services that may receive any data are:</p>
+      <ul>
+        <li><strong>Google Gemini API</strong> — anonymised spending summaries (optional, AI feature only)</li>
+        <li><strong>Google Drive</strong> — your own backup files (optional, backup feature only)</li>
+        <li><strong>Google Play Billing</strong> — purchase confirmation tokens (when buying a paid tier)</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>8. Data Retention &amp; Deletion</h2>
+      <ul>
+        <li><strong>Local data:</strong> retained until you uninstall the app or use "Reset app" in Settings → Danger Zone.</li>
+        <li><strong>Drive backups:</strong> retained in your Google Drive until you delete them manually from <em>drive.google.com → Storage → Hidden app data</em>.</li>
+        <li><strong>AI analysis cache:</strong> retained locally for up to 25 hours per group, then refreshed.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>9. Security</h2>
+      <ul>
+        <li>Local data is stored in the app's private storage directory, inaccessible to other apps without device root access.</li>
+        <li>All network communication (Gemini API, Google Drive, Google Sign-In, Google Play) uses HTTPS/TLS encryption.</li>
+        <li>Purchase status is stored using the platform's secure encrypted storage.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>10. Children's Privacy</h2>
+      <p>
+        Feloosy is not directed at children under the age of 13. We do not knowingly
+        collect personal information from children. If you believe a child has used
+        this app and shared personal data, please contact us.
+      </p>
+    </section>
+
+    <section>
+      <h2>11. Changes to This Policy</h2>
+      <p>
+        We may update this Privacy Policy from time to time. When we do, the effective date
+        at the top of this page will be updated. Continued use of the app after any changes
+        constitutes acceptance of the revised policy. Significant changes will be notified
+        via an in-app notice on first launch after the update.
+      </p>
+    </section>
+
+    <section>
+      <h2>12. Contact Us</h2>
+      <p>For privacy questions or data requests, contact us at:</p>
+      <p>
+        <strong>Email:</strong> privacy@feloosy.com<br/>
+        We aim to respond within 5 business days.
+      </p>
+    </section>
+  </div><!-- /en -->
+
+  <!-- ── ARABIC ──────────────────────────────────────────────────── -->
+  <div lang="ar">
+    <div class="header">
+      <div class="logo-row">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21 7H3a1 1 0 0 0-1 1v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a1 1 0 0 0-1-1zm-1 11H4V9h16v9zm-5-4a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0zM20 5H4a1 1 0 0 1 0-2h16a1 1 0 0 1 0 2z"/>
+          </svg>
+        </div>
+        <span class="app-name">فلوسي</span>
+      </div>
+      <h1>سياسة الخصوصية</h1>
+      <p class="effective">تاريخ السريان: 27 مايو 2026</p>
+      <div class="summary-box">
+        <span class="icon">🔒</span>
+        <p>
+          <strong>الملخص:</strong> بياناتك المالية تبقى على جهازك فقط.
+          لا نمتلك خوادم ولا يمكننا الاطلاع على معاملاتك. رسائل SMS تُعالَج في الذاكرة
+          فقط ولا تُحفَظ أو تُرسَل إلى أي جهة. التدفقات الخارجية للبيانات اختيارية —
+          النسخ الاحتياطي يذهب إلى Google Drive الخاص بك، وتحليل الذكاء الاصطناعي
+          يرسل ملخصات إنفاق مجهولة الهوية فقط إلى Gemini.
+        </p>
+      </div>
+    </div>
+
+    <section>
+      <h2>١. البيانات التي نخزّنها محليًا</h2>
+      <p>جميع البيانات التالية مخزّنة على جهازك فقط في قاعدة بيانات SQLite خاصة:</p>
+      <ul>
+        <li>المعاملات (المبالغ، التواريخ، الأوصاف، الفئات)</li>
+        <li>مبالغ الميزانية الشهرية</li>
+        <li>أسماء المحافظ وإعدادات العملة</li>
+        <li>أسماء الفئات وأيقوناتها وألوانها</li>
+        <li>تفضيلات التطبيق (السمة، يوم بداية الشهر)</li>
+        <li>قواعد قراءة الرسائل (الكلمات المفتاحية والأنماط)</li>
+        <li>قواعد المعاملات المتكررة</li>
+      </ul>
+      <p>إلغاء تثبيت التطبيق يحذف جميع هذه البيانات نهائيًا من جهازك.</p>
+    </section>
+
+    <section>
+      <h2>٢. صلاحية الوصول إلى الرسائل النصية (SMS)</h2>
+      <p>
+        يطلب فلوسي صلاحيتَي <strong>READ_SMS</strong> و<strong>RECEIVE_SMS</strong>
+        على Android لاكتشاف إشعارات معاملات البنك تلقائيًا.
+      </p>
+      <p><strong>كيف تُستخدم بيانات SMS:</strong></p>
+      <ul>
+        <li>تُطابَق كل رسالة واردة أو تُفحَص يدويًا في الذاكرة وفق قواعدك لتحديد المُرسِل واستخراج المبلغ.</li>
+        <li>عند تطابق القاعدة، يُحفَظ فقط المبلغ المستخرج وبيانات القاعدة المطابقة كسجل معاملة.</li>
+        <li><strong>نص الرسالة الأصلي لا يُكتب في قاعدة البيانات ولا يُرسَل لأي خادم ولا يُشارَك مع أي طرف ثالث.</strong></li>
+      </ul>
+      <p>
+        يمكنك سحب الصلاحية في أي وقت من <em>الإعدادات ← التطبيقات ← فلوسي ← الأذونات</em>.
+      </p>
+    </section>
+
+    <section>
+      <h2>٣. البيانات المالية والتخزين المحلي</h2>
+      <p>
+        جميع بيانات الميزانية والمعاملات مخزّنة محليًا على جهازك. لا نملك خوادم ولا
+        يمكننا الوصول إلى بياناتك المالية عن بُعد. لا تغادر بياناتك جهازك إلا إذا
+        فعّلت النسخ الاحتياطي على Drive أو ميزة تحليل الذكاء الاصطناعي.
+      </p>
+    </section>
+
+    <section>
+      <h2>٤. النسخ الاحتياطي على Google Drive (اختياري)</h2>
+      <p>
+        إذا سجّلت الدخول بـ Google وفعّلت النسخ الاحتياطي، يرفع فلوسي لقطة JSON
+        من بياناتك إلى مجلد <strong>appDataFolder</strong> الخاص بحساب Google Drive
+        الخاص بك فقط، ولا يمكن لأحد غيرك الوصول إليه.
+      </p>
+      <ul>
+        <li>البيانات مشفّرة أثناء الإرسال عبر HTTPS.</li>
+        <li>النسخ الاحتياطية محفوظة تحت حسابك وتخضع لـ<a href="https://policies.google.com/privacy" target="_blank" rel="noopener">سياسة خصوصية Google</a>.</li>
+        <li>يمكنك حذف جميع النسخ عبر <em>drive.google.com ← التخزين ← بيانات التطبيقات المخفية</em>.</li>
+        <li>يحتفظ فلوسي تلقائيًا بـ 5 نسخ كحد أقصى ويحذف الأقدم عند إنشاء نسخة جديدة.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>٥. تحليل الإنفاق بالذكاء الاصطناعي (اختياري — خطة Pro / SMS)</h2>
+      <p>
+        تُرسَل ملخصات مجهولة الهوية لإنفاقك إلى <strong>Google Gemini API</strong>
+        لتوليد تحليلات مخصصة.
+      </p>
+      <p><strong>ما يُرسَل:</strong></p>
+      <ul>
+        <li>أسماء الفئات ومجاميع الإنفاق للفترة</li>
+        <li>إجمالي ميزانيتك للفترة</li>
+      </ul>
+      <p><strong>ما لا يُرسَل:</strong></p>
+      <ul>
+        <li>نص رسائل SMS الأصلية</li>
+        <li>اسمك أو بريدك الإلكتروني</li>
+        <li>أوصاف المعاملات الفردية</li>
+        <li>أي معرّف للجهاز</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>٦. المشتريات داخل التطبيق</h2>
+      <p>
+        تتم معالجة المشتريات المدفوعة (Pro مدى الحياة واشتراك SMS) عبر
+        <strong>Google Play Billing</strong>. نستقبل فقط رمز تأكيد الشراء —
+        تفاصيل الدفع تُدار كليًا من قِبل Google. يُخزَّن حالة الشراء محليًا في
+        التخزين الآمن المشفّر للجهاز.
+      </p>
+    </section>
+
+    <section>
+      <h2>٧. مشاركة البيانات مع أطراف ثالثة</h2>
+      <p>
+        لا نبيع بياناتك الشخصية ولا نؤجّرها ولا نشاركها مع أطراف ثالثة لأغراض
+        إعلانية أو تجارية. لا يوجد في التطبيق أي شبكة إعلانات أو SDK تتبع أو
+        خدمة تقارير أعطال.
+      </p>
+      <p>الخدمات الخارجية الوحيدة التي قد تستقبل بيانات:</p>
+      <ul>
+        <li><strong>Google Gemini API</strong> — ملخصات إنفاق مجهولة (اختياري، ميزة الذكاء الاصطناعي فقط)</li>
+        <li><strong>Google Drive</strong> — ملفات النسخ الاحتياطي الخاصة بك (اختياري)</li>
+        <li><strong>Google Play Billing</strong> — رمز تأكيد الشراء عند اشتراك بخطة مدفوعة</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>٨. الاحتفاظ بالبيانات وحذفها</h2>
+      <ul>
+        <li><strong>البيانات المحلية:</strong> تُحتفَظ حتى تلغي التثبيت أو تستخدم "إعادة تعيين التطبيق" في الإعدادات.</li>
+        <li><strong>نسخ Drive الاحتياطية:</strong> تبقى في حساب Google Drive حتى تحذفها يدويًا.</li>
+        <li><strong>ذاكرة التخزين المؤقت للذكاء الاصطناعي:</strong> تُحتَفَظ محليًا لمدة 25 ساعة لكل مجموعة ثم تُجدَّد.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>٩. الأمان</h2>
+      <ul>
+        <li>البيانات المحلية في مجلد التخزين الخاص بالتطبيق، لا يمكن للتطبيقات الأخرى الوصول إليها.</li>
+        <li>جميع الاتصالات الشبكية مشفّرة عبر HTTPS/TLS.</li>
+        <li>حالة الشراء مخزّنة في التخزين الآمن المشفّر للمنصة.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>١٠. خصوصية الأطفال</h2>
+      <p>
+        فلوسي ليس موجّهًا للأطفال دون سن 13 عامًا. إذا كنت تعتقد أن طفلًا قد
+        استخدم التطبيق وشارك بيانات شخصية، يُرجى التواصل معنا.
+      </p>
+    </section>
+
+    <section>
+      <h2>١١. التغييرات على هذه السياسة</h2>
+      <p>
+        قد نحدّث سياسة الخصوصية هذه من وقت لآخر. عند التحديث، سيتغير تاريخ
+        السريان في أعلى هذه الصفحة. الاستمرار في استخدام التطبيق يعني قبول
+        السياسة المحدّثة. ستُبلَّغ بالتغييرات الجوهرية عبر إشعار داخل التطبيق.
+      </p>
+    </section>
+
+    <section>
+      <h2>١٢. تواصل معنا</h2>
+      <p>لأي أسئلة تتعلق بالخصوصية:</p>
+      <p>
+        <strong>البريد الإلكتروني:</strong> privacy@feloosy.com<br/>
+        نهدف إلى الرد خلال 5 أيام عمل.
+      </p>
+    </section>
+  </div><!-- /ar -->
+
+  <footer>
+    &copy; 2026 Feloosy · All rights reserved ·
+    <a href="mailto:privacy@feloosy.com">privacy@feloosy.com</a>
+  </footer>
+
+</div><!-- /wrapper -->
+
+<script>
+  function setLang(lang) {
+    document.body.classList.toggle('arabic', lang === 'ar');
+    document.querySelectorAll('.lang-btn').forEach(function(btn) {
+      btn.classList.toggle('active', btn.textContent.trim() === (lang === 'en' ? 'English' : 'العربية'));
+    });
+  }
+</script>
+</body>
+</html>
