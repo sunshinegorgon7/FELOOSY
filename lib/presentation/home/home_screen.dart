@@ -84,7 +84,7 @@ class _PrivacyConsentSheet extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          _ConsentPoint(
+          const _ConsentPoint(
             icon: Icons.sms_outlined,
             title: 'SMS auto-detection',
             body:
@@ -93,7 +93,7 @@ class _PrivacyConsentSheet extends StatelessWidget {
                 'never saved or shared.',
           ),
           const SizedBox(height: 12),
-          _ConsentPoint(
+          const _ConsentPoint(
             icon: Icons.phone_android_outlined,
             title: 'Your data stays on your device',
             body:
@@ -101,7 +101,7 @@ class _PrivacyConsentSheet extends StatelessWidget {
                 'servers and cannot see your financial data.',
           ),
           const SizedBox(height: 12),
-          _ConsentPoint(
+          const _ConsentPoint(
             icon: Icons.auto_awesome_outlined,
             title: 'AI analysis (optional)',
             body:

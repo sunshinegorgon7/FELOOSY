@@ -52,6 +52,7 @@
             android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.app.action.NIGHT_MODE_CHANGED" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"

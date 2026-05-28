@@ -3,6 +3,7 @@ package com.feloosy.app.widget
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
@@ -24,6 +25,21 @@ class FeloosyWidgetProvider : AppWidgetProvider() {
 
     override fun onReceive(context: Context, intent: Intent) {
         Log.d(TAG, "onReceive action=${intent.action}")
+        if (intent.action == "android.app.action.NIGHT_MODE_CHANGED") {
+            val themeMode = HomeWidgetPlugin.getData(context)
+                .getString("fw_theme_mode", "system") ?: "system"
+            if (themeMode == "system") {
+                val manager = AppWidgetManager.getInstance(context)
+                val ids = manager.getAppWidgetIds(
+                    ComponentName(context, FeloosyWidgetProvider::class.java)
+                )
+                if (ids.isNotEmpty()) {
+                    Log.i(TAG, "onReceive: night mode changed — re-rendering ${ids.size} widget(s)")
+                    onUpdate(context, manager, ids)
+                    return
+                }
+            }
+        }
         super.onReceive(context, intent)
     }
 
