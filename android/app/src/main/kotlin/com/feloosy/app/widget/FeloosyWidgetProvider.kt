@@ -78,18 +78,7 @@ class FeloosyWidgetProvider : AppWidgetProvider() {
 
         private data class CategoryData(val name: String, val amount: Double, val color: Int)
 
-        private val CAT_COLORS_LIGHT = intArrayOf(
-            Color.parseColor("#0065B5"), // N performance blue
-            Color.parseColor("#1E6EB8"), // Deep ocean blue
-            Color.parseColor("#A8192D"), // Expense red
-            Color.parseColor("#2C7848"), // Forest green (income)
-        )
-        private val CAT_COLORS_DARK = intArrayOf(
-            Color.parseColor("#4CC490"), // Emerald highlight
-            Color.parseColor("#78B8EC"), // Clear blue
-            Color.parseColor("#FF8090"), // Rose red
-            Color.parseColor("#A8DC84"), // Lime green
-        )
+        // No hardcoded palette — widget uses pre-computed colours from Flutter
 
         fun buildViews(context: Context): RemoteViews {
             return try {
@@ -114,8 +103,6 @@ class FeloosyWidgetProvider : AppWidgetProvider() {
 
             val availableVal = availableStr.toDoubleOrNull() ?: 0.0
             val todayTotal = todayTotalStr.toDoubleOrNull() ?: 0.0
-            val rawCategories = parseCategories(categoriesJson)
-
             // ── Adaptive palette ───────────────────────────────────────────
             // Honour the app's in-app theme override before falling back to
             // the device system dark/light mode.
@@ -131,10 +118,8 @@ class FeloosyWidgetProvider : AppWidgetProvider() {
             val colMuted     = if (isNight) Color.parseColor("#7BAF93") else Color.parseColor("#4A6E8A")
             val colOver      = if (isNight) Color.parseColor("#FF8090") else Color.parseColor("#A8192D")
             val colOnPrimary = if (isNight) Color.parseColor("#031A0C") else Color.parseColor("#FFFFFF")
-            val catPalette = if (isNight) CAT_COLORS_DARK else CAT_COLORS_LIGHT
-            val categories = rawCategories.mapIndexed { i, cat ->
-                cat.copy(color = catPalette[i % catPalette.size])
-            }
+            // Flutter pre-computes the correct chart colour per theme — use it directly
+            val categories = parseCategories(categoriesJson, isNight)
 
             val views = RemoteViews(context.packageName, R.layout.feloosy_widget)
 
@@ -279,15 +264,20 @@ class FeloosyWidgetProvider : AppWidgetProvider() {
 
         // ── Helpers ────────────────────────────────────────────────────────
 
-        private fun parseCategories(json: String): List<CategoryData> {
+        private fun parseCategories(json: String, isNight: Boolean): List<CategoryData> {
             return try {
                 val arr = JSONArray(json)
                 (0 until arr.length()).map { i ->
                     val obj = arr.getJSONObject(i)
+                    // Use pre-computed theme-correct colour sent from Flutter
+                    val colorKey = if (isNight) "colorDark" else "colorLight"
+                    val colorStr = obj.optString(colorKey).ifEmpty {
+                        obj.optString("color", "#ff888888") // legacy fallback
+                    }
                     CategoryData(
                         name = obj.getString("name"),
                         amount = obj.getDouble("amount"),
-                        color = Color.parseColor(obj.getString("color")),
+                        color = Color.parseColor(colorStr),
                     )
                 }
             } catch (e: Exception) {

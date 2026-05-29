@@ -101,6 +101,13 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     final previewName = _nameCtrl.text.isNotEmpty ? _nameCtrl.text : 'Category';
+    // Chart-rendered color — what the user will actually see in bar charts
+    final chartColor = AppTheme.categoryBarColor(
+      uuid: widget.category?.uuid ?? '',
+      colorValue: _color.toARGB32(),
+      colorScheme: cs,
+    );
+    final isBuiltIn = widget.category != null && !widget.category!.isCustom;
 
     return Scaffold(
       appBar: AppBar(
@@ -131,10 +138,10 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
                     width: 72,
                     height: 72,
                     decoration: BoxDecoration(
-                      color: _color.withValues(alpha: 0.15),
+                      color: chartColor.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(_icon, color: _color, size: 36),
+                    child: Icon(_icon, color: chartColor, size: 36),
                   ),
                   const SizedBox(height: 8),
                   Text(previewName, style: tt.titleMedium),
@@ -224,6 +231,17 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
                 );
               }).toList(),
             ),
+            if (isBuiltIn) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Chart bar colour is theme-managed for built-in categories.',
+                style: tt.bodySmall?.copyWith(
+                  color: cs.onSurfaceVariant,
+                  fontSize: 11.5,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
             const SizedBox(height: 24),
 
             // Icon picker

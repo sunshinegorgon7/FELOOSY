@@ -1,7 +1,7 @@
 ﻿import 'dart:convert';
 import 'package:sqflite/sqflite.dart';
 import '../database/database_helper.dart';
-import '../../domain/services/ai_analysis_service.dart';
+import '../../domain/services/ai_analysis_result.dart';
 
 class AiCacheEntry {
   final String hash;

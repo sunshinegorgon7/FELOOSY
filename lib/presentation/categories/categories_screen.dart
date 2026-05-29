@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../app/app_theme.dart';
 import '../../data/models/category.dart';
 import '../../providers/access_tier_provider.dart';
 import '../../providers/categories_provider.dart';
@@ -269,7 +270,11 @@ class _IndexRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final color = Color(category.colorValue);
+    final color = AppTheme.categoryBarColor(
+      uuid: category.uuid,
+      colorValue: category.colorValue,
+      colorScheme: cs,
+    );
     final iconData =
         IconData(category.iconCodePoint, fontFamily: category.iconFontFamily);
     final pct = (total > 0 && amount > 0) ? amount / total : 0.0;

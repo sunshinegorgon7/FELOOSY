@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:home_widget/home_widget.dart';
 
+import '../app/app_theme.dart';
 import '../data/models/transaction.dart';
 import '../providers/accounts_provider.dart';
 import '../providers/budget_period_provider.dart';
@@ -86,20 +87,35 @@ Future<void> _sync(WidgetRef ref) async {
   for (int i = 0; i < sorted.length; i++) {
     if (i < 3) {
       final cat = await categoryRepo.getByUuid(sorted[i].key);
-      // Flutter ARGB int → #AARRGGBB for Android Color.parseColor
-      final colorHex =
-          '#${(cat?.colorValue ?? 0xFF6E8790).toRadixString(16).padLeft(8, '0').toUpperCase()}';
+      final uuid = cat?.uuid ?? '';
+      final colorValue = cat?.colorValue ?? 0xFF6E8790;
+      // Pre-compute the chart bar colour for each theme so the widget
+      // doesn't need to replicate AppTheme.categoryBarColor logic
+      final lightColor = AppTheme.categoryBarColor(
+        uuid: uuid, colorValue: colorValue,
+        colorScheme: AppTheme.light.colorScheme,
+      );
+      final darkColor = AppTheme.categoryBarColor(
+        uuid: uuid, colorValue: colorValue,
+        colorScheme: AppTheme.dark.colorScheme,
+      );
       catList.add({
         'name': cat?.name ?? 'Other',
         'amount': sorted[i].value,
-        'color': colorHex,
+        'colorLight': '#${lightColor.toARGB32().toRadixString(16).padLeft(8, '0')}',
+        'colorDark':  '#${darkColor.toARGB32().toRadixString(16).padLeft(8, '0')}',
       });
     } else {
       otherAmount += sorted[i].value;
     }
   }
   if (otherAmount > 0) {
-    catList.add({'name': 'Other', 'amount': otherAmount, 'color': '#FF5B8DB8'});
+    catList.add({
+      'name': 'Other',
+      'amount': otherAmount,
+      'colorLight': '#ff2a6090',
+      'colorDark':  '#ff80c0e0',
+    });
   }
 
   await HomeWidget.saveWidgetData<String>('fw_account_name', account.name);

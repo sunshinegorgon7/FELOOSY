@@ -198,11 +198,12 @@ class AppTheme {
     ColorScheme colorScheme,
   ) {
     final luminance = base.computeLuminance();
+    // Blend toward neutral (not theme-tinted) to avoid color cast
     if (colorScheme.brightness == Brightness.dark && luminance < 0.30) {
-      return Color.lerp(base, darkText, 0.36)!;
+      return Color.lerp(base, const Color(0xFFDDDDDD), 0.36)!;
     }
     if (colorScheme.brightness == Brightness.light && luminance > 0.70) {
-      return Color.lerp(base, lightText, 0.22)!;
+      return Color.lerp(base, const Color(0xFF222222), 0.22)!;
     }
     return base;
   }

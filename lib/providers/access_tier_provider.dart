@@ -25,6 +25,8 @@ extension AccessTierLimits on AccessTier {
   bool get canCustomCategories => this != AccessTier.free;
   bool get canBackup => this != AccessTier.free;
   bool get canExport => this != AccessTier.free;
+  // On-device AI analysis: subscription only
+  bool get hasAiAnalysis => this == AccessTier.subscription;
 }
 
 /// Synchronous tier resolution. Loading async providers → treated as free

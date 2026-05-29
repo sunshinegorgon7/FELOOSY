@@ -1,6 +1,6 @@
 ﻿import '../../data/models/category.dart';
 import '../../data/models/transaction.dart';
-import 'ai_analysis_service.dart';
+import 'ai_analysis_result.dart';
 
 class LocalAnalysisService {
   static AiAnalysisSuccess analyze({

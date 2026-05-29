@@ -1,7 +1,9 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../app/app_theme.dart';
 import '../../../data/repositories/ai_cache_repository.dart';
+
+// ── Completed analysis card ──────────────────────────────────────────────────
 
 class AiInsightsCard extends StatelessWidget {
   final AiCacheEntry entry;
@@ -12,7 +14,8 @@ class AiInsightsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final isAi = entry.source == 'ai';
+    // 'ai' (legacy), 'on-device' → no badge; 'local' → "Basic analysis"
+    final isBasic = entry.source == 'local';
     final accentColor = AppTheme.primaryText(cs);
 
     return Container(
@@ -28,13 +31,12 @@ class AiInsightsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
           Row(
             children: [
               Icon(Icons.auto_awesome, size: 13, color: accentColor),
               const SizedBox(width: 5),
               Text(
-                isAi ? 'AI Insights' : 'Summary',
+                'AI Insights',
                 style: tt.labelSmall?.copyWith(
                   color: accentColor,
                   fontWeight: FontWeight.w700,
@@ -42,6 +44,26 @@ class AiInsightsCard extends StatelessWidget {
                   fontSize: 10,
                 ),
               ),
+              if (isBasic) ...[
+                const SizedBox(width: 6),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: cs.surfaceContainerHigh,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    'BASIC',
+                    style: tt.labelSmall?.copyWith(
+                      color: cs.onSurfaceVariant,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+              ],
               const Spacer(),
               Text(
                 DateFormat('d MMM').format(entry.createdAt),
@@ -53,8 +75,6 @@ class AiInsightsCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-
-          // Summary
           Text(
             entry.result.summary,
             style: tt.bodySmall?.copyWith(
@@ -63,7 +83,6 @@ class AiInsightsCard extends StatelessWidget {
               fontSize: 12.5,
             ),
           ),
-
           if (entry.result.insights.isNotEmpty) ...[
             const SizedBox(height: 10),
             ...entry.result.insights.map(
@@ -99,11 +118,11 @@ class AiInsightsCard extends StatelessWidget {
               ),
             ),
           ],
-
           if (entry.result.advice.isNotEmpty) ...[
             const SizedBox(height: 10),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               decoration: BoxDecoration(
                 color: cs.surfaceContainerHigh,
                 borderRadius: BorderRadius.circular(8),
@@ -111,8 +130,7 @@ class AiInsightsCard extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.lightbulb_outline,
-                      size: 13, color: accentColor),
+                  Icon(Icons.lightbulb_outline, size: 13, color: accentColor),
                   const SizedBox(width: 7),
                   Expanded(
                     child: Text(
@@ -134,6 +152,8 @@ class AiInsightsCard extends StatelessWidget {
     );
   }
 }
+
+// ── Pending card — period not yet complete ───────────────────────────────────
 
 class AiInsightsPendingCard extends StatelessWidget {
   final String groupLabel;
@@ -173,6 +193,8 @@ class AiInsightsPendingCard extends StatelessWidget {
   }
 }
 
+// ── Preparing card — analysis running locally ────────────────────────────────
+
 class AiInsightsPreparingCard extends StatelessWidget {
   const AiInsightsPreparingCard({super.key});
 
@@ -188,9 +210,7 @@ class AiInsightsPreparingCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: cs.surfaceContainerLow,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: cs.primary.withValues(alpha: 0.2),
-        ),
+        border: Border.all(color: cs.primary.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
@@ -203,15 +223,96 @@ class AiInsightsPreparingCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          Text(
-            'Preparing insights in the background…',
-            style: tt.bodySmall?.copyWith(
-              color: cs.onSurfaceVariant,
-              fontSize: 12,
-              fontStyle: FontStyle.italic,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Analyzing locally…',
+                  style: tt.bodySmall?.copyWith(
+                    color: cs.onSurfaceVariant,
+                    fontSize: 12,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+                Text(
+                  'This may take up to 30 seconds.',
+                  style: tt.bodySmall?.copyWith(
+                    color: cs.onSurfaceVariant.withValues(alpha: 0.7),
+                    fontSize: 11,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ── Analyze button — triggers on-demand analysis ─────────────────────────────
+
+class AiAnalyzeButton extends StatelessWidget {
+  final String periodLabel;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const AiAnalyzeButton({
+    super.key,
+    required this.periodLabel,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    final accentColor = AppTheme.primaryText(cs);
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: cs.outlineVariant),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+          child: Row(
+            children: [
+              Icon(Icons.auto_awesome, size: 14, color: accentColor),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Analyze $periodLabel',
+                      style: tt.bodySmall?.copyWith(
+                        color: accentColor,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12.5,
+                      ),
+                    ),
+                    Text(
+                      subtitle,
+                      style: tt.bodySmall?.copyWith(
+                        color: cs.onSurfaceVariant,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, size: 16, color: cs.onSurfaceVariant),
+            ],
+          ),
+        ),
       ),
     );
   }

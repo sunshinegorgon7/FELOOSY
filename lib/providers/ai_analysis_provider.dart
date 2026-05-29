@@ -1,13 +1,16 @@
-﻿import 'dart:convert';
+import 'dart:convert';
+import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/database/database_helper.dart';
 import '../data/models/category.dart';
 import '../data/models/transaction.dart';
 import '../data/repositories/ai_cache_repository.dart';
-import '../domain/services/ai_analysis_service.dart';
+import '../domain/services/ai_analysis_result.dart';
 import '../domain/services/local_analysis_service.dart';
+import '../domain/services/local_llm_service.dart';
 import 'categories_provider.dart';
+import 'model_download_provider.dart';
 
 // ── Repository provider ──────────────────────────────────────────────────────
 
@@ -37,7 +40,7 @@ final aiCacheForHashProvider =
   return repo.get(hash);
 });
 
-// ── Background scanner state ─────────────────────────────────────────────────
+// ── On-demand analysis job ───────────────────────────────────────────────────
 
 class AiScanJob {
   final String hash;
@@ -57,31 +60,69 @@ class AiScanJob {
   });
 }
 
-class AiBackgroundScanner extends Notifier<Set<String>> {
-  bool _running = false;
+// ── Analysis notifier ────────────────────────────────────────────────────────
 
+class AiBackgroundScanner extends Notifier<Set<String>> {
   @override
   Set<String> build() => {};
 
-  /// Queue a list of groups for background analysis.
-  /// Only complete (past) periods should be enqueued.
-  Future<void> enqueue(List<AiScanJob> jobs) async {
-    if (_running) return;
-    _running = true;
+  /// Runs analysis for a single period on demand. No-op if already cached or running.
+  Future<void> analyzeOne(AiScanJob job) async {
+    if (state.contains(job.hash)) return;
 
     final repo = ref.read(aiCacheRepositoryProvider);
-    final cats = ref.read(categoriesProvider).asData?.value ?? const <Category>[];
+    final existing = await repo.get(job.hash);
+    if (existing != null) return; // already cached
 
-    for (final job in jobs) {
-      // Skip if already cached and doesn't need retry
-      final existing = await repo.get(job.hash);
-      final needsRetry = existing != null && await repo.needsRetry(job.hash);
-      if (existing != null && !needsRetry) continue;
+    state = {...state, job.hash};
 
-      // Mark as in-progress in state so UI can react
-      state = {...state, job.hash};
+    final cats =
+        ref.read(categoriesProvider).asData?.value ?? const <Category>[];
 
-      final result = await AiAnalysisService.analyze(
+    AiAnalysisResult result;
+    String source;
+
+    // Use on-device LLM on Android when model is ready; rule-based everywhere else
+    if (Platform.isAndroid) {
+      final modelState = ref.read(modelDownloadProvider).value;
+      if (modelState is ModelStateReady) {
+        result = await LocalLlmService.analyze(
+          modelPath: modelState.modelPath,
+          transactions: job.transactions,
+          categories: cats,
+          groupLabel: job.groupLabel,
+          currencySymbol: job.currencySymbol,
+          symbolLeading: job.symbolLeading,
+          budgetAmount: job.budgetAmount,
+        );
+        source = result is AiAnalysisSuccess ? 'on-device' : 'local';
+        // If LLM failed, fall back to rule-based
+        if (result is! AiAnalysisSuccess) {
+          result = LocalAnalysisService.analyze(
+            transactions: job.transactions,
+            categories: cats,
+            groupLabel: job.groupLabel,
+            currencySymbol: job.currencySymbol,
+            symbolLeading: job.symbolLeading,
+            budgetAmount: job.budgetAmount,
+          );
+          source = 'local';
+        }
+      } else {
+        // Model not ready — use rule-based
+        result = LocalAnalysisService.analyze(
+          transactions: job.transactions,
+          categories: cats,
+          groupLabel: job.groupLabel,
+          currencySymbol: job.currencySymbol,
+          symbolLeading: job.symbolLeading,
+          budgetAmount: job.budgetAmount,
+        );
+        source = 'local';
+      }
+    } else {
+      // Non-Android: rule-based only
+      result = LocalAnalysisService.analyze(
         transactions: job.transactions,
         categories: cats,
         groupLabel: job.groupLabel,
@@ -89,68 +130,24 @@ class AiBackgroundScanner extends Notifier<Set<String>> {
         symbolLeading: job.symbolLeading,
         budgetAmount: job.budgetAmount,
       );
-
-      if (result is AiAnalysisSuccess) {
-        await repo.put(
-          hash: job.hash,
-          groupLabel: job.groupLabel,
-          result: result,
-          source: 'ai',
-        );
-      } else if (result is AiAnalysisQuotaExceeded) {
-        // Fall back to local, mark for retry tomorrow
-        final local = LocalAnalysisService.analyze(
-          transactions: job.transactions,
-          categories: cats,
-          groupLabel: job.groupLabel,
-          currencySymbol: job.currencySymbol,
-          symbolLeading: job.symbolLeading,
-          budgetAmount: job.budgetAmount,
-        );
-        final retryAfter = DateTime.now().add(const Duration(hours: 25));
-        await repo.put(
-          hash: job.hash,
-          groupLabel: job.groupLabel,
-          result: local,
-          source: 'local',
-          retryAfter: retryAfter,
-        );
-        // Refresh UI then stop — quota hit, no point continuing
-        ref.invalidate(aiCacheForHashProvider(job.hash));
-        state = state.difference({job.hash});
-        break;
-      } else {
-        // Network/other failure — local fallback, retry in 1 hour
-        final local = LocalAnalysisService.analyze(
-          transactions: job.transactions,
-          categories: cats,
-          groupLabel: job.groupLabel,
-          currencySymbol: job.currencySymbol,
-          symbolLeading: job.symbolLeading,
-          budgetAmount: job.budgetAmount,
-        );
-        final retryAfter = DateTime.now().add(const Duration(hours: 1));
-        await repo.put(
-          hash: job.hash,
-          groupLabel: job.groupLabel,
-          result: local,
-          source: 'local',
-          retryAfter: retryAfter,
-        );
-      }
-
-      // Refresh the UI cache for this hash so the card re-reads from SQLite
-      ref.invalidate(aiCacheForHashProvider(job.hash));
-      state = state.difference({job.hash});
-
-      // Rate limit: 1 request per 5 seconds (12 RPM, safely under 15 RPM free tier)
-      await Future.delayed(const Duration(seconds: 5));
+      source = 'local';
     }
 
-    _running = false;
+    if (result is AiAnalysisSuccess) {
+      await repo.put(
+        hash: job.hash,
+        groupLabel: job.groupLabel,
+        result: result,
+        source: source,
+      );
+    }
+
+    ref.invalidate(aiCacheForHashProvider(job.hash));
+    state = state.difference({job.hash});
   }
 }
 
 final aiBackgroundScannerProvider =
     NotifierProvider<AiBackgroundScanner, Set<String>>(
-        AiBackgroundScanner.new);
+  AiBackgroundScanner.new,
+);

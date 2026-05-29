@@ -1,44 +1,13 @@
-﻿import 'dart:convert';
-import 'package:google_generative_ai/google_generative_ai.dart';
-import '../../core/constants/api_keys.dart';
+import 'dart:convert';
+import 'package:fllama/fllama.dart';
+import 'package:fllama/fllama_type.dart';
 import '../../data/models/category.dart';
 import '../../data/models/transaction.dart';
+import 'ai_analysis_result.dart';
 
-sealed class AiAnalysisResult {
-  const AiAnalysisResult();
-}
-
-class AiAnalysisSuccess extends AiAnalysisResult {
-  final String summary;
-  final List<String> insights;
-  final String advice;
-  const AiAnalysisSuccess({
-    required this.summary,
-    required this.insights,
-    required this.advice,
-  });
-}
-
-class AiAnalysisQuotaExceeded extends AiAnalysisResult {
-  const AiAnalysisQuotaExceeded();
-}
-
-class AiAnalysisFailure extends AiAnalysisResult {
-  final String message;
-  const AiAnalysisFailure(this.message);
-}
-
-class AiAnalysisService {
-  static final _model = GenerativeModel(
-    model: 'gemini-1.5-flash',
-    apiKey: kGeminiApiKey,
-    generationConfig: GenerationConfig(
-      responseMimeType: 'application/json',
-      temperature: 0.4,
-    ),
-  );
-
+class LocalLlmService {
   static Future<AiAnalysisResult> analyze({
+    required String modelPath,
     required List<Transaction> transactions,
     required List<Category> categories,
     required String groupLabel,
@@ -46,8 +15,16 @@ class AiAnalysisService {
     required bool symbolLeading,
     required double budgetAmount,
   }) async {
+    final fllama = Fllama.instance();
+    if (fllama == null) return const AiAnalysisFailure('fllama unavailable');
+
+    double? contextId;
     try {
-      final prompt = _buildPrompt(
+      final ctx = await fllama.initContext(modelPath, nCtx: 2048, nBatch: 512);
+      if (ctx == null) return const AiAnalysisFailure('Failed to load model');
+      contextId = double.parse(ctx['contextId'].toString());
+
+      final rawPrompt = _buildPrompt(
         transactions: transactions,
         categories: categories,
         groupLabel: groupLabel,
@@ -56,13 +33,31 @@ class AiAnalysisService {
         budgetAmount: budgetAmount,
       );
 
-      final response = await _model.generateContent([Content.text(prompt)]);
-      final text = response.text;
-      if (text == null || text.isEmpty) {
-        return const AiAnalysisFailure('Empty response from AI');
-      }
+      // Use the model's chat template so instruction-tuned models respond correctly
+      final formatted = await fllama.getFormattedChat(
+        contextId,
+        messages: [RoleContent(role: 'user', content: rawPrompt)],
+      );
 
-      final json = jsonDecode(text) as Map<String, dynamic>;
+      final result = await fllama.completion(
+        contextId,
+        prompt: formatted ?? rawPrompt,
+        nPredict: 512,
+        temperature: 0.35,
+        stop: ['<end_of_turn>', '<eos>', 'Human:', 'User:'],
+        emitRealtimeCompletion: false,
+      );
+
+      final text = result?['text'] as String?
+          ?? result?['content'] as String?
+          ?? '';
+
+      if (text.isEmpty) return const AiAnalysisFailure('Empty model response');
+
+      final jsonStr = _extractJson(text);
+      if (jsonStr == null) return const AiAnalysisFailure('No JSON found in response');
+
+      final json = jsonDecode(jsonStr) as Map<String, dynamic>;
       final rawInsights = json['insights'];
       final insights = rawInsights is List
           ? rawInsights.map((e) => e.toString()).toList()
@@ -73,15 +68,25 @@ class AiAnalysisService {
         insights: insights,
         advice: json['advice']?.toString() ?? '',
       );
-    } on GenerativeAIException catch (e) {
-      if (e.message.contains('429') ||
-          e.message.toLowerCase().contains('quota') ||
-          e.message.toLowerCase().contains('rate')) {
-        return const AiAnalysisQuotaExceeded();
-      }
-      return AiAnalysisFailure(e.message);
     } catch (e) {
       return AiAnalysisFailure(e.toString());
+    } finally {
+      if (contextId != null) {
+        await fllama.releaseContext(contextId);
+      }
+    }
+  }
+
+  static String? _extractJson(String text) {
+    final start = text.indexOf('{');
+    final end = text.lastIndexOf('}');
+    if (start == -1 || end == -1 || end <= start) return null;
+    try {
+      final candidate = text.substring(start, end + 1);
+      jsonDecode(candidate); // validate it parses
+      return candidate;
+    } catch (_) {
+      return null;
     }
   }
 
@@ -94,7 +99,6 @@ class AiAnalysisService {
     required double budgetAmount,
   }) {
     final catMap = {for (final c in categories) c.uuid: c};
-
     final totals = <String, _CatTotal>{};
     double totalExpenses = 0;
     double totalIncome = 0;
@@ -118,17 +122,13 @@ class AiAnalysisService {
 
     final sb = StringBuffer();
     sb.writeln('Period: $groupLabel');
-    if (budgetAmount > 0) {
-      sb.writeln('Budget: ${fmt(budgetAmount)}');
-    }
+    if (budgetAmount > 0) sb.writeln('Budget: ${fmt(budgetAmount)}');
     sb.writeln('Total Income: ${fmt(totalIncome)}');
     sb.writeln('Total Expenses: ${fmt(totalExpenses)}');
     if (net != null) {
-      sb.writeln(
-        isOver
-            ? 'Net: ${fmt(net.abs())} over budget'
-            : 'Net: ${fmt(net)} under budget',
-      );
+      sb.writeln(isOver
+          ? 'Net: ${fmt(net.abs())} over budget'
+          : 'Net: ${fmt(net)} under budget');
     }
     sb.writeln('Transactions: ${transactions.length}');
     sb.writeln();
@@ -140,18 +140,20 @@ class AiAnalysisService {
           '${entry.key},expense,${fmt(entry.value.total)},${entry.value.count}');
     }
     if (totalIncome > 0) {
-      sb.writeln('Income,income,${fmt(totalIncome)},${transactions.where((t) => t.type == TransactionType.income).length}');
+      sb.writeln(
+          'Income,income,${fmt(totalIncome)},${transactions.where((t) => t.type == TransactionType.income).length}');
     }
-
     sb.writeln();
     sb.writeln(
-      'Analyze this budget summary and respond in JSON with exactly three keys: '
-      '"summary" (2-3 sentences covering income, total spending, and whether over or under budget — use exact figures), '
-      '"insights" (array of exactly 2-3 short bullets identifying the main spending drivers using exact figures from the data), '
-      'and "advice" (one concise, actionable improvement suggestion). '
-      'Keep the tone clear and supportive. Use the exact figures from the data provided.',
+      'Analyze this budget summary. Respond with ONLY a JSON object — no explanation, '
+      'no preamble, no markdown. The JSON must have exactly three keys: '
+      '"summary" (string: 2–3 sentences covering income, total spending, and '
+      'whether over or under budget, use exact figures), '
+      '"insights" (array of exactly 2–3 short strings identifying spending drivers '
+      'with exact figures), '
+      '"advice" (string: one concise actionable suggestion). '
+      'Start your response with {',
     );
-
     return sb.toString();
   }
 }

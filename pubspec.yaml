@@ -1,4 +1,4 @@
-﻿name: feloosy
+name: feloosy
 description: Personal budget tracker — pocket money only.
 publish_to: 'none'
 version: 1.4.1+70
@@ -40,8 +40,9 @@ dependencies:
   gap: ^3.0.1
   google_fonts: ^8.0.2
 
-  # AI analysis
-  google_generative_ai: ^0.4.0
+  # On-device AI analysis
+  fllama: ^0.0.1
+  http: ^1.2.2
 
   # Auth + Google Drive backup
   google_sign_in: ^7.2.0
