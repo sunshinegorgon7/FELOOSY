@@ -2,120 +2,135 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // Inspiration palette.
-  static const Color forestGreen = Color(0xFF0E3B2E);
-  static const Color icePerformanceBlue = Color(0xFF8FD5E6);
-  static const Color ghazelBlood = Color(0xFFA6192E);
-  static const Color royalBlue = Color(0xFF1E4FA3);
-  static const Color mossGreen = Color(0xFF647A43);
+  // ══════════════════════════════════════════════════════════════════════════
+  // Inspiration palette
+  // ══════════════════════════════════════════════════════════════════════════
 
-  // Light theme.
-  static const Color lightPrimary = forestGreen;
-  static const Color lightSecondary = royalBlue;
-  static const Color lightBackground = Color(0xFFF3F6EF);
-  static const Color lightAccent = icePerformanceBlue;
-  static const Color lightSurfaceLowest = Color(0xFFFBFDF8);
-  static const Color lightSurfaceLow = Color(0xFFE8EFE2);
-  static const Color lightSurfaceHigh = Color(0xFFD9E4D1);
-  static const Color lightText = Color(0xFF202823);
-  static const Color lightMuted = Color(0xFF566156);
-  static const Color lightOutline = Color(0xFF81917E);
-  static const Color lightOutlineVariant = Color(0xFFC8D5C3);
+  // Dark mode — Genesis Forest Green: deep, jewel-toned, premium forest
+  static const Color genesisForest    = Color(0xFF0E2018); // rich surface lowest
+  static const Color emeraldHighlight = Color(0xFF4CC490); // vivid emerald accent
 
-  // Dark theme.
-  static const Color darkPrimary = forestGreen;
-  static const Color darkSecondary = Color(0xFF6F8FEA);
-  static const Color darkBackground = Color(0xFF0D1513);
-  static const Color darkAccent = icePerformanceBlue;
-  static const Color darkSurfaceLow = Color(0xFF151E1B);
-  static const Color darkSurface = Color(0xFF1C2824);
-  static const Color darkSurfaceHigh = Color(0xFF24312C);
-  static const Color darkSurfaceHighest = Color(0xFF2C3A34);
-  static const Color darkText = Color(0xFFE3ECE8);
-  static const Color darkMuted = Color(0xFFAAB7B1);
+  // Light mode — Hyundai N Ice Blue: crisp, sporty, crystalline
+  static const Color nPerformanceBlue = Color(0xFF0065B5); // N performance blue
+  static const Color iceWhite         = Color(0xFFEDF5FA); // ice background
 
-  // Backward-compatible aliases used by existing widgets.
-  static const Color fern = lightPrimary;
-  static const Color washedSage = lightSecondary;
-  static const Color forestDeep = lightAccent;
-  static const Color mintMist = lightBackground;
-  static const Color mintLift = lightSurfaceLowest;
-  static const Color paleGrove = lightSurfaceLow;
-  static const Color paleGroveHigh = lightSurfaceHigh;
-  static const Color inkDeep = lightText;
-  static const Color groveShadow = lightMuted;
-  static const Color groveOutline = lightOutline;
+  // Legacy name aliases kept for existing widget references
+  static const Color forestGreen        = genesisForest;
+  static const Color icePerformanceBlue = nPerformanceBlue;
+  static const Color ghazelBlood        = Color(0xFFA8192D); // expense red
+  static const Color royalBlue          = Color(0xFF1E4FA3); // kept for cat bars
+  static const Color mossGreen          = Color(0xFF2C7848); // income green
+
+  // ── Dark surface scale (Genesis Forest) ───────────────────────────────────
+  static const Color darkPrimary        = Color(0xFF060D0A);
+  static const Color darkSecondary      = Color(0xFF7AC4AE);
+  static const Color darkBackground     = Color(0xFF060D0A);
+  static const Color darkAccent         = emeraldHighlight;
+  static const Color darkSurfaceLow     = Color(0xFF142B1D);
+  static const Color darkSurface        = Color(0xFF1A3222);
+  static const Color darkSurfaceHigh    = Color(0xFF203B28);
+  static const Color darkSurfaceHighest = Color(0xFF274430);
+  static const Color darkText           = Color(0xFFDAF0E7);
+  static const Color darkMuted          = Color(0xFF7BAF93);
+
+  // ── Light surface scale (Hyundai N Ice) ───────────────────────────────────
+  static const Color lightPrimary        = nPerformanceBlue;
+  static const Color lightSecondary      = Color(0xFF2D88BE);
+  static const Color lightBackground     = iceWhite;
+  static const Color lightAccent         = Color(0xFFCBE5F5);
+  static const Color lightSurfaceLowest  = Color(0xFFF5FBFE);
+  static const Color lightSurfaceLow     = Color(0xFFDEEFF8);
+  static const Color lightSurfaceHigh    = Color(0xFFCBE5F5);
+  static const Color lightText           = Color(0xFF071422);
+  static const Color lightMuted          = Color(0xFF4A6E8A);
+  static const Color lightOutline        = Color(0xFF6896B2);
+  static const Color lightOutlineVariant = Color(0xFFB2D5EA);
+
+  // ── Backward-compatible aliases (used by existing widgets) ─────────────────
+  static const Color fern                = lightPrimary;
+  static const Color washedSage          = lightSecondary;
+  static const Color forestDeep          = lightAccent;
+  static const Color mintMist            = lightBackground;
+  static const Color mintLift            = lightSurfaceLowest;
+  static const Color paleGrove           = lightSurfaceLow;
+  static const Color paleGroveHigh       = lightSurfaceHigh;
+  static const Color inkDeep             = lightText;
+  static const Color groveShadow         = lightMuted;
+  static const Color groveOutline        = lightOutline;
   static const Color groveOutlineVariant = lightOutlineVariant;
 
-  static const Color iceGlow = darkAccent;
-  static const Color deepNimbus = darkBackground;
-  static const Color nimbusLowest = darkPrimary;
-  static const Color nimbusSurface = darkSurfaceLow;
-  static const Color nimbusMid = darkSurface;
-  static const Color nimbusHigh = darkSurfaceHigh;
-  static const Color nimbusHighest = darkSurfaceHighest;
-  static const Color mistText = darkText;
-  static const Color mistVariant = darkMuted;
+  static const Color iceGlow             = darkAccent;
+  static const Color deepNimbus          = darkBackground;
+  static const Color nimbusLowest        = genesisForest;
+  static const Color nimbusSurface       = darkSurfaceLow;
+  static const Color nimbusMid           = darkSurface;
+  static const Color nimbusHigh          = darkSurfaceHigh;
+  static const Color nimbusHighest       = darkSurfaceHighest;
+  static const Color mistText            = darkText;
+  static const Color mistVariant         = darkMuted;
 
-  // Semantic colors.
-  static const Color ledgerRed = ghazelBlood;
-  static const Color ledgerGreen = mossGreen;
-  static const Color amberMark = Color(0xFFB47A2B);
-  static const Color destructiveColor = Color(0xFFB11C2E);
+  // ── Semantic colors ───────────────────────────────────────────────────────
+  static const Color ledgerRed        = ghazelBlood;
+  static const Color ledgerGreen      = mossGreen;
+  static const Color amberMark        = Color(0xFFB07A1A);
+  static const Color destructiveColor = Color(0xFFB01C2E);
+  static const Color expenseColor     = ledgerRed;
+  static const Color incomeColor      = ledgerGreen;
+  static const Color warningColor     = amberMark;
 
-  // Text-safe variants for small semantic text on tinted surfaces.
-  static const Color fernText = lightPrimary;
-  static const Color iceGlowText = darkAccent;
-  static const Color ledgerRedText = ghazelBlood;
-  static const Color ledgerRedTextDark = Color(0xFFFF7885);
-  static const Color ledgerGreenText = Color(0xFF4B612C);
-  static const Color ledgerGreenTextDark = Color(0xFFA8BE72);
-  static const Color amberText = Color(0xFF80531B);
+  // Text-safe semantic variants for small text on tinted surfaces
+  static const Color fernText            = lightPrimary;
+  static const Color iceGlowText         = darkAccent;
+  static const Color ledgerRedText       = Color(0xFF9B1424);
+  static const Color ledgerRedTextDark   = Color(0xFFFF8090);
+  static const Color ledgerGreenText     = Color(0xFF1E6038);
+  static const Color ledgerGreenTextDark = Color(0xFF72D4A0);
+  static const Color amberText           = Color(0xFF7D5012);
 
-  static const Color expenseColor = ledgerRed;
-  static const Color incomeColor = ledgerGreen;
-  static const Color warningColor = amberMark;
+  // ══════════════════════════════════════════════════════════════════════════
+  // Category bar palettes
+  // ══════════════════════════════════════════════════════════════════════════
 
   static const List<Color> categoryBarsLight = [
-    forestGreen,
-    royalBlue,
-    Color(0xFF8B6048),
-    Color(0xFF3A7F92),
-    Color(0xFF9B6F2E),
-    mossGreen,
-    Color(0xFF425F8F),
-    ghazelBlood,
-    Color(0xFF7B5D88),
-    Color(0xFF9E654C),
-    Color(0xFF5260A7),
-    Color(0xFF3D8174),
-    Color(0xFF2F6A9B),
-    forestGreen,
-    mossGreen,
-    Color(0xFF3D8174),
-    royalBlue,
-    Color(0xFF7B5D88),
+    nPerformanceBlue,    // 0  — N performance blue (primary)
+    Color(0xFF1E6EB8),   // 1  — deep ocean blue
+    Color(0xFF8B5A38),   // 2  — warm caramel
+    Color(0xFF1F8CA0),   // 3  — teal blue
+    Color(0xFF8B6A10),   // 4  — amber brown
+    mossGreen,           // 5  — forest green (income)
+    Color(0xFF3D5AAA),   // 6  — steel blue
+    ghazelBlood,         // 7  — expense red
+    Color(0xFF7A4E9C),   // 8  — plum purple
+    Color(0xFF9E5040),   // 9  — terracotta
+    Color(0xFF4848A8),   // 10 — indigo
+    Color(0xFF287878),   // 11 — deep teal
+    Color(0xFF2A6090),   // 12 — slate blue
+    nPerformanceBlue,    // 13
+    mossGreen,           // 14
+    Color(0xFF287878),   // 15
+    Color(0xFF1E6EB8),   // 16
+    Color(0xFF7A4E9C),   // 17
   ];
 
   static const List<Color> categoryBarsDark = [
-    Color(0xFF5FAF8A),
-    darkSecondary,
-    Color(0xFFD09A78),
-    darkAccent,
-    Color(0xFFC99A50),
-    Color(0xFFA8BE72),
-    Color(0xFF85A0E8),
-    Color(0xFFFF7885),
-    Color(0xFFB28CC5),
-    Color(0xFFD49276),
-    Color(0xFF9CA8F2),
-    Color(0xFF75C3B3),
-    Color(0xFF78B8E0),
-    Color(0xFF5FAF8A),
-    Color(0xFFA8BE72),
-    Color(0xFF75C3B3),
-    darkSecondary,
-    Color(0xFFB28CC5),
+    emeraldHighlight,    // 0  — emerald (primary)
+    Color(0xFF78B8EC),   // 1  — clear blue
+    Color(0xFFD4A87C),   // 2  — warm caramel
+    Color(0xFF5CC8D4),   // 3  — teal cyan
+    Color(0xFFD4B852),   // 4  — golden amber
+    Color(0xFFA8DC84),   // 5  — lime green
+    Color(0xFF8EB0F0),   // 6  — periwinkle blue
+    Color(0xFFFF8090),   // 7  — rose red
+    Color(0xFFBC9AD8),   // 8  — soft purple
+    Color(0xFFE08C78),   // 9  — terracotta
+    Color(0xFF90A8F5),   // 10 — blue-lavender
+    Color(0xFF6ECEC0),   // 11 — seafoam teal
+    Color(0xFF80C0E0),   // 12 — sky blue
+    emeraldHighlight,    // 13
+    Color(0xFFA8DC84),   // 14
+    Color(0xFF6ECEC0),   // 15
+    Color(0xFF78B8EC),   // 16
+    Color(0xFFBC9AD8),   // 17
   ];
 
   static const Map<String, int> _defaultCategoryBarIndex = {
@@ -139,13 +154,13 @@ class AppTheme {
     '00000000-0000-0000-0000-000000000018': 17,
   };
 
-  static final ThemeData dark = _buildDark();
+  static final ThemeData dark  = _buildDark();
   static final ThemeData light = _buildLight();
 
   static ThemeMode resolveMode(String stored) => switch (stored) {
         'light' => ThemeMode.light,
-        'dark' => ThemeMode.dark,
-        _ => ThemeMode.system,
+        'dark'  => ThemeMode.dark,
+        _       => ThemeMode.system,
       };
 
   static Color primaryText(ColorScheme cs) =>
@@ -192,43 +207,49 @@ class AppTheme {
     return base;
   }
 
+  // ══════════════════════════════════════════════════════════════════════════
+  // Theme builders
+  // ══════════════════════════════════════════════════════════════════════════
+
   static ThemeData _buildDark() {
     return ThemeData(
       useMaterial3: true,
       colorScheme: const ColorScheme(
         brightness: Brightness.dark,
         surfaceTint: Colors.transparent,
-        primary: darkAccent,
-        onPrimary: darkPrimary,
-        primaryContainer: darkPrimary,
-        onPrimaryContainer: darkAccent,
+        // Emerald as the primary interactive color — FABs, buttons, selection
+        primary: emeraldHighlight,
+        onPrimary: Color(0xFF031A0C),
+        primaryContainer: darkSurfaceHigh,
+        onPrimaryContainer: Color(0xFFAEECD0),
         secondary: darkSecondary,
-        onSecondary: darkPrimary,
-        secondaryContainer: Color(0xFF1A2F63),
-        onSecondaryContainer: Color(0xFFD8E2FF),
-        tertiary: Color(0xFFA8BE72),
-        onTertiary: Color(0xFF18230F),
-        tertiaryContainer: Color(0xFF2C3B20),
-        onTertiaryContainer: Color(0xFFDDE9BC),
-        error: destructiveColor,
-        onError: lightBackground,
-        errorContainer: Color(0xFF5A111C),
+        onSecondary: Color(0xFF062819),
+        secondaryContainer: Color(0xFF0C2A22),
+        onSecondaryContainer: Color(0xFFC4EAE0),
+        tertiary: Color(0xFF72D4A0),
+        onTertiary: Color(0xFF042215),
+        tertiaryContainer: Color(0xFF0C2A1E),
+        onTertiaryContainer: Color(0xFFC0EAD4),
+        error: Color(0xFFFF6B7A),
+        onError: Color(0xFF4A0010),
+        errorContainer: Color(0xFF5A0E1C),
         onErrorContainer: Color(0xFFFFDADC),
+        // Surface layering — deepest forest to elevated surfaces
         surface: darkBackground,
         onSurface: darkText,
-        surfaceContainerLowest: darkPrimary,
+        surfaceContainerLowest: genesisForest,    // rich forest green lowest
         surfaceContainerLow: darkSurfaceLow,
         surfaceContainer: darkSurface,
         surfaceContainerHigh: darkSurfaceHigh,
         surfaceContainerHighest: darkSurfaceHighest,
         onSurfaceVariant: darkMuted,
-        outline: Color(0xFF5A6A64),
+        outline: Color(0xFF3D6050),
         outlineVariant: darkSurfaceHighest,
-        inverseSurface: lightBackground,
-        onInverseSurface: darkPrimary,
-        inversePrimary: forestGreen,
-        scrim: darkPrimary,
-        shadow: darkPrimary,
+        inverseSurface: lightSurfaceLow,
+        onInverseSurface: lightText,
+        inversePrimary: nPerformanceBlue,
+        scrim: Color(0xFF000000),
+        shadow: Color(0xFF000000),
       ),
       scaffoldBackgroundColor: darkBackground,
       canvasColor: darkBackground,
@@ -266,22 +287,24 @@ class AppTheme {
       colorScheme: const ColorScheme(
         brightness: Brightness.light,
         surfaceTint: Colors.transparent,
+        // N Performance Blue as the primary interactive color
         primary: lightPrimary,
-        onPrimary: lightBackground,
-        primaryContainer: Color(0xFFD4E3D9),
-        onPrimaryContainer: lightPrimary,
+        onPrimary: Color(0xFFFFFFFF),
+        primaryContainer: lightSurfaceHigh,
+        onPrimaryContainer: Color(0xFF003570),
         secondary: lightSecondary,
-        onSecondary: lightBackground,
-        secondaryContainer: Color(0xFFDDE6FF),
-        onSecondaryContainer: Color(0xFF17356E),
-        tertiary: mossGreen,
-        onTertiary: lightBackground,
-        tertiaryContainer: Color(0xFFE1EBCD),
-        onTertiaryContainer: Color(0xFF34441F),
+        onSecondary: Color(0xFFFFFFFF),
+        secondaryContainer: Color(0xFFCCE8F5),
+        onSecondaryContainer: Color(0xFF0C3D60),
+        tertiary: Color(0xFF1E7A45),
+        onTertiary: Color(0xFFFFFFFF),
+        tertiaryContainer: Color(0xFFC4EBD5),
+        onTertiaryContainer: Color(0xFF083D20),
         error: destructiveColor,
-        onError: lightBackground,
-        errorContainer: Color(0xFFFFDADC),
-        onErrorContainer: Color(0xFF6E0E19),
+        onError: Color(0xFFFFFFFF),
+        errorContainer: Color(0xFFFFDADE),
+        onErrorContainer: Color(0xFF6E0010),
+        // Surface layering — ice-white atmosphere
         surface: lightBackground,
         onSurface: lightText,
         surfaceContainerLowest: lightSurfaceLowest,
@@ -292,11 +315,11 @@ class AppTheme {
         onSurfaceVariant: lightMuted,
         outline: lightOutline,
         outlineVariant: lightOutlineVariant,
-        inverseSurface: darkPrimary,
-        onInverseSurface: lightBackground,
-        inversePrimary: darkAccent,
-        scrim: darkPrimary,
-        shadow: darkPrimary,
+        inverseSurface: genesisForest,
+        onInverseSurface: lightSurfaceLow,
+        inversePrimary: emeraldHighlight,
+        scrim: Color(0xFF000000),
+        shadow: Color(0xFF000000),
       ),
       scaffoldBackgroundColor: lightBackground,
       canvasColor: lightBackground,
@@ -315,7 +338,7 @@ class AppTheme {
       ),
       cardTheme: const CardThemeData(
         elevation: 0,
-        color: lightSurfaceHigh,
+        color: lightSurfaceLow,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(16)),
           side: BorderSide(color: lightOutlineVariant),
