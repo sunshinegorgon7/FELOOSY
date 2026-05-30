@@ -106,7 +106,15 @@ class InsightsService {
     List<Transaction> previous,
     List<Category> categories,
   ) {
-    if (previous.isEmpty) return [];
+    if (previous.isEmpty) {
+      return [
+        const Insight(
+          type: InsightType.trend,
+          severity: InsightSeverity.info,
+          text: 'First month tracked',
+        ),
+      ];
+    }
 
     Map<String, double> expensesByCategory(List<Transaction> txns) {
       final map = <String, double>{};
@@ -209,12 +217,26 @@ class InsightsService {
 
     if (expenses.length < 8) return null;
 
+    // Build a map of date → daily total, then group by weekday
+    final dailyTotals = <DateTime, double>{};
+    for (final t in expenses) {
+      final day = DateTime(
+        t.transactionDate.year,
+        t.transactionDate.month,
+        t.transactionDate.day,
+      );
+      dailyTotals[day] = (dailyTotals[day] ?? 0) + t.amount;
+    }
+
+    if (dailyTotals.isEmpty) return null;
+
+    // For each weekday, average the daily totals across all days of that type
     final sumByDow = List<double>.filled(8, 0);
     final countByDow = List<int>.filled(8, 0);
 
-    for (final t in expenses) {
-      final dow = t.transactionDate.weekday; // 1=Mon, 7=Sun
-      sumByDow[dow] += t.amount;
+    for (final entry in dailyTotals.entries) {
+      final dow = entry.key.weekday; // 1=Mon, 7=Sun
+      sumByDow[dow] += entry.value;
       countByDow[dow]++;
     }
 
@@ -232,17 +254,8 @@ class InsightsService {
 
     if (bestDow == -1) return null;
 
+    final uniqueDays = dailyTotals.length;
     final total = expenses.fold<double>(0, (s, t) => s + t.amount);
-    final uniqueDays = expenses
-        .map((t) => DateTime(
-              t.transactionDate.year,
-              t.transactionDate.month,
-              t.transactionDate.day,
-            ))
-        .toSet()
-        .length;
-    if (uniqueDays == 0) return null;
-
     final overallDailyAvg = total / uniqueDays;
     if (bestAvg < overallDailyAvg * 1.5) return null;
 
