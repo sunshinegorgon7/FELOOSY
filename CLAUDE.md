@@ -35,7 +35,7 @@ FELOOSY is a Flutter personal budgeting app for iOS and Android. Local-first SQL
 **Flavors:** Two only — `dev` and `prod`. No UAT.
 - `lib/main_dev.dart` → `Flavor.dev` → `feloosy_dev.db`
 - `lib/main.dart` → `Flavor.prod` → `feloosy.db`
-- Dev always resolves to `AccessTier.subscription` — paywall never appears.
+- Dev always resolves to `AccessTier.pro` — paywall never appears.
 
 **Common commands:**
 ```bash
@@ -113,15 +113,14 @@ Read providers synchronously with `ref.read(xProvider)`. Watch with `ref.watch(x
 
 **Access tier resolution (read before writing any gate):**
 ```dart
-enum AccessTier { free, pro, subscription }
-// Resolved in access_tier_provider.dart from: purchaseProvider + smsSubscriptionProvider + trialProvider
-// Dev flavor always returns subscription.
+enum AccessTier { free, pro }
+// Resolved in access_tier_provider.dart from: purchaseProvider + trialProvider
+// Dev flavor always returns pro.
 ```
 
 **Monetization products:**
-- `feloosy_pro_lifetime` — $4.99 one-time Pro tier
-- `feloosy_sms_monthly` — recurring SMS tier subscription
-- Trial: 14-day trial for SMS features, stored as first-launch timestamp in `flutter_secure_storage`
+- `feloosy_pro_lifetime` — $9.99 one-time, unlocks everything (unlimited wallets + transactions, full history, backup, export, custom categories, SMS auto-parsing)
+- Trial: 14-day trial of Pro features, stored as first-launch timestamp in `flutter_secure_storage`
 - Purchase state: `flutter_secure_storage` ONLY. Never SQLite — it resists tampering.
 
 **Android-only features:**
@@ -219,8 +218,7 @@ Budgeting and personal finance rules have non-obvious edge cases. Before impleme
 Currently decided values (do not change without explicit instruction):
 - Trial length: 14 days
 - Max backups retained: 5
-- Pro product: `feloosy_pro_lifetime` / $4.99
-- SMS product: `feloosy_sms_monthly`
+- Pro product: `feloosy_pro_lifetime` / $9.99 (update price in App Store / Play Console)
 - DB name (dev): `feloosy_dev.db` / (prod): `feloosy.db`
 
 ---

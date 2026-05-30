@@ -2,40 +2,27 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../app/app_flavor.dart';
 import 'purchase_provider.dart';
-import 'sms_subscription_provider.dart';
 
-enum AccessTier { free, pro, subscription }
+enum AccessTier { free, pro }
 
 extension AccessTierLimits on AccessTier {
   /// null = unlimited
-  int? get monthlyTxPerWallet => switch (this) {
-        AccessTier.free => 10,
-        AccessTier.pro => 50,
-        AccessTier.subscription => null,
-      };
+  int? get monthlyTxPerWallet => this == AccessTier.free ? 10 : null;
 
   /// null = unlimited
-  int? get maxWallets => switch (this) {
-        AccessTier.free => 1,
-        AccessTier.pro => 2,
-        AccessTier.subscription => null,
-      };
+  int? get maxWallets => this == AccessTier.free ? 1 : null;
 
-  bool get hasFullHistory => this != AccessTier.free;
-  bool get canCustomCategories => this != AccessTier.free;
-  bool get canBackup => this != AccessTier.free;
-  bool get canExport => this != AccessTier.free;
-  // On-device AI analysis: subscription only
-  bool get hasAiAnalysis => this == AccessTier.subscription;
+  bool get hasFullHistory => this == AccessTier.pro;
+  bool get canCustomCategories => this == AccessTier.pro;
+  bool get canBackup => this == AccessTier.pro;
+  bool get canExport => this == AccessTier.pro;
+  bool get hasSms => this == AccessTier.pro;
 }
 
 /// Synchronous tier resolution. Loading async providers → treated as free
-/// (conservative; same intent as the comment in add_transaction_screen.dart).
+/// (conservative default; never grants access on loading state).
 final accessTierProvider = Provider<AccessTier>((ref) {
-  if (AppFlavor.isDev) return AccessTier.subscription;
-  if (ref.watch(smsSubscriptionProvider).value ?? false) {
-    return AccessTier.subscription;
-  }
+  if (AppFlavor.isDev) return AccessTier.pro;
   if (ref.watch(purchaseProvider).value ?? false) return AccessTier.pro;
   return AccessTier.free;
 });

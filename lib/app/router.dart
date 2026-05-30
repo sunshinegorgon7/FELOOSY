@@ -79,9 +79,7 @@ final appRouter = GoRouter(
 
     GoRoute(
       path: '/paywall',
-      builder: (context, state) => PaywallScreen(
-        focus: state.extra as PaywallFocus? ?? PaywallFocus.pro,
-      ),
+      builder: (context, state) => const PaywallScreen(),
     ),
 
     GoRoute(

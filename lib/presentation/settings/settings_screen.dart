@@ -21,8 +21,7 @@ import '../../providers/settings_provider.dart';
 import '../../providers/transactions_provider.dart';
 import '../../providers/accounts_provider.dart';
 import '../../providers/access_tier_provider.dart';
-import '../../providers/sms_subscription_provider.dart';
-import '../paywall/paywall_screen.dart' show PaywallFocus;
+import '../../providers/purchase_provider.dart';
 
 class SettingsScreen extends ConsumerWidget {
   final bool isModal;
@@ -964,17 +963,17 @@ class _SmsRulesTile extends ConsumerWidget {
   const _SmsRulesTile({this.isModal = false});
 
   void _navigate(BuildContext context, WidgetRef ref) {
-    final isSubscribed =
-        ref.read(smsSubscriptionProvider).asData?.value ?? AppFlavor.isDev;
-    if (!isSubscribed) {
+    final isPro =
+        ref.read(purchaseProvider).asData?.value ?? AppFlavor.isDev;
+    if (!isPro) {
       if (isModal) {
         final router = GoRouter.of(context);
         Navigator.of(context).pop();
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          router.push('/paywall', extra: PaywallFocus.sms);
+          router.push('/paywall');
         });
       } else {
-        context.push('/paywall', extra: PaywallFocus.sms);
+        context.push('/paywall');
       }
       return;
     }
