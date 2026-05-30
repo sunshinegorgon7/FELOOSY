@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,15 +6,10 @@ import 'package:intl/intl.dart';
 import '../../app/app_theme.dart';
 import '../../data/models/category.dart';
 import '../../data/models/transaction.dart';
-import '../../providers/access_tier_provider.dart';
 import '../../providers/accounts_provider.dart';
 import '../../providers/categories_provider.dart';
-import '../../providers/model_download_provider.dart';
 import '../../providers/transactions_provider.dart';
 import '../transactions/widgets/transaction_tile.dart';
-import '../../data/repositories/ai_cache_repository.dart';
-import '../../providers/ai_analysis_provider.dart';
-import 'widgets/ai_insights_card.dart';
 
 enum _LedgerGrouping { month, year }
 
@@ -35,7 +29,6 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     final cats =
         ref.watch(categoriesProvider).asData?.value ?? const <Category>[];
     final account = ref.watch(activeAccountProvider);
-    final tier = ref.watch(accessTierProvider);
 
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
@@ -63,10 +56,6 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
           return ListView(
             padding: EdgeInsets.fromLTRB(16, 16, 16, bottomPad + 80),
             children: [
-              // Model download banner — Android + subscription only
-              if (Platform.isAndroid && tier.hasAiAnalysis)
-                _ModelBanner(key: const ValueKey('model_banner')),
-
               if (allTxs.isEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top: 32),
@@ -87,235 +76,10 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                     isPeriodComplete: group.isPeriodComplete,
                     currencySymbol: account?.currencySymbol ?? '',
                     symbolLeading: account?.currencySymbolLeading ?? false,
-                    showAi: tier.hasAiAnalysis,
                   ),
             ],
           );
         },
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Model download banner
-// ---------------------------------------------------------------------------
-
-class _ModelBanner extends ConsumerWidget {
-  const _ModelBanner({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    final modelAsync = ref.watch(modelDownloadProvider);
-
-    return modelAsync.when(
-      loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
-      data: (state) => switch (state) {
-        ModelStateReady() => const SizedBox.shrink(),
-        ModelStateNotReady() => _DownloadPromptBanner(
-            cs: cs,
-            tt: tt,
-            onDownload: () =>
-                ref.read(modelDownloadProvider.notifier).startDownload(),
-          ),
-        ModelStateDownloading(:final progress) => _DownloadProgressBanner(
-            cs: cs,
-            tt: tt,
-            progress: progress,
-            onCancel: () =>
-                ref.read(modelDownloadProvider.notifier).cancelDownload(),
-          ),
-        ModelStateError(:final message) => _DownloadErrorBanner(
-            cs: cs,
-            tt: tt,
-            message: message,
-            onRetry: () => ref.read(modelDownloadProvider.notifier).retry(),
-          ),
-      },
-    );
-  }
-}
-
-class _DownloadPromptBanner extends StatelessWidget {
-  final ColorScheme cs;
-  final TextTheme tt;
-  final VoidCallback onDownload;
-  const _DownloadPromptBanner(
-      {required this.cs, required this.tt, required this.onDownload});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cs.outlineVariant),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.auto_awesome, size: 16, color: AppTheme.primaryText(cs)),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Enable AI Spending Analysis',
-                  style: tt.bodySmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: cs.onSurface,
-                    fontSize: 12.5,
-                  ),
-                ),
-                Text(
-                  'Download a 1.5 GB model that runs fully on your device. Your data never leaves your phone.',
-                  style: tt.bodySmall?.copyWith(
-                    color: cs.onSurfaceVariant,
-                    fontSize: 11.5,
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          TextButton(
-            onPressed: onDownload,
-            style: TextButton.styleFrom(
-              foregroundColor: AppTheme.primaryText(cs),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            child: const Text('Download', style: TextStyle(fontSize: 12.5)),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DownloadProgressBanner extends StatelessWidget {
-  final ColorScheme cs;
-  final TextTheme tt;
-  final double progress;
-  final VoidCallback onCancel;
-  const _DownloadProgressBanner(
-      {required this.cs,
-      required this.tt,
-      required this.progress,
-      required this.onCancel});
-
-  @override
-  Widget build(BuildContext context) {
-    final pct = (progress * 100).round();
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cs.primary.withValues(alpha: 0.25)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              SizedBox(
-                width: 12,
-                height: 12,
-                child: CircularProgressIndicator(
-                  value: progress,
-                  strokeWidth: 1.5,
-                  color: AppTheme.primaryText(cs),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Downloading AI model… $pct%',
-                  style: tt.bodySmall?.copyWith(
-                      color: cs.onSurface,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500),
-                ),
-              ),
-              GestureDetector(
-                onTap: onCancel,
-                child: Icon(Icons.close,
-                    size: 16, color: cs.onSurfaceVariant),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: progress,
-              minHeight: 4,
-              backgroundColor: cs.surfaceContainerHigh,
-              color: AppTheme.primaryText(cs),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DownloadErrorBanner extends StatelessWidget {
-  final ColorScheme cs;
-  final TextTheme tt;
-  final String message;
-  final VoidCallback onRetry;
-  const _DownloadErrorBanner(
-      {required this.cs,
-      required this.tt,
-      required this.message,
-      required this.onRetry});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-            color: AppTheme.expenseText(cs).withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.error_outline,
-              size: 16, color: AppTheme.expenseText(cs)),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              'Download failed. Check your connection.',
-              style: tt.bodySmall?.copyWith(
-                color: cs.onSurface,
-                fontSize: 12,
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: onRetry,
-            style: TextButton.styleFrom(
-              foregroundColor: AppTheme.primaryText(cs),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            child: const Text('Retry', style: TextStyle(fontSize: 12.5)),
-          ),
-        ],
       ),
     );
   }
@@ -461,7 +225,6 @@ class _MonthCard extends ConsumerStatefulWidget {
   final bool isPeriodComplete;
   final String currencySymbol;
   final bool symbolLeading;
-  final bool showAi;
 
   const _MonthCard({
     required this.monthLabel,
@@ -470,7 +233,6 @@ class _MonthCard extends ConsumerStatefulWidget {
     required this.isPeriodComplete,
     required this.currencySymbol,
     required this.symbolLeading,
-    required this.showAi,
   });
 
   @override
@@ -480,8 +242,6 @@ class _MonthCard extends ConsumerStatefulWidget {
 class _MonthCardState extends ConsumerState<_MonthCard> {
   bool _expanded = false;
   String? _selectedCategoryUuid;
-
-  String get _hash => computeGroupHash(widget.transactions, 0);
 
   @override
   Widget build(BuildContext context) {
@@ -494,9 +254,6 @@ class _MonthCardState extends ConsumerState<_MonthCard> {
     final incomeTotal = widget.transactions
         .where((t) => t.type == TransactionType.income)
         .fold<double>(0, (a, t) => a + t.amount);
-    final expenseCount = widget.transactions
-        .where((t) => t.type == TransactionType.expense)
-        .length;
 
     final totals = <String, double>{};
     for (final tx in widget.transactions
@@ -519,11 +276,6 @@ class _MonthCardState extends ConsumerState<_MonthCard> {
         : widget.transactions
             .where((t) => t.categoryUuid == _selectedCategoryUuid)
             .toList();
-
-    final hash = _hash;
-    final scanningHashes = ref.watch(aiBackgroundScannerProvider);
-    final isScanning = scanningHashes.contains(hash);
-    final cacheAsync = ref.watch(aiCacheForHashProvider(hash));
 
     return Card(
       margin: const EdgeInsets.only(bottom: 14),
@@ -657,20 +409,6 @@ class _MonthCardState extends ConsumerState<_MonthCard> {
                   const SizedBox(height: 8),
                 ],
 
-                // AI Insights section
-                const Divider(height: 1),
-                const SizedBox(height: 12),
-                if (!widget.isPeriodComplete)
-                  AiInsightsPendingCard(groupLabel: widget.monthLabel)
-                else if (widget.showAi)
-                  _buildAiSection(
-                    hash: hash,
-                    isScanning: isScanning,
-                    cacheAsync: cacheAsync,
-                    expenseCount: expenseCount,
-                    expenseTotal: expenseTotal,
-                  ),
-
                 // Transaction list
                 const Divider(height: 1),
                 if (displayedTxs.isEmpty)
@@ -706,48 +444,6 @@ class _MonthCardState extends ConsumerState<_MonthCard> {
     );
   }
 
-  Widget _buildAiSection({
-    required String hash,
-    required bool isScanning,
-    required AsyncValue<AiCacheEntry?> cacheAsync,
-    required int expenseCount,
-    required double expenseTotal,
-  }) {
-    if (isScanning) return const AiInsightsPreparingCard();
-
-    return cacheAsync.when(
-      loading: () => const AiInsightsPreparingCard(),
-      error: (_, __) => const SizedBox.shrink(),
-      data: (entry) {
-        if (entry != null) return AiInsightsCard(entry: entry);
-
-        // No cache yet — show the on-demand analyze button
-        final subtitle = expenseCount == 0
-            ? 'No expenses this period'
-            : '$expenseCount expense${expenseCount == 1 ? '' : 's'} · ${_fmt(expenseTotal)}';
-
-        return AiAnalyzeButton(
-          periodLabel: widget.monthLabel,
-          subtitle: subtitle,
-          onTap: expenseCount == 0
-              ? () {} // disabled appearance but no crash
-              : () {
-                  final job = AiScanJob(
-                    hash: hash,
-                    groupLabel: widget.monthLabel,
-                    transactions: widget.transactions,
-                    budgetAmount: 0,
-                    currencySymbol: widget.currencySymbol,
-                    symbolLeading: widget.symbolLeading,
-                  );
-                  ref
-                      .read(aiBackgroundScannerProvider.notifier)
-                      .analyzeOne(job);
-                },
-        );
-      },
-    );
-  }
 }
 
 // ---------------------------------------------------------------------------

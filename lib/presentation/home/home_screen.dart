@@ -19,6 +19,8 @@ import '../../providers/transactions_provider.dart';
 import '../settings/settings_screen.dart';
 import '../transactions/widgets/transaction_tile.dart';
 import '../tutorial/tutorial_overlay.dart';
+import '../../domain/services/insights_service.dart';
+import '../../providers/insights_provider.dart';
 
 /// Incremented after a batch SMS import. The home screen listens to this and
 /// clears all local filter state + scrolls to top so the imported transactions
@@ -201,7 +203,7 @@ String _dayLabel(DateTime date) {
   return DateFormat('EEEE, MMMM d').format(date);
 }
 
-enum _HomeListView { byDay, byCategory }
+enum _HomeListView { byCategory, byDay }
 
 class _CatGroup {
   final Category category;
@@ -249,7 +251,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Set<int> _cachedPeriodOffsets = const {};
 
   String? _selectedCategoryFilter;
-  _HomeListView _listView = _HomeListView.byDay;
+  _HomeListView _listView = _HomeListView.byCategory;
   DateTime? _selectedDay;
   final _scrollController = ScrollController();
   bool _tutorialDismissed = false;
@@ -796,7 +798,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             SliverToBoxAdapter(
               child: KeyedSubtree(
                 key: _budgetHeroKey,
-                child: _BudgetHero(summary: summary),
+                child: _BudgetHero(
+                  summary: summary,
+                  insights: ref.watch(insightsProvider).asData?.value ?? const [],
+                ),
               ),
             ),
 
@@ -809,15 +814,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(
-                      'TOP SPENDING',
-                      style: tt.labelSmall?.copyWith(
-                        color: accentColor,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.10 * 11,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
                     _TopCategoriesChart(
                       stats: allCatStats,
                       summary: summary,
@@ -1779,7 +1775,9 @@ class _DayOverlayState extends ConsumerState<_DayOverlay> {
 
 class _BudgetHero extends StatelessWidget {
   final BudgetSummary summary;
-  const _BudgetHero({required this.summary});
+  final List<Insight> insights;
+
+  const _BudgetHero({required this.summary, this.insights = const []});
 
   @override
   Widget build(BuildContext context) {
@@ -1815,38 +1813,103 @@ class _BudgetHero extends StatelessWidget {
     final heroColor = isOver ? cs.error : accentColor;
     final pct = summary.spentPercentage.clamp(0.0, 1.0);
 
+    final numberStr =
+        NumberFormat('#,##0.00').format(summary.remaining.abs());
+
+    final amountWidget = RichText(
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      text: TextSpan(
+        style: TextStyle(
+          fontFamily: 'DM Mono',
+          color: heroColor,
+          height: 1.0,
+        ),
+        children: summary.currencySymbolLeading
+            ? [
+                TextSpan(
+                  text: '${summary.currencySymbol} ',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                TextSpan(
+                  text: numberStr,
+                  style: const TextStyle(
+                    fontSize: 44,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 44 * -0.02,
+                  ),
+                ),
+              ]
+            : [
+                TextSpan(
+                  text: numberStr,
+                  style: const TextStyle(
+                    fontSize: 44,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 44 * -0.02,
+                  ),
+                ),
+                TextSpan(
+                  text: ' ${summary.currencySymbol}',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+      ),
+    );
+
+    final leftColumn = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        amountWidget,
+        const SizedBox(height: 4),
+        Text(
+          isOver
+              ? 'over budget · ${(pct * 100).round()}% spent'
+              : 'remaining this month · ${(pct * 100).round()}% spent',
+          style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+        ),
+        if (summary.carryOverAmount > 0) ...[
+          const SizedBox(height: 2),
+          Text(
+            '+ ${summary.formatAmount(summary.carryOverAmount)} carried from last month',
+            style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+          ),
+        ],
+      ],
+    );
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            summary.formatAmount(summary.remaining.abs()),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 44,
-              fontWeight: FontWeight.w700,
-              fontFamily: 'DM Mono',
-              color: heroColor,
-              height: 1.0,
-              letterSpacing: 44 * -0.02,
+          if (insights.isEmpty)
+            leftColumn
+          else
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(child: leftColumn),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (int i = 0; i < insights.length; i++) ...[
+                      if (i > 0) const SizedBox(height: 8),
+                      _InsightRow(insight: insights[i]),
+                    ],
+                  ],
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            isOver
-                ? 'over budget · ${(pct * 100).round()}% spent'
-                : 'remaining this month · ${(pct * 100).round()}% spent',
-            style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-          ),
-          if (summary.carryOverAmount > 0) ...[
-            const SizedBox(height: 2),
-            Text(
-              '+ ${summary.formatAmount(summary.carryOverAmount)} carried from last month',
-              style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-            ),
-          ],
           const SizedBox(height: 14),
           ClipRRect(
             borderRadius: BorderRadius.circular(2),
@@ -1859,6 +1922,47 @@ class _BudgetHero extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _InsightRow extends StatelessWidget {
+  final Insight insight;
+  const _InsightRow({required this.insight});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final color = switch (insight.severity) {
+      InsightSeverity.warning  => AppTheme.warningText(cs),
+      InsightSeverity.positive => AppTheme.incomeText(cs),
+      InsightSeverity.info     => cs.onSurfaceVariant,
+    };
+    final icon = switch (insight.type) {
+      InsightType.pace    => insight.severity == InsightSeverity.positive
+                                ? LucideIcons.checkCircle
+                                : LucideIcons.alertTriangle,
+      InsightType.trend   => insight.severity == InsightSeverity.positive
+                                ? LucideIcons.trendingDown
+                                : LucideIcons.trendingUp,
+      InsightType.anomaly => LucideIcons.alertTriangle,
+      InsightType.pattern => LucideIcons.sparkles,
+    };
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 12, color: color),
+        const SizedBox(width: 4),
+        Text(
+          insight.text,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: color,
+          ),
+        ),
+      ],
     );
   }
 }
