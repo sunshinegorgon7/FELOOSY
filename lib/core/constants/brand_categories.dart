@@ -74,7 +74,7 @@ const kBrandCategoryData = [
   ('Noon',             Icons.storefront,       Color(0xFF8A7A2E), 'AED', 'noon.com'),
   ('Talabat',          Icons.delivery_dining,  Color(0xFF9A4A2A), 'AED', 'talabat.com'),
   ('Careem',           Icons.directions_car,   Color(0xFF3A7A58), 'AED', 'careem.com'),
-  ('LuLu',             Icons.shopping_cart,    Color(0xFF8A3A40), 'AED', 'luluhypermarket.com'),
+  ('LuLu',             Icons.shopping_cart,    Color(0xFF8A3A40), 'AED', 'gcc.luluhypermarket.com'),
   // SAR – Saudi Arabia
   ('Amazon',           Icons.storefront,       Color(0xFF7A6040), 'SAR', 'amazon.sa'),
   ('Noon',             Icons.storefront,       Color(0xFF8A7A2E), 'SAR', 'noon.com'),

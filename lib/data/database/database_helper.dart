@@ -28,7 +28,7 @@ class DatabaseHelper {
     final dbPath = p.join(docDir.path, AppFlavor.databaseName);
     return openDatabase(
       dbPath,
-      version: 21,
+      version: 22,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -503,6 +503,15 @@ class DatabaseHelper {
         "SELECT COUNT(*) as c FROM categories WHERE logo_url LIKE '%google.com%'",
       );
       debugPrint('[DB] v21 done: ${updated.first['c']} logo URLs updated');
+    }
+    if (oldVersion < 22) {
+      // Fix LuLu domain to gcc subdomain for GCC-region logo.
+      await db.rawUpdate(
+        "UPDATE categories SET logo_url = "
+        "'https://www.google.com/s2/favicons?sz=128&domain=gcc.luluhypermarket.com' "
+        "WHERE uuid = '00000000-0000-0000-0000-000000000023'",
+      );
+      debugPrint('[DB] v22 done: updated LuLu logo URL');
     }
   }
 

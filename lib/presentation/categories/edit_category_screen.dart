@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -45,6 +46,17 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
     super.dispose();
   }
 
+  // Derive a logo URL from the first word of the name, same logic as CategoryIcon.
+  String? get _previewLogoUrl {
+    // For existing brand categories, use their stored URL.
+    final storedUrl = widget.category?.logoUrl;
+    if (storedUrl != null) return storedUrl;
+    // For new / custom categories, auto-derive from name being typed.
+    final firstWord = _nameCtrl.text.trim().split(' ').first.toLowerCase();
+    if (firstWord.isEmpty) return null;
+    return 'https://www.google.com/s2/favicons?sz=128&domain=$firstWord.com';
+  }
+
   Future<void> _save() async {
     final name = _nameCtrl.text.trim();
     if (name.isEmpty) {
@@ -70,6 +82,8 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
         sortOrder: existing.sortOrder,
         createdAt: existing.createdAt,
         transactionType: _transactionType,
+        logoUrl: existing.logoUrl, // preserve brand URLs
+        currencyHint: existing.currencyHint,
       );
       await ref.read(categoriesProvider.notifier).saveCategory(updated);
     } else {
@@ -101,13 +115,13 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     final previewName = _nameCtrl.text.isNotEmpty ? _nameCtrl.text : 'Category';
-    // Chart-rendered color — what the user will actually see in bar charts
     final chartColor = AppTheme.categoryBarColor(
       uuid: widget.category?.uuid ?? '',
       colorValue: _color.toARGB32(),
       colorScheme: cs,
     );
     final isBuiltIn = widget.category != null && !widget.category!.isCustom;
+    final logoUrl = _previewLogoUrl;
 
     return Scaffold(
       appBar: AppBar(
@@ -141,7 +155,20 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
                       color: chartColor.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(_icon, color: chartColor, size: 36),
+                    child: ClipOval(
+                      child: logoUrl != null
+                          ? CachedNetworkImage(
+                              imageUrl: logoUrl,
+                              width: 72,
+                              height: 72,
+                              fit: BoxFit.contain,
+                              placeholder: (ctx, url) =>
+                                  Icon(_icon, color: chartColor, size: 36),
+                              errorWidget: (ctx, url, err) =>
+                                  Icon(_icon, color: chartColor, size: 36),
+                            )
+                          : Icon(_icon, color: chartColor, size: 36),
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(previewName, style: tt.titleMedium),

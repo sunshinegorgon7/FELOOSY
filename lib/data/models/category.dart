@@ -32,6 +32,9 @@ class Category {
     this.currencyHint,
   });
 
+  // Sentinel so copyWith can explicitly set logoUrl to null (clear it).
+  static const _keep = Object();
+
   Category copyWith({
     String? name,
     int? colorValue,
@@ -39,6 +42,7 @@ class Category {
     bool? isActive,
     int? sortOrder,
     String? transactionType,
+    Object? logoUrl = _keep,
   }) {
     return Category(
       id: id,
@@ -52,7 +56,7 @@ class Category {
       sortOrder: sortOrder ?? this.sortOrder,
       createdAt: createdAt,
       transactionType: transactionType ?? this.transactionType,
-      logoUrl: logoUrl,
+      logoUrl: logoUrl == _keep ? this.logoUrl : logoUrl as String?,
       currencyHint: currencyHint,
     );
   }
