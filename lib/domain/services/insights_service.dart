@@ -159,7 +159,7 @@ class InsightsService {
       byDate[day] = (byDate[day] ?? 0) + t.amount;
     }
 
-    if (byDate.length < 3) return null;
+    if (byDate.length < 2) return null;
 
     final mean =
         byDate.values.fold<double>(0, (s, v) => s + v) / byDate.length;
@@ -207,7 +207,7 @@ class InsightsService {
         .where((t) => t.type == TransactionType.expense)
         .toList();
 
-    if (expenses.length < 14) return null;
+    if (expenses.length < 8) return null;
 
     final sumByDow = List<double>.filled(8, 0);
     final countByDow = List<int>.filled(8, 0);
