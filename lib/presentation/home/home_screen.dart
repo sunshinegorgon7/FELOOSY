@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../app/app_theme.dart';
+import '../../core/widgets/category_icon.dart';
 import '../../data/models/category.dart';
 import '../../data/models/account.dart';
 import '../../data/models/transaction.dart';
@@ -944,12 +945,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               alignment: Alignment.center,
-                              child: Icon(
-                                IconData(
-                                  catGroup.category.iconCodePoint,
-                                  fontFamily:
-                                      catGroup.category.iconFontFamily,
-                                ),
+                              child: CategoryIcon(
+                                category: catGroup.category,
                                 size: 15,
                                 color: catColor,
                               ),
@@ -1465,9 +1462,8 @@ class _CategoryTimelineState extends ConsumerState<_CategoryTimeline> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     alignment: Alignment.center,
-                    child: Icon(
-                      IconData(cat.iconCodePoint,
-                          fontFamily: cat.iconFontFamily),
+                    child: CategoryIcon(
+                      category: cat,
                       size: 15,
                       color: catColor,
                     ),
@@ -1814,7 +1810,7 @@ class _BudgetHero extends StatelessWidget {
     final pct = summary.spentPercentage.clamp(0.0, 1.0);
 
     final numberStr =
-        NumberFormat('#,##0.00').format(summary.remaining.abs());
+        (isOver ? '−' : '') + NumberFormat('#,##0.00').format(summary.remaining.abs());
 
     final amountWidget = RichText(
       maxLines: 1,
@@ -2465,11 +2461,8 @@ class _ExpandableCatGroupState extends State<_ExpandableCatGroup> {
                     borderRadius: BorderRadius.circular(7),
                   ),
                   alignment: Alignment.center,
-                  child: Icon(
-                    IconData(
-                      group.category.iconCodePoint,
-                      fontFamily: group.category.iconFontFamily,
-                    ),
+                  child: CategoryIcon(
+                    category: group.category,
                     size: 13,
                     color: catColor,
                   ),
@@ -2598,14 +2591,13 @@ class _InlineTransactionRow extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
               alignment: Alignment.center,
-              child: Icon(
-                IconData(
-                  cat?.iconCodePoint ?? 0xe25a,
-                  fontFamily: cat?.iconFontFamily ?? 'MaterialIcons',
-                ),
-                size: 15,
-                color: catColor,
-              ),
+              child: cat != null
+                  ? CategoryIcon(category: cat!, size: 15, color: catColor)
+                  : Icon(
+                      const IconData(0xe25a, fontFamily: 'MaterialIcons'),
+                      size: 15,
+                      color: catColor,
+                    ),
             ),
             const SizedBox(width: 10),
             Expanded(

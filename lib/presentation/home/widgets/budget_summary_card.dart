@@ -110,7 +110,9 @@ class _BudgetCard extends StatelessWidget {
 
             // Remaining amount — hero number
             Text(
-              summary.formatAmount(summary.remaining),
+              summary.isOverBudget
+                  ? '-${summary.formatAmount(summary.remaining)}'
+                  : summary.formatAmount(summary.remaining),
               style: tt.headlineLarge?.copyWith(
                 fontWeight: FontWeight.w700,
                 color: remainingColor,

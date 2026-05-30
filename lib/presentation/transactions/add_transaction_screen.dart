@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import '../../app/app_theme.dart';
+import '../../core/widgets/category_icon.dart';
 import '../../data/models/category.dart';
 import '../../data/models/recurring_rule.dart';
 import '../../data/models/transaction.dart';
@@ -625,11 +626,15 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                         error: (e, _) => Text('$e'),
                         data: (cats) {
                           final typeKey = isExpense ? 'expense' : 'income';
+                          final currencyCode =
+                              account?.currencyCode ?? 'AED';
                           final active =
                               (cats.where((c) =>
                                       c.isActive &&
                                       (c.transactionType == typeKey ||
-                                          c.transactionType == null))
+                                          c.transactionType == null) &&
+                                      (c.currencyHint == null ||
+                                          c.currencyHint == currencyCode))
                                   .toList()
                                     ..sort((a, b) => a.sortOrder
                                         .compareTo(b.sortOrder)))
@@ -1006,10 +1011,6 @@ class _DescriptionAutocomplete extends ConsumerWidget {
                       .firstOrNull;
                   final iconColor =
                       cat != null ? Color(cat.colorValue) : cs.onSurfaceVariant;
-                  final iconData = cat != null
-                      ? IconData(cat.iconCodePoint,
-                          fontFamily: cat.iconFontFamily)
-                      : Icons.receipt_outlined;
 
                   return InkWell(
                     onTap: () => onSelected(opt),
@@ -1022,8 +1023,14 @@ class _DescriptionAutocomplete extends ConsumerWidget {
                             radius: 14,
                             backgroundColor:
                                 iconColor.withValues(alpha: 0.15),
-                            child: Icon(iconData,
-                                color: iconColor, size: 14),
+                            child: cat != null
+                                ? CategoryIcon(
+                                    category: cat,
+                                    size: 14,
+                                    color: iconColor,
+                                  )
+                                : Icon(Icons.receipt_outlined,
+                                    color: iconColor, size: 14),
                           ),
                           const SizedBox(width: 10),
                           Expanded(
@@ -1229,9 +1236,9 @@ class _CategoryCell extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              IconData(cat.iconCodePoint, fontFamily: cat.iconFontFamily),
-              size: 20,
+            CategoryIcon(
+              category: cat,
+              size: cat.logoUrl != null ? 28 : 20,
               color: color,
             ),
             const SizedBox(height: 4),

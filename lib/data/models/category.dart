@@ -11,6 +11,10 @@ class Category {
   final DateTime createdAt;
   // 'expense', 'income', or null for custom categories that appear in both tabs
   final String? transactionType;
+  // Clearbit logo URL — when set the icon is rendered as a network image
+  final String? logoUrl;
+  // ISO currency code this brand category belongs to (null = all currencies)
+  final String? currencyHint;
 
   const Category({
     this.id,
@@ -24,6 +28,8 @@ class Category {
     required this.sortOrder,
     required this.createdAt,
     this.transactionType,
+    this.logoUrl,
+    this.currencyHint,
   });
 
   Category copyWith({
@@ -46,6 +52,8 @@ class Category {
       sortOrder: sortOrder ?? this.sortOrder,
       createdAt: createdAt,
       transactionType: transactionType ?? this.transactionType,
+      logoUrl: logoUrl,
+      currencyHint: currencyHint,
     );
   }
 
@@ -63,6 +71,8 @@ class Category {
       createdAt:
           DateTime.fromMillisecondsSinceEpoch(map['created_at'] as int),
       transactionType: map['transaction_type'] as String?,
+      logoUrl: map['logo_url'] as String?,
+      currencyHint: map['currency_hint'] as String?,
     );
   }
 
@@ -78,6 +88,8 @@ class Category {
       'sort_order': sortOrder,
       'created_at': createdAt.millisecondsSinceEpoch,
       'transaction_type': transactionType,
+      'logo_url': logoUrl,
+      'currency_hint': currencyHint,
     };
     if (id != null) m['id'] = id;
     return m;

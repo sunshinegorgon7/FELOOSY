@@ -85,7 +85,7 @@ Future<void> _sync(WidgetRef ref) async {
   double otherAmount = 0;
 
   for (int i = 0; i < sorted.length; i++) {
-    if (i < 3) {
+    if (i < 5) {
       final cat = await categoryRepo.getByUuid(sorted[i].key);
       final uuid = cat?.uuid ?? '';
       final colorValue = cat?.colorValue ?? 0xFF6E8790;

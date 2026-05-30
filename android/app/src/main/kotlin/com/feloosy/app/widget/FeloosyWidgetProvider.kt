@@ -7,6 +7,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
+import android.os.Bundle
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
@@ -61,15 +62,25 @@ class FeloosyWidgetProvider : AppWidgetProvider() {
         appWidgetIds: IntArray,
     ) {
         Log.i(TAG, "onUpdate: ids=${appWidgetIds.toList()} pkg=${context.packageName}")
-        val views = buildViews(context)
         appWidgetIds.forEach { id ->
             try {
-                appWidgetManager.updateAppWidget(id, views)
-                Log.i(TAG, "onUpdate: updateAppWidget OK id=$id")
+                val maxCats = maxCategoriesForWidget(appWidgetManager, id)
+                appWidgetManager.updateAppWidget(id, buildViews(context, maxCats))
+                Log.i(TAG, "onUpdate: updateAppWidget OK id=$id maxCats=$maxCats")
             } catch (e: Exception) {
                 Log.e(TAG, "onUpdate: updateAppWidget FAILED id=$id", e)
             }
         }
+    }
+
+    override fun onAppWidgetOptionsChanged(
+        context: Context,
+        appWidgetManager: AppWidgetManager,
+        appWidgetId: Int,
+        newOptions: Bundle,
+    ) {
+        val maxCats = maxCategoriesForWidget(appWidgetManager, appWidgetId)
+        appWidgetManager.updateAppWidget(appWidgetId, buildViews(context, maxCats))
     }
 
     companion object {
@@ -80,9 +91,9 @@ class FeloosyWidgetProvider : AppWidgetProvider() {
 
         // No hardcoded palette — widget uses pre-computed colours from Flutter
 
-        fun buildViews(context: Context): RemoteViews {
+        fun buildViews(context: Context, maxCategories: Int = 4): RemoteViews {
             return try {
-                buildViewsInternal(context).also {
+                buildViewsInternal(context, maxCategories).also {
                     Log.d(TAG, "buildViews: built successfully")
                 }
             } catch (e: Exception) {
@@ -91,7 +102,25 @@ class FeloosyWidgetProvider : AppWidgetProvider() {
             }
         }
 
-        private fun buildViewsInternal(context: Context): RemoteViews {
+        private fun maxCategoriesForWidget(manager: AppWidgetManager, widgetId: Int): Int {
+            val minW = manager.getAppWidgetOptions(widgetId)
+                .getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0)
+            return when {
+                minW >= 290 -> 6  // 4 cols → 5 named + Other
+                minW >= 220 -> 5  // 3 cols → 4 named + Other
+                else        -> 4  // 2 cols → 3 named + Other
+            }
+        }
+
+        private fun regroupForSlots(categories: List<CategoryData>, maxSlots: Int): List<CategoryData> {
+            if (categories.size <= maxSlots) return categories
+            val named = categories.take(maxSlots - 1)
+            val otherAmount = categories.drop(maxSlots - 1).sumOf { it.amount }
+            val otherColor = categories.last().color
+            return named + CategoryData("Other", otherAmount, otherColor)
+        }
+
+        private fun buildViewsInternal(context: Context, maxCategories: Int): RemoteViews {
             val prefs = HomeWidgetPlugin.getData(context)
             val accountName = prefs.getString("fw_account_name", "Wallet") ?: "Wallet"
             val currencyCode = prefs.getString("fw_currency_code", "AED") ?: "AED"
@@ -119,7 +148,7 @@ class FeloosyWidgetProvider : AppWidgetProvider() {
             val colOver      = if (isNight) Color.parseColor("#FF8090") else Color.parseColor("#A8192D")
             val colOnPrimary = if (isNight) Color.parseColor("#031A0C") else Color.parseColor("#FFFFFF")
             // Flutter pre-computes the correct chart colour per theme — use it directly
-            val categories = parseCategories(categoriesJson, isNight)
+            val categories = regroupForSlots(parseCategories(categoriesJson, isNight), maxCategories)
 
             val views = RemoteViews(context.packageName, R.layout.feloosy_widget)
 
@@ -249,6 +278,8 @@ class FeloosyWidgetProvider : AppWidgetProvider() {
                 Triple(R.id.fw_item_2, R.id.fw_dot_2, R.id.fw_label_2),
                 Triple(R.id.fw_item_3, R.id.fw_dot_3, R.id.fw_label_3),
                 Triple(R.id.fw_item_4, R.id.fw_dot_4, R.id.fw_label_4),
+                Triple(R.id.fw_item_5, R.id.fw_dot_5, R.id.fw_label_5),
+                Triple(R.id.fw_item_6, R.id.fw_dot_6, R.id.fw_label_6),
             )
             slots.forEachIndexed { i, (itemId, dotId, labelId) ->
                 if (i < categories.size) {

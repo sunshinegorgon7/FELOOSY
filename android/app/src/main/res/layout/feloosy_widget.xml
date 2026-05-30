@@ -198,6 +198,58 @@
                 android:ellipsize="end" />
         </LinearLayout>
 
+        <LinearLayout
+            android:id="@+id/fw_item_5"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:visibility="gone">
+            <ImageView
+                android:id="@+id/fw_dot_5"
+                android:layout_width="7dp"
+                android:layout_height="7dp"
+                android:scaleType="fitXY" />
+            <TextView
+                android:id="@+id/fw_label_5"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="3dp"
+                android:text="&#8211;"
+                android:textColor="#202823"
+                android:textSize="11sp"
+                android:includeFontPadding="false"
+                android:singleLine="true"
+                android:ellipsize="end" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/fw_item_6"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:visibility="gone">
+            <ImageView
+                android:id="@+id/fw_dot_6"
+                android:layout_width="7dp"
+                android:layout_height="7dp"
+                android:scaleType="fitXY" />
+            <TextView
+                android:id="@+id/fw_label_6"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="3dp"
+                android:text="&#8211;"
+                android:textColor="#202823"
+                android:textSize="11sp"
+                android:includeFontPadding="false"
+                android:singleLine="true"
+                android:ellipsize="end" />
+        </LinearLayout>
+
     </LinearLayout>
 
     <!-- ── Stacked progress bar ── -->

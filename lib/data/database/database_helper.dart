@@ -1,7 +1,9 @@
-﻿import 'package:path/path.dart' as p;
+﻿import 'package:flutter/foundation.dart';
+import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import '../../app/app_flavor.dart';
+import '../../core/constants/brand_categories.dart';
 import '../../core/constants/default_categories.dart';
 import '../models/app_settings.dart';
 
@@ -26,7 +28,7 @@ class DatabaseHelper {
     final dbPath = p.join(docDir.path, AppFlavor.databaseName);
     return openDatabase(
       dbPath,
-      version: 19,
+      version: 21,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -99,7 +101,9 @@ class DatabaseHelper {
         is_active INTEGER NOT NULL DEFAULT 1,
         sort_order INTEGER NOT NULL,
         created_at INTEGER NOT NULL,
-        transaction_type TEXT
+        transaction_type TEXT,
+        logo_url TEXT,
+        currency_hint TEXT
       )
     ''');
 
@@ -172,6 +176,7 @@ class DatabaseHelper {
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    debugPrint('[DB] onUpgrade: $oldVersion → $newVersion');
     if (oldVersion < 2) {
       await db.execute(
         'ALTER TABLE app_settings ADD COLUMN default_monthly_budget REAL NOT NULL DEFAULT 0',
@@ -463,6 +468,42 @@ class DatabaseHelper {
         'ALTER TABLE app_settings ADD COLUMN privacy_accepted_at INTEGER',
       );
     }
+    if (oldVersion < 20) {
+      debugPrint('[DB] Running migration v20: adding brand categories');
+      await db.execute('ALTER TABLE categories ADD COLUMN logo_url TEXT');
+      await db.execute('ALTER TABLE categories ADD COLUMN currency_hint TEXT');
+      final now = DateTime.now().millisecondsSinceEpoch;
+      int inserted = 0;
+      for (final cat in buildBrandCategories()) {
+        final exists = (await db.query(
+          'categories',
+          columns: ['id'],
+          where: 'uuid = ?',
+          whereArgs: [cat.uuid],
+        )).isNotEmpty;
+        if (!exists) {
+          await db.insert('categories', {...cat.toMap(), 'created_at': now});
+          inserted++;
+        }
+      }
+      debugPrint('[DB] v20 done: inserted $inserted brand categories');
+    }
+    if (oldVersion < 21) {
+      // Clearbit Logo API shut down — migrate stored URLs to Google S2 favicons.
+      // Old: https://logo.clearbit.com/{domain}
+      // New: https://www.google.com/s2/favicons?sz=128&domain={domain}
+      debugPrint('[DB] Running migration v21: rewriting logo URLs');
+      await db.rawUpdate(
+        "UPDATE categories "
+        "SET logo_url = 'https://www.google.com/s2/favicons?sz=128&domain=' "
+        "    || SUBSTR(logo_url, LENGTH('https://logo.clearbit.com/') + 1) "
+        "WHERE logo_url LIKE 'https://logo.clearbit.com/%'",
+      );
+      final updated = await db.rawQuery(
+        "SELECT COUNT(*) as c FROM categories WHERE logo_url LIKE '%google.com%'",
+      );
+      debugPrint('[DB] v21 done: ${updated.first['c']} logo URLs updated');
+    }
   }
 
   Future<void> _seed(Database db) async {
@@ -483,6 +524,9 @@ class DatabaseHelper {
 
     final batch = db.batch();
     for (final cat in buildDefaultCategories()) {
+      batch.insert('categories', cat.toMap());
+    }
+    for (final cat in buildBrandCategories()) {
       batch.insert('categories', cat.toMap());
     }
     await batch.commit(noResult: true);
@@ -513,6 +557,9 @@ class DatabaseHelper {
         'updated_at': now,
       });
       for (final cat in buildDefaultCategories()) {
+        await txn.insert('categories', cat.toMap());
+      }
+      for (final cat in buildBrandCategories()) {
         await txn.insert('categories', cat.toMap());
       }
     });

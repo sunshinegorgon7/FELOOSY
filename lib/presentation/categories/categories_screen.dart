@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../app/app_theme.dart';
+import '../../core/widgets/category_icon.dart';
 import '../../data/models/category.dart';
 import '../../providers/access_tier_provider.dart';
+import '../../providers/accounts_provider.dart';
 import '../../providers/categories_provider.dart';
 import '../../providers/transactions_provider.dart';
 
@@ -120,9 +122,12 @@ class _CategoryIndex extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final currencyCode =
+        ref.watch(activeAccountProvider)?.currencyCode ?? 'AED';
     final scoped = allCats
         .where((c) =>
-            c.transactionType == sectionType || c.transactionType == null)
+            (c.transactionType == sectionType || c.transactionType == null) &&
+            (c.currencyHint == null || c.currencyHint == currencyCode))
         .toList()
       ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
 
@@ -275,8 +280,6 @@ class _IndexRow extends StatelessWidget {
       colorValue: category.colorValue,
       colorScheme: cs,
     );
-    final iconData =
-        IconData(category.iconCodePoint, fontFamily: category.iconFontFamily);
     final pct = (total > 0 && amount > 0) ? amount / total : 0.0;
     final opacity = dim ? 0.55 : 1.0;
 
@@ -302,7 +305,7 @@ class _IndexRow extends StatelessWidget {
               ),
               const SizedBox(width: 14),
               // Icon
-              Icon(iconData, color: color, size: 20),
+              CategoryIcon(category: category, size: 20, color: color),
               const SizedBox(width: 14),
               // Name + share bar
               Expanded(

@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -82,6 +83,7 @@ class TransactionTile extends ConsumerWidget {
           iconData: iconData,
           iconColor: iconColor,
           badgeIcon: badgeIcon,
+          logoUrl: category?.logoUrl,
           radius: 14,
           iconSize: 14,
           badgeSize: 11,
@@ -113,6 +115,7 @@ class TransactionTile extends ConsumerWidget {
         iconData: iconData,
         iconColor: iconColor,
         badgeIcon: badgeIcon,
+        logoUrl: category?.logoUrl,
         radius: 20,
         iconSize: 20,
         badgeSize: 15,
@@ -158,6 +161,7 @@ class _AutoAvatar extends StatelessWidget {
   final IconData iconData;
   final Color iconColor;
   final IconData? badgeIcon;
+  final String? logoUrl;
   final double radius;
   final double iconSize;
   final double badgeSize;
@@ -167,6 +171,7 @@ class _AutoAvatar extends StatelessWidget {
     required this.iconData,
     required this.iconColor,
     required this.badgeIcon,
+    this.logoUrl,
     required this.radius,
     required this.iconSize,
     required this.badgeSize,
@@ -176,13 +181,28 @@ class _AutoAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final double avatarDiameter = radius * 2;
+    final Widget iconChild = logoUrl != null
+        ? ClipOval(
+            child: CachedNetworkImage(
+              imageUrl: logoUrl!,
+              width: avatarDiameter,
+              height: avatarDiameter,
+              fit: BoxFit.cover,
+              placeholder: (ctx, url) =>
+                  SizedBox(width: avatarDiameter, height: avatarDiameter),
+              errorWidget: (ctx, url, err) =>
+                  Icon(iconData, color: iconColor, size: iconSize),
+            ),
+          )
+        : Icon(iconData, color: iconColor, size: iconSize);
     return Stack(
       clipBehavior: Clip.none,
       children: [
         CircleAvatar(
           radius: radius,
           backgroundColor: iconColor.withValues(alpha: 0.15),
-          child: Icon(iconData, color: iconColor, size: iconSize),
+          child: iconChild,
         ),
         if (badgeIcon != null)
           Positioned(
