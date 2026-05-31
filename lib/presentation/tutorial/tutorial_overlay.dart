@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../app/app_theme.dart';
+import '../../core/extensions/localizations_extension.dart';
 
 class TutorialStep {
   final String title;
@@ -109,7 +110,7 @@ class _TutorialOverlayState extends State<TutorialOverlay>
             top: safePad.top + 14,
             left: 20,
             child: Text(
-              '${_step + 1} of ${widget.steps.length}',
+              context.l10n.tutorialStepOf(_step + 1, widget.steps.length),
               style: TextStyle(
                 color: AppTheme.mintMist.withValues(alpha: 0.60),
                 fontSize: 12,
@@ -125,7 +126,7 @@ class _TutorialOverlayState extends State<TutorialOverlay>
             child: TextButton(
               onPressed: widget.onComplete,
               child: Text(
-                'Skip',
+                context.l10n.skip,
                 style: TextStyle(
                   color: AppTheme.mintMist.withValues(alpha: 0.70),
                   fontSize: 14,
@@ -292,7 +293,7 @@ class _StepCard extends StatelessWidget {
                     ),
                     minimumSize: Size.zero,
                   ),
-                  child: Text(isLast ? 'Get Started' : 'Next'),
+                  child: Text(isLast ? context.l10n.tutorialGetStarted : context.l10n.next),
                 ),
               ],
             ),

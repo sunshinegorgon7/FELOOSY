@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import '../../../app/app_theme.dart';
+import '../../../core/extensions/localizations_extension.dart';
 import '../../../domain/entities/budget_summary.dart';
 
 class BudgetSummaryCard extends StatelessWidget {
@@ -29,6 +30,7 @@ class _NoBudgetCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     return Card(
       margin: const EdgeInsets.all(16),
@@ -42,7 +44,7 @@ class _NoBudgetCard extends StatelessWidget {
                 style: Theme.of(context).textTheme.titleMedium),
             const Gap(4),
             Text(
-              'No budget set for this month yet.',
+              l10n.budgetNoSet,
               style: Theme.of(context)
                   .textTheme
                   .bodyMedium
@@ -53,7 +55,7 @@ class _NoBudgetCard extends StatelessWidget {
             FilledButton.icon(
               onPressed: onSetBudget,
               icon: const Icon(Icons.add),
-              label: const Text('Set Budget'),
+              label: Text(l10n.setBudget),
             ),
           ],
         ),
@@ -118,7 +120,7 @@ class _BudgetCard extends StatelessWidget {
                 color: remainingColor,
               ),
             ),
-            Text('remaining',
+            Text(context.l10n.budgetRemaining,
                 style: tt.bodySmall
                     ?.copyWith(color: cs.onSurfaceVariant)),
             const Gap(14),
@@ -138,7 +140,7 @@ class _BudgetCard extends StatelessWidget {
             Align(
               alignment: Alignment.centerRight,
               child: Text(
-                '${(summary.spentPercentage * 100).toStringAsFixed(0)}% used',
+                context.l10n.budgetPercentUsed((summary.spentPercentage * 100).toStringAsFixed(0)),
                 style: tt.labelSmall
                     ?.copyWith(color: cs.onSurfaceVariant),
               ),
@@ -149,19 +151,19 @@ class _BudgetCard extends StatelessWidget {
             Row(
               children: [
                 _Stat(
-                  label: 'Budget',
+                  label: context.l10n.budget,
                   value: summary.formatAmount(summary.budgetAmount),
                   color: cs.onSurface,
                 ),
                 const Gap(8),
                 _Stat(
-                  label: 'Spent',
+                  label: context.l10n.budgetSpent,
                   value: summary.formatAmount(summary.totalExpenses),
                   color: AppTheme.expenseText(cs),
                 ),
                 const Gap(8),
                 _Stat(
-                  label: 'Income',
+                  label: context.l10n.income,
                   value: summary.formatAmount(summary.totalIncome),
                   color: AppTheme.incomeText(cs),
                 ),

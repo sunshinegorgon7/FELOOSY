@@ -8,6 +8,7 @@ import '../../app/app_flavor.dart';
 import '../../app/app_theme.dart';
 import '../../core/constants/app_info.dart';
 import '../../core/constants/currencies.dart';
+import '../../core/extensions/localizations_extension.dart';
 import '../../data/database/database_helper.dart';
 import '../../dev/seed_snapshot_service.dart';
 import '../../data/models/app_settings.dart';
@@ -22,6 +23,20 @@ import '../../providers/transactions_provider.dart';
 import '../../providers/accounts_provider.dart';
 import '../../providers/access_tier_provider.dart';
 import '../../providers/purchase_provider.dart';
+
+const _languages = [
+  ('', 'System default'),
+  ('en', 'English'),
+  ('ar', 'العربية'),
+  ('es', 'Español'),
+  ('fr', 'Français'),
+  ('de', 'Deutsch'),
+  ('hi', 'हिन्दी'),
+  ('ur', 'اردو'),
+  ('pt', 'Português'),
+  ('tr', 'Türkçe'),
+  ('id', 'Bahasa Indonesia'),
+];
 
 class SettingsScreen extends ConsumerWidget {
   final bool isModal;
@@ -42,7 +57,7 @@ class SettingsScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(title: Text(context.l10n.settings)),
       body: body,
     );
   }
@@ -71,79 +86,89 @@ class _SettingsBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final tt = Theme.of(context).textTheme;
     final cs = Theme.of(context).colorScheme;
+
+    final currentLangName = _languages
+        .where((e) => e.$1 == settings.languageCode)
+        .firstOrNull
+        ?.$2 ?? 'System default';
 
     return ListView(
       padding: EdgeInsets.only(bottom: MediaQuery.paddingOf(context).bottom + 16),
       children: [
-        const _SectionHeader('Appearance'),
+        _SectionHeader(l10n.settingsAppearance),
         _AppearanceSection(settings: settings),
-        const _SectionHeader('Budget'),
         _SettingsRow(
-          title: 'Currency',
+          title: l10n.settingsLanguage,
+          value: currentLangName,
+          onTap: () => _showLanguagePicker(context, ref, settings),
+        ),
+        _SectionHeader(l10n.budget),
+        _SettingsRow(
+          title: l10n.currency,
           value:
               '${settings.currencySymbol}  ${_currencyName(settings.currencyCode)}',
           onTap: () => _showCurrencyPicker(context, ref, settings),
         ),
         _SettingsRow(
-          title: 'Month starts on',
-          value:
-              'Day ${settings.monthStartDay}${_ordinal(settings.monthStartDay)}',
+          title: l10n.settingsMonthStartsOn,
+          value: l10n.settingsMonthStartDay(settings.monthStartDay, _ordinal(settings.monthStartDay)),
           onTap: () => _showDayPicker(context, ref, settings),
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
           child: Text(
-            'Days 29–31 unavailable to ensure February compatibility.',
+            l10n.settingsDaysFebNote,
             style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
           ),
         ),
         _SettingsRow(
-          title: 'Default monthly budget',
+          title: l10n.settingsDefaultMonthlyBudget,
           value: settings.defaultMonthlyBudget > 0
               ? '${settings.currencySymbol} ${settings.defaultMonthlyBudget.toStringAsFixed(2)}'
-              : 'Not set',
+              : l10n.settingsNotSet,
           onTap: () => _showDefaultBudgetDialog(context, ref, settings),
         ),
 
-        const _SectionHeader('Categories'),
+        _SectionHeader(l10n.categories),
         _SettingsRow(
-          title: 'Manage categories',
+          title: l10n.settingsManageCategories,
           onTap: () => _navigateCategories(context),
         ),
 
-        const _SectionHeader('Wallets'),
+        _SectionHeader(l10n.settingsWallets),
         _SettingsRow(
-          title: 'Manage wallets',
+          title: l10n.settingsManageWallets,
           onTap: () => context.push('/settings/accounts'),
         ),
 
         if (AppFlavor.isDev) ...[
-          const _SectionHeader('Automations'),
+          _SectionHeader(l10n.settingsAutomations),
           _SmsRulesTile(isModal: isModal),
         ],
 
-        const _SectionHeader('Data'),
+        _SectionHeader(l10n.settingsData),
         _DriveBackupTile(isModal: isModal),
         _LocalBackupTile(isModal: isModal),
 
-        const _SectionHeader('About'),
-        const _InfoRow(title: 'Version', value: kAppVersionLabel),
+        _SectionHeader(l10n.settingsAbout),
+        _InfoRow(title: l10n.version, value: kAppVersionLabel),
         _SettingsRow(
-          title: 'Privacy Policy',
+          title: l10n.settingsPrivacyPolicy,
           onTap: () => context.push('/settings/privacy'),
         ),
 
         if (AppFlavor.isDev) ...[
-          const _SectionHeader('Developer Tools'),
+          _SectionHeader(l10n.settingsDeveloperTools),
           const _DevSnapshotTile(),
         ],
 
-        const _SectionHeader('Danger Zone', danger: true),
+        _SectionHeader(l10n.settingsDangerZone, danger: true),
         _SettingsRow(
-          title: 'Reset app',
-          subtitle: 'Erase all transactions and budgets, restore defaults',
+          title: l10n.settingsResetApp,
+          subtitle: l10n.settingsResetAppDesc,
           danger: true,
           onTap: () => _showResetConfirmation(context, ref),
         ),
@@ -166,6 +191,64 @@ class _SettingsBody extends ConsumerWidget {
     return switch (n % 10) { 1 => 'st', 2 => 'nd', 3 => 'rd', _ => 'th' };
   }
 
+  void _showLanguagePicker(
+      BuildContext context, WidgetRef ref, AppSettings settings) {
+    final l10n = context.l10n;
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.5,
+        minChildSize: 0.4,
+        maxChildSize: 0.85,
+        expand: false,
+        builder: (ctx, scrollController) => Column(
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Theme.of(ctx).colorScheme.outlineVariant,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              child: Text(l10n.settingsSelectLanguage,
+                  style: Theme.of(context).textTheme.titleMedium),
+            ),
+            const Divider(height: 1),
+            Expanded(
+              child: ListView.builder(
+                controller: scrollController,
+                itemCount: _languages.length,
+                itemBuilder: (context, i) {
+                  final (code, name) = _languages[i];
+                  final isSelected = code == settings.languageCode;
+                  return ListTile(
+                    title: Text(name),
+                    trailing: isSelected
+                        ? Icon(Icons.check_circle,
+                            color: Theme.of(context).colorScheme.primary)
+                        : null,
+                    onTap: () async {
+                      await ref.read(settingsProvider.notifier).updateLanguage(code);
+                      if (context.mounted) Navigator.pop(context);
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showDefaultBudgetDialog(
       BuildContext context, WidgetRef ref, AppSettings settings) {
     final ctrl = TextEditingController(
@@ -173,16 +256,17 @@ class _SettingsBody extends ConsumerWidget {
           ? settings.defaultMonthlyBudget.toStringAsFixed(2)
           : '',
     );
+    final l10n = context.l10n;
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Default monthly budget'),
+        title: Text(l10n.settingsDefaultMonthlyBudget),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Applied automatically when no budget has been set for the current month.',
+              l10n.settingsDefaultBudgetApplied,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
@@ -206,7 +290,7 @@ class _SettingsBody extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           if (settings.defaultMonthlyBudget > 0)
             TextButton(
@@ -214,7 +298,7 @@ class _SettingsBody extends ConsumerWidget {
                 _save(ref, settings.copyWith(defaultMonthlyBudget: 0));
                 Navigator.pop(ctx);
               },
-              child: const Text('Clear'),
+              child: Text(l10n.clear),
             ),
           FilledButton(
             onPressed: () {
@@ -223,7 +307,7 @@ class _SettingsBody extends ConsumerWidget {
               _save(ref, settings.copyWith(defaultMonthlyBudget: amount));
               Navigator.pop(ctx);
             },
-            child: const Text('Save'),
+            child: Text(l10n.save),
           ),
         ],
       ),
@@ -256,7 +340,7 @@ class _SettingsBody extends ConsumerWidget {
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-              child: Text('Select Currency',
+              child: Text(context.l10n.settingsSelectCurrency,
                   style: Theme.of(context).textTheme.titleMedium),
             ),
             const Divider(height: 1),
@@ -309,7 +393,7 @@ class _SettingsBody extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Month starts on day…'),
+        title: Text(context.l10n.settingsMonthStartOnDay),
         content: SizedBox(
           width: 280,
           child: GridView.builder(
@@ -361,7 +445,7 @@ class _SettingsBody extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancel),
           ),
         ],
       ),
@@ -369,26 +453,18 @@ class _SettingsBody extends ConsumerWidget {
   }
 
   void _showResetConfirmation(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
         icon: Icon(Icons.warning_amber_rounded, color: cs.error, size: 32),
-        title: const Text('Reset app?'),
-        content: const Text(
-          'This will permanently delete:\n'
-          '  • All transactions\n'
-          '  • All budgets\n'
-          '  • All custom categories\n\n'
-          'Settings will be restored to defaults and you will be '
-          'signed out of Google. Sign in again afterwards to restore '
-          'from a backup.\n\n'
-          'This cannot be undone.',
-        ),
+        title: Text(l10n.settingsResetTitle),
+        content: Text(l10n.settingsResetMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: cs.error),
@@ -396,7 +472,7 @@ class _SettingsBody extends ConsumerWidget {
               Navigator.pop(ctx);
               await _resetApp(context, ref);
             },
-            child: const Text('Reset Everything'),
+            child: Text(l10n.settingsResetConfirm),
           ),
         ],
       ),
@@ -418,19 +494,16 @@ class _SettingsBody extends ConsumerWidget {
 
   void _showDayChangeWarning(BuildContext ctx, WidgetRef ref,
       AppSettings settings, int newDay) {
+    final l10n = ctx.l10n;
     showDialog(
       context: ctx,
       builder: (warnCtx) => AlertDialog(
-        title: const Text('Change start day?'),
-        content: Text(
-          'Changing from day ${settings.monthStartDay} to day $newDay '
-          'will shift the period boundaries for all months. '
-          'Existing transactions stay as-is.',
-        ),
+        title: Text(l10n.settingsChangeStartDayTitle),
+        content: Text(l10n.settingsChangeStartDayMessage(settings.monthStartDay, newDay)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(warnCtx),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             onPressed: () {
@@ -438,7 +511,7 @@ class _SettingsBody extends ConsumerWidget {
               Navigator.pop(warnCtx);
               Navigator.pop(ctx);
             },
-            child: const Text('Change'),
+            child: Text(l10n.change),
           ),
         ],
       ),
@@ -484,7 +557,7 @@ class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Sign-in failed: $e'),
+          content: Text('Sign-in failed: ${e.toString()}'),
           backgroundColor: Theme.of(context).colorScheme.error,
         ));
       }
@@ -514,20 +587,23 @@ class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
                 await ref.read(googleDriveBackupProvider).lastBackupTime();
             if (!mounted) break;
             setState(() => _lastBackupTime = t);
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Backup saved to Google Drive.')),
-            );
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(context.l10n.settingsBackupSaved)),
+              );
+            }
           case BackupSkipped():
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                  content: Text('No changes since last backup — skipped.')),
-            );
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(context.l10n.settingsBackupNoChanges)),
+              );
+            }
         }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Backup failed: $e'),
+          content: Text(context.l10n.settingsBackupFailed(e.toString())),
           backgroundColor: Theme.of(context).colorScheme.error,
         ));
       }
@@ -547,7 +623,7 @@ class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Could not list backups: $e'),
+          content: Text(context.l10n.settingsListBackupsFailed(e.toString())),
           backgroundColor: Theme.of(context).colorScheme.error,
         ));
       }
@@ -560,7 +636,7 @@ class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
 
     if (backups.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: const Text('No backup found in Google Drive.'),
+        content: Text(context.l10n.settingsNoBackupFound),
         backgroundColor: Theme.of(context).colorScheme.error,
       ));
       return;
@@ -588,22 +664,17 @@ class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
           final cs = Theme.of(ctx).colorScheme;
           return AlertDialog(
             icon: Icon(Icons.warning_rounded, color: cs.error, size: 36),
-            title: const Text('Replace all local data?'),
-            content: const Text(
-              'Restoring from Google Drive will permanently delete '
-              'everything currently on this device — all transactions, '
-              'budgets, and categories — and replace it with the backup.\n\n'
-              'This cannot be undone.',
-            ),
+            title: Text(context.l10n.settingsReplaceLocalTitle),
+            content: Text(context.l10n.settingsReplaceLocalMessage),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('Cancel'),
+                child: Text(context.l10n.cancel),
               ),
               FilledButton(
                 style: FilledButton.styleFrom(backgroundColor: cs.error),
                 onPressed: () => Navigator.pop(ctx, true),
-                child: const Text('Replace my data'),
+                child: Text(context.l10n.settingsReplaceMyData),
               ),
             ],
           );
@@ -624,14 +695,14 @@ class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
       ref.invalidate(accountsProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Data restored from Google Drive.')),
+          SnackBar(content: Text(context.l10n.settingsDataRestored)),
         );
         if (widget.isModal) Navigator.of(context).pop();
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Restore failed: $e'),
+          content: Text(context.l10n.settingsRestoreFailed(e.toString())),
           backgroundColor: Theme.of(context).colorScheme.error,
         ));
       }
@@ -656,7 +727,7 @@ class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
     return showDialog<String>(
       context: context,
       builder: (ctx) => SimpleDialog(
-        title: const Text('Select backup to restore'),
+        title: Text(context.l10n.settingsSelectBackup),
         children: [
           ...backups.map(
             (b) => SimpleDialogOption(
@@ -667,7 +738,7 @@ class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
           SimpleDialogOption(
             onPressed: () => Navigator.pop(ctx, null),
             child: Text(
-              'Cancel',
+              context.l10n.cancel,
               style: TextStyle(color: Theme.of(ctx).colorScheme.onSurfaceVariant),
             ),
           ),
@@ -677,11 +748,12 @@ class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
   }
 
   String _formatBackupTime(DateTime dt) {
+    final l10n = context.l10n;
     final diff = DateTime.now().difference(dt);
-    if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inHours < 1) return '${diff.inMinutes}m ago';
-    if (diff.inDays < 1) return '${diff.inHours}h ago';
-    if (diff.inDays == 1) return 'Yesterday';
+    if (diff.inMinutes < 1) return l10n.settingsJustNow;
+    if (diff.inHours < 1) return l10n.settingsMinutesAgo(diff.inMinutes);
+    if (diff.inDays < 1) return l10n.settingsHoursAgo(diff.inHours);
+    if (diff.inDays == 1) return l10n.yesterday;
     return '${dt.day}/${dt.month}/${dt.year}';
   }
 
@@ -693,8 +765,8 @@ class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
 
     if (account == null) {
       return _SettingsRow(
-        title: 'Back up to Google Drive',
-        subtitle: 'Sign in to enable backup',
+        title: context.l10n.settingsBackupToDrive,
+        subtitle: context.l10n.settingsSignInForBackup,
         busy: _signingIn,
         onTap: anyBusy
             ? null
@@ -710,8 +782,8 @@ class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
 
     final tt = Theme.of(context).textTheme;
     final lastBackupLabel = _lastBackupTime != null
-        ? 'Last backup: ${_formatBackupTime(_lastBackupTime!)}'
-        : 'No backup yet';
+        ? context.l10n.settingsLastBackup(_formatBackupTime(_lastBackupTime!))
+        : context.l10n.settingsNoBackupYet;
 
     return Column(
       children: [
@@ -772,21 +844,21 @@ class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
                             horizontal: 10, vertical: 4),
                         visualDensity: VisualDensity.compact,
                       ),
-                      child: const Text('Sign out',
-                          style: TextStyle(fontWeight: FontWeight.w600)),
+                      child: Text(context.l10n.settingsSignOut,
+                          style: const TextStyle(fontWeight: FontWeight.w600)),
                     ),
             ],
           ),
         ),
         _SettingsRow(
-          title: 'Back up now',
+          title: context.l10n.settingsBackupNow,
           value: lastBackupLabel,
           busy: _backingUp,
           onTap: anyBusy ? null : _backup,
         ),
         _SettingsRow(
-          title: 'Restore from Drive',
-          subtitle: 'Replace local data with Drive backup',
+          title: context.l10n.settingsRestoreFromDrive,
+          subtitle: context.l10n.settingsRestoreFromDriveDesc,
           busy: _restoring || _loadingBackups,
           onTap: anyBusy ? null : _restore,
         ),
@@ -831,7 +903,7 @@ class _LocalBackupTileState extends ConsumerState<_LocalBackupTile> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Export failed: $e'),
+            content: Text(context.l10n.settingsExportFailed(e.toString())),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -857,7 +929,7 @@ class _LocalBackupTileState extends ConsumerState<_LocalBackupTile> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Cannot read file: $e'),
+            content: Text(context.l10n.settingsCannotReadFile(e.toString())),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -871,22 +943,16 @@ class _LocalBackupTileState extends ConsumerState<_LocalBackupTile> {
       builder: (ctx) => AlertDialog(
         icon: Icon(Icons.upload_file_outlined,
             color: Theme.of(ctx).colorScheme.primary, size: 32),
-        title: const Text('Import backup?'),
-        content: Text(
-          'Found:\n'
-          '  • ${summary.transactions} transaction${summary.transactions == 1 ? '' : 's'}\n'
-          '  • ${summary.budgets} budget${summary.budgets == 1 ? '' : 's'}\n'
-          '  • ${summary.categories} categor${summary.categories == 1 ? 'y' : 'ies'}\n\n'
-          'This will replace all local data. This cannot be undone.',
-        ),
+        title: Text(context.l10n.settingsImportTitle),
+        content: Text(context.l10n.settingsImportFound(summary.transactions, summary.budgets, summary.categories)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Import'),
+            child: Text(context.l10n.settingsImportConfirm),
           ),
         ],
       ),
@@ -905,9 +971,7 @@ class _LocalBackupTileState extends ConsumerState<_LocalBackupTile> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              'Imported ${done.transactions} transaction${done.transactions == 1 ? '' : 's'} successfully.',
-            ),
+            content: Text(context.l10n.settingsImportDone(done.transactions)),
           ),
         );
         if (widget.isModal) Navigator.of(context).pop();
@@ -916,7 +980,7 @@ class _LocalBackupTileState extends ConsumerState<_LocalBackupTile> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Import failed: $e'),
+            content: Text(context.l10n.settingsImportFailed(e.toString())),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -932,8 +996,8 @@ class _LocalBackupTileState extends ConsumerState<_LocalBackupTile> {
     return Column(
       children: [
         _SettingsRow(
-          title: 'Export backup',
-          subtitle: 'Save all data as a JSON file',
+          title: context.l10n.settingsExportBackup,
+          subtitle: context.l10n.settingsExportBackupDesc,
           busy: _exporting,
           onTap: busy
               ? null
@@ -946,8 +1010,8 @@ class _LocalBackupTileState extends ConsumerState<_LocalBackupTile> {
                 },
         ),
         _SettingsRow(
-          title: 'Restore from file',
-          subtitle: 'Replace local data with an exported backup',
+          title: context.l10n.settingsRestoreFromFile,
+          subtitle: context.l10n.settingsRestoreFromFileDesc,
           busy: _importing,
           onTap: busy ? null : _pickAndImport,
         ),
@@ -991,8 +1055,8 @@ class _SmsRulesTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return _SettingsRow(
-      title: 'SMS Rules',
-      subtitle: 'Auto-create transactions from incoming messages',
+      title: context.l10n.settingsSmsRules,
+      subtitle: context.l10n.settingsSmsRulesDesc,
       onTap: () => _navigate(context, ref),
     );
   }
@@ -1004,16 +1068,20 @@ class _AppearanceSection extends ConsumerWidget {
   final AppSettings settings;
   const _AppearanceSection({required this.settings});
 
-  static const _segments = [
-    ('light', 'Light'),
-    ('system', 'Auto'),
-    ('dark', 'Dark'),
-  ];
+  // Labels resolved in build() from l10n
+  static const _segmentValues = ['light', 'system', 'dark'];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final current = settings.themeMode;
+
+    final segments = [
+      ('light', l10n.settingsThemeLight),
+      ('system', l10n.settingsThemeAuto),
+      ('dark', l10n.settingsThemeDark),
+    ];
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
@@ -1025,7 +1093,7 @@ class _AppearanceSection extends ConsumerWidget {
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
-          children: _segments.map((seg) {
+          children: segments.map((seg) {
             final (value, label) = seg;
             final isActive = current == value;
             return Expanded(

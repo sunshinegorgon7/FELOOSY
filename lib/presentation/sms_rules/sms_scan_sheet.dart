@@ -8,6 +8,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../app/app_theme.dart';
+import '../../core/extensions/localizations_extension.dart';
 import '../../data/models/category.dart';
 import '../../data/models/sms_rule.dart';
 import '../../data/models/transaction.dart';
@@ -73,13 +74,7 @@ class _SmsScanSheet extends ConsumerStatefulWidget {
 }
 
 class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
-  static const _presets = [
-    (label: 'Today',     days: 0),
-    (label: 'Yesterday', days: 1),
-    (label: '3 days',   days: 3),
-    (label: '7 days',   days: 7),
-    (label: '30 days',  days: 30),
-  ];
+  static const _presetDays = [0, 1, 3, 7, 30];
 
   _Step _step = _Step.range;
   int _preset = 0; // default: Today
@@ -109,7 +104,7 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
         ),
       );
     }
-    final days = _preset < _presets.length ? _presets[_preset].days : 3;
+    final days = _preset < _presetDays.length ? _presetDays[_preset] : 3;
     if (days == 0) {
       // Today: from midnight to right now
       return DateTimeRange(
@@ -144,7 +139,7 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
 
     final status = await Permission.sms.status;
     if (!status.isGranted) {
-      setState(() => _error = 'SMS permission is required to scan messages.');
+      setState(() => _error = context.l10n.smsScanPermissionRequired);
       return;
     }
 
@@ -296,29 +291,30 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
   }
 
   Future<void> _editDescription(int index) async {
+    final l10n = context.l10n;
     final ctrl = TextEditingController(text: _candidates[index].description);
     final result = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Edit label'),
+        title: Text(l10n.smsScanEditLabel),
         content: TextField(
           controller: ctrl,
           autofocus: true,
           textCapitalization: TextCapitalization.sentences,
-          decoration: const InputDecoration(
-            hintText: 'Transaction description',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            hintText: l10n.smsScanTransactionDesc,
+            border: const OutlineInputBorder(),
           ),
           onSubmitted: (_) => Navigator.pop(ctx, ctrl.text.trim()),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
-            child: const Text('Save'),
+            child: Text(l10n.save),
           ),
         ],
       ),
@@ -344,11 +340,12 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
       );
 
   Widget _buildRangeStep(ColorScheme cs, TextTheme tt) {
+    final l10n = context.l10n;
     final hasCustom = _preset == 5 && _customRange != null;
     final customLabel = hasCustom
         ? '${DateFormat('MMM d').format(_customRange!.start)} – '
           '${DateFormat('MMM d').format(_customRange!.end)}'
-        : 'Custom…';
+        : l10n.smsScanCustom;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -357,12 +354,12 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
         _buildHandle(cs),
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
-          child: Text('Scan existing SMS', style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+          child: Text(l10n.smsScanTitle, style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
           child: Text(
-            'Apply your active rules to messages already in your inbox.',
+            l10n.smsScanDesc,
             style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
           ),
         ),
@@ -380,7 +377,7 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
           ),
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-          child: Text('Date range', style: tt.labelSmall?.copyWith(
+          child: Text(l10n.smsScanDateRange, style: tt.labelSmall?.copyWith(
             color: AppTheme.primaryText(cs),
             fontWeight: FontWeight.w600,
             letterSpacing: 0.8,
@@ -392,12 +389,11 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              for (int i = 0; i < _presets.length; i++)
-                _RangeChip(
-                  label: _presets[i].label,
-                  selected: _preset == i,
-                  onTap: () => setState(() => _preset = i),
-                ),
+              _RangeChip(label: l10n.today, selected: _preset == 0, onTap: () => setState(() => _preset = 0)),
+              _RangeChip(label: l10n.yesterday, selected: _preset == 1, onTap: () => setState(() => _preset = 1)),
+              _RangeChip(label: l10n.smsScan3Days, selected: _preset == 2, onTap: () => setState(() => _preset = 2)),
+              _RangeChip(label: l10n.smsScan7Days, selected: _preset == 3, onTap: () => setState(() => _preset = 3)),
+              _RangeChip(label: l10n.smsScan30Days, selected: _preset == 4, onTap: () => setState(() => _preset = 4)),
               _RangeChip(
                 label: customLabel,
                 selected: _preset == 5,
@@ -428,7 +424,7 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
         const SizedBox(height: 32),
         const CircularProgressIndicator(),
         const SizedBox(height: 16),
-        Text('Scanning messages…', style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
+        Text(context.l10n.smsScanScanning, style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
         SizedBox(height: MediaQuery.paddingOf(context).bottom + 48),
       ],
     );
@@ -450,14 +446,13 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
                 icon: const Icon(Icons.arrow_back),
                 onPressed: () => setState(() => _step = _Step.range),
               ),
-              Text('No matches found', style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+              Text(context.l10n.smsScanNoMatches, style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
             ],
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
             child: Text(
-              'No messages in this range matched your active rules.\n'
-              'Try a wider range or check your rule keywords.',
+              context.l10n.smsScanNoMatchesMessage,
               style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
             ),
           ),
@@ -465,7 +460,7 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
             child: OutlinedButton(
               onPressed: () => setState(() => _step = _Step.range),
-              child: const Text('Try different range'),
+              child: Text(context.l10n.smsScanTryDifferent),
             ),
           ),
           SizedBox(height: MediaQuery.paddingOf(context).bottom + 20),
@@ -489,12 +484,12 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '${_candidates.length} match${_candidates.length == 1 ? '' : 'es'} found',
+                    context.l10n.smsScanMatchesFound(_candidates.length),
                     style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w700),
                   ),
                   if (dupCount > 0)
                     Text(
-                      '$dupCount already exist${dupCount == 1 ? 's' : ''} today — unchecked by default',
+                      context.l10n.smsScanDupNote(dupCount),
                       style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
                     ),
                 ],
@@ -548,8 +543,8 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
                   )
                 : Text(
                     selected == 0
-                        ? 'Nothing selected'
-                        : 'Import $selected transaction${selected == 1 ? '' : 's'}',
+                        ? context.l10n.smsScanNothingSelected
+                        : context.l10n.smsScanImportButton(selected),
                   ),
           ),
         ),
@@ -682,7 +677,7 @@ class _CandidateTile extends StatelessWidget {
       contentPadding: const EdgeInsets.fromLTRB(4, 6, 16, 6),
       secondary: isDup
           ? Tooltip(
-              message: 'Transaction for this amount and category already exists on this day',
+              message: context.l10n.smsScanDupWarning,
               child: Icon(Icons.warning_amber_rounded, size: 18, color: cs.error),
             )
           : null,
@@ -764,7 +759,7 @@ class _CandidateTile extends StatelessWidget {
                       Text('·', style: TextStyle(fontSize: 11, color: cs.error)),
                       const SizedBox(width: 6),
                       Text(
-                        'exists',
+                        context.l10n.smsScanExists,
                         style: tt.labelSmall?.copyWith(
                           color: cs.error,
                           fontWeight: FontWeight.w600,

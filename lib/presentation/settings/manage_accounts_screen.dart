@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../app/app_theme.dart';
 import '../../core/constants/currencies.dart';
+import '../../core/extensions/localizations_extension.dart';
 import '../../data/models/account.dart';
 import '../../providers/accounts_provider.dart';
 import '../../providers/access_tier_provider.dart';
@@ -16,7 +17,7 @@ class ManageAccountsScreen extends ConsumerWidget {
     final accountsAsync = ref.watch(accountsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Manage Wallets')),
+      appBar: AppBar(title: Text(context.l10n.manageWalletsTitle)),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           final accounts = accountsAsync.value ?? [];
@@ -37,7 +38,7 @@ class ManageAccountsScreen extends ConsumerWidget {
           if (accounts.isEmpty) {
             return Center(
               child: Text(
-                'No wallets yet.',
+                context.l10n.manageWalletsNone,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
@@ -93,7 +94,7 @@ class ManageAccountsScreen extends ConsumerWidget {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setState) => AlertDialog(
-          title: Text(account == null ? 'Add wallet' : 'Edit wallet'),
+          title: Text(account == null ? context.l10n.manageWalletsAdd : context.l10n.manageWalletsEditTitle),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -104,14 +105,14 @@ class ManageAccountsScreen extends ConsumerWidget {
                     if (nameError != null) setState(() => nameError = null);
                   },
                   decoration: InputDecoration(
-                    labelText: 'Wallet name',
+                    labelText: ctx.l10n.manageWalletsName,
                     errorText: nameError,
                   ),
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<CurrencyOption>(
                   initialValue: selectedCurrency,
-                  decoration: const InputDecoration(labelText: 'Currency'),
+                  decoration: InputDecoration(labelText: ctx.l10n.currency),
                   items: kCurrencies
                       .map((c) => DropdownMenuItem(
                           value: c, child: Text('${c.code} — ${c.name}')))
@@ -125,27 +126,27 @@ class ManageAccountsScreen extends ConsumerWidget {
                   controller: budgetCtrl,
                   keyboardType:
                       const TextInputType.numberWithOptions(decimal: true),
-                  decoration: const InputDecoration(
-                    labelText: 'Default monthly budget (optional)',
-                    hintText: 'Leave empty to disable',
+                  decoration: InputDecoration(
+                    labelText: ctx.l10n.manageWalletsDefaultBudget,
+                    hintText: ctx.l10n.manageWalletsLeaveEmpty,
                   ),
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<int?>(
                   initialValue: selectedMonthStartDay,
-                  decoration: const InputDecoration(
-                    labelText: 'Month starts on (optional)',
-                    helperText: 'Leave as app default if not set',
+                  decoration: InputDecoration(
+                    labelText: ctx.l10n.manageWalletsMonthStart,
+                    helperText: ctx.l10n.manageWalletsLeaveAsDefault,
                   ),
                   items: [
-                    const DropdownMenuItem<int?>(
+                    DropdownMenuItem<int?>(
                       value: null,
-                      child: Text('App default'),
+                      child: Text(ctx.l10n.manageWalletsAppDefault),
                     ),
                     ...List.generate(28, (i) => i + 1).map(
                       (d) => DropdownMenuItem<int?>(
                         value: d,
-                        child: Text('Day $d'),
+                        child: Text(ctx.l10n.manageWalletsDay(d)),
                       ),
                     ),
                   ],
@@ -153,8 +154,8 @@ class ManageAccountsScreen extends ConsumerWidget {
                       setState(() => selectedMonthStartDay = value),
                 ),
                 SwitchListTile(
-                  title: const Text('Carry over unused budget'),
-                  subtitle: const Text('Surplus rolls into the next month'),
+                  title: Text(ctx.l10n.settingsCarryOver),
+                  subtitle: Text(ctx.l10n.settingsCarryOverDesc),
                   value: carryOverEnabled,
                   onChanged: (v) => setState(() => carryOverEnabled = v),
                   contentPadding: EdgeInsets.zero,
@@ -177,11 +178,11 @@ class ManageAccountsScreen extends ConsumerWidget {
                       .read(accountsProvider.notifier)
                       .delete(account.id!);
                 },
-                child: const Text('Delete'),
+                child: Text(ctx.l10n.delete),
               ),
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
+              child: Text(ctx.l10n.cancel),
             ),
             FilledButton(
               onPressed: () async {
@@ -197,7 +198,7 @@ class ManageAccountsScreen extends ConsumerWidget {
                 );
                 if (isDuplicate) {
                   setState(() =>
-                      nameError = 'A wallet with this name already exists');
+                      nameError = ctx.l10n.manageWalletsAlreadyExists);
                   return;
                 }
 
@@ -231,7 +232,7 @@ class ManageAccountsScreen extends ConsumerWidget {
                 }
                 if (ctx.mounted) Navigator.pop(ctx);
               },
-              child: const Text('Save'),
+              child: Text(ctx.l10n.save),
             ),
           ],
         ),
@@ -260,11 +261,12 @@ class _WalletRow extends StatelessWidget {
     final accentColor = AppTheme.primaryText(cs);
     final sliverColor = account.isFavorite ? accentColor : cs.outlineVariant;
 
+    final l10n = context.l10n;
     final budgetText = account.defaultMonthlyBudget != null
         ? '${_fmtAmount(account.defaultMonthlyBudget!)} / mo'
-        : 'No default budget';
+        : l10n.manageWalletsNoBudget;
     final subtitle = account.carryOverEnabled
-        ? '$budgetText · Carry-over on'
+        ? l10n.manageWalletsBudgetCarryOver(budgetText)
         : budgetText;
 
     return InkWell(
@@ -333,7 +335,7 @@ class _WalletRow extends StatelessWidget {
                     ? accentColor
                     : cs.onSurfaceVariant.withValues(alpha: 0.4),
               ),
-              tooltip: account.isFavorite ? 'Default wallet' : 'Set as default',
+              tooltip: account.isFavorite ? l10n.manageWalletsDefaultLabel : l10n.manageWalletsSetAsDefault,
               onPressed: onFavorite,
             ),
             IconButton(
@@ -342,7 +344,7 @@ class _WalletRow extends StatelessWidget {
                 size: 18,
                 color: cs.onSurfaceVariant.withValues(alpha: 0.6),
               ),
-              tooltip: 'Edit wallet',
+              tooltip: l10n.manageWalletsEditTitle,
               onPressed: onEdit,
             ),
           ],

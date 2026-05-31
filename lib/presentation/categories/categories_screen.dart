@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../app/app_theme.dart';
+import '../../core/extensions/localizations_extension.dart';
 import '../../core/widgets/category_icon.dart';
 import '../../data/models/category.dart';
 import '../../providers/access_tier_provider.dart';
@@ -42,12 +43,12 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Categories'),
+        title: Text(context.l10n.categories),
         bottom: TabBar(
           controller: _tabController,
-          tabs: const [
-            Tab(child: _TabLabel(symbol: '−', label: 'Expense')),
-            Tab(child: _TabLabel(symbol: '+', label: 'Income')),
+          tabs: [
+            Tab(child: _TabLabel(symbol: '−', label: context.l10n.expense)),
+            Tab(child: _TabLabel(symbol: '+', label: context.l10n.income)),
           ],
         ),
       ),
@@ -132,9 +133,10 @@ class _CategoryIndex extends ConsumerWidget {
       ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
 
     if (scoped.isEmpty) {
+      final l10n = context.l10n;
       return Center(
         child: Text(
-          'No ${sectionType == 'expense' ? 'expense' : 'income'} categories yet.',
+          sectionType == 'expense' ? l10n.categoriesNoExpense : l10n.categoriesNoIncome,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
@@ -226,7 +228,7 @@ class _SummaryStrip extends StatelessWidget {
             ),
           ),
           Text(
-            '$activeCount active',
+            context.l10n.categoriesActiveCount(activeCount),
             style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
           ),
         ],
@@ -245,7 +247,7 @@ class _UnusedHeader extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Text(
-        'UNUSED THIS MONTH · $count',
+        context.l10n.categoriesUnusedHeader(count),
         style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w600,
@@ -355,8 +357,8 @@ class _IndexRow extends StatelessWidget {
                   const SizedBox(height: 3),
                   Text(
                     amount > 0
-                        ? '${(pct * 100).toStringAsFixed(0)}% of spend'
-                        : 'unused',
+                        ? context.l10n.categoriesPercentSpend((pct * 100).toStringAsFixed(0))
+                        : context.l10n.categoriesUnused,
                     style: TextStyle(
                       fontSize: 10,
                       letterSpacing: 0.2,

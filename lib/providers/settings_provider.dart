@@ -28,6 +28,12 @@ class SettingsNotifier extends AsyncNotifier<AppSettings> {
     final updated = current.copyWith(privacyAcceptedAt: DateTime.now());
     await saveSettings(updated);
   }
+
+  Future<void> updateLanguage(String languageCode) async {
+    final current = state.value;
+    if (current == null) return;
+    await saveSettings(current.copyWith(languageCode: languageCode));
+  }
 }
 
 final settingsProvider =

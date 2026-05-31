@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 import '../../app/app_theme.dart';
 import '../../core/constants/category_options.dart';
+import '../../core/extensions/localizations_extension.dart';
 import '../../data/models/category.dart';
 import '../../providers/categories_provider.dart';
 
@@ -61,7 +62,7 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
     final name = _nameCtrl.text.trim();
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter a category name')),
+        SnackBar(content: Text(context.l10n.transactionEnterCategoryName)),
       );
       return;
     }
@@ -125,7 +126,7 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEdit ? 'Edit Category' : 'Add Category'),
+        title: Text(_isEdit ? context.l10n.editCategoryTitleEdit : context.l10n.editCategoryTitleAdd),
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => context.pop(),
@@ -133,8 +134,8 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
         actions: [
           TextButton(
             onPressed: _save,
-            child: const Text('Save',
-                style: TextStyle(fontWeight: FontWeight.w700)),
+            child: Text(context.l10n.save,
+                style: const TextStyle(fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -181,21 +182,21 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
             TextField(
               controller: _nameCtrl,
               textCapitalization: TextCapitalization.words,
-              decoration: const InputDecoration(
-                labelText: 'Name',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: context.l10n.editCategoryName,
+                border: const OutlineInputBorder(),
               ),
               onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: 24),
 
             // Type selector
-            Text('Used for', style: tt.titleSmall),
+            Text(context.l10n.editCategoryUsedFor, style: tt.titleSmall),
             const SizedBox(height: 10),
             Row(
               children: [
                 _TypeChip(
-                  label: 'Expense',
+                  label: context.l10n.expense,
                   symbol: '−',
                   color: AppTheme.expenseText(cs),
                   selected: _transactionType == 'expense',
@@ -203,7 +204,7 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
                 ),
                 const SizedBox(width: 8),
                 _TypeChip(
-                  label: 'Income',
+                  label: context.l10n.income,
                   symbol: '+',
                   color: AppTheme.incomeText(cs),
                   selected: _transactionType == 'income',
@@ -211,7 +212,7 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
                 ),
                 const SizedBox(width: 8),
                 _TypeChip(
-                  label: 'Both',
+                  label: context.l10n.both,
                   symbol: '±',
                   color: cs.onSurfaceVariant,
                   selected: _transactionType == null,
@@ -222,7 +223,7 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
             const SizedBox(height: 24),
 
             // Color picker
-            Text('Colour', style: tt.titleSmall),
+            Text(context.l10n.editCategoryColour, style: tt.titleSmall),
             const SizedBox(height: 10),
             Wrap(
               spacing: 10,
@@ -261,7 +262,7 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
             if (isBuiltIn) ...[
               const SizedBox(height: 8),
               Text(
-                'Chart bar colour is theme-managed for built-in categories.',
+                context.l10n.editCategoryChartNote,
                 style: tt.bodySmall?.copyWith(
                   color: cs.onSurfaceVariant,
                   fontSize: 11.5,
@@ -272,7 +273,7 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
             const SizedBox(height: 24),
 
             // Icon picker
-            Text('Icon', style: tt.titleSmall),
+            Text(context.l10n.editCategoryIcon, style: tt.titleSmall),
             const SizedBox(height: 10),
             GridView.builder(
               shrinkWrap: true,

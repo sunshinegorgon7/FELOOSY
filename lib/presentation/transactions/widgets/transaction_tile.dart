@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../app/app_theme.dart';
+import '../../../core/extensions/localizations_extension.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../data/models/category.dart';
 import '../../../data/models/recurring_rule.dart';
@@ -80,10 +81,10 @@ class TransactionTile extends ConsumerWidget {
             const EdgeInsets.only(left: 32, right: 16, top: 0, bottom: 0),
         minLeadingWidth: 32,
         leading: _AutoAvatar(
+          description: transaction.description,
           iconData: iconData,
           iconColor: iconColor,
           badgeIcon: badgeIcon,
-          logoUrl: category?.logoUrl,
           radius: 14,
           iconSize: 14,
           badgeSize: 11,
@@ -112,10 +113,10 @@ class TransactionTile extends ConsumerWidget {
       tileColor: tileColor,
       contentPadding: const EdgeInsets.only(left: 28, right: 16),
       leading: _AutoAvatar(
+        description: transaction.description,
         iconData: iconData,
         iconColor: iconColor,
         badgeIcon: badgeIcon,
-        logoUrl: category?.logoUrl,
         radius: 20,
         iconSize: 20,
         badgeSize: 15,
@@ -129,7 +130,7 @@ class TransactionTile extends ConsumerWidget {
       subtitle: Row(
         children: [
           Text(
-            category?.name ?? 'No category',
+            category?.name ?? context.l10n.noCategory,
             style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12),
           ),
           if (transaction.isFromSms) ...[
@@ -155,23 +156,37 @@ class TransactionTile extends ConsumerWidget {
   }
 }
 
-// ── Avatar with optional bolt badge ──────────────────────────────────────────
+// ── Avatar: tries merchant favicon from description, falls back to icon ───────
 
-class _AutoAvatar extends StatelessWidget {
+// TLDs tried in order when looking up a merchant favicon.
+const _tlds = [
+  'com', 'ae', 'sa', 'net', 'org', 'co', 'io',
+  'eg', 'in', 'pk', 'qa', 'kw', 'bh', 'om', 'gb', 'de', 'fr',
+];
+
+// Generic words that have no meaningful domain to look up.
+const _skipWords = {
+  'atm', 'pos', 'cash', 'card', 'bank', 'debit', 'credit', 'payment',
+  'transfer', 'purchase', 'transaction', 'fee', 'charge', 'refund',
+  'withdrawal', 'deposit', 'salary', 'expense', 'income', 'misc',
+  'other', 'unknown', 'via', 'for', 'from', 'the', 'and', 'ref',
+};
+
+class _AutoAvatar extends StatefulWidget {
+  final String description;
   final IconData iconData;
   final Color iconColor;
   final IconData? badgeIcon;
-  final String? logoUrl;
   final double radius;
   final double iconSize;
   final double badgeSize;
   final double badgeIconSize;
 
   const _AutoAvatar({
+    required this.description,
     required this.iconData,
     required this.iconColor,
     required this.badgeIcon,
-    this.logoUrl,
     required this.radius,
     required this.iconSize,
     required this.badgeSize,
@@ -179,38 +194,93 @@ class _AutoAvatar extends StatelessWidget {
   });
 
   @override
+  State<_AutoAvatar> createState() => _AutoAvatarState();
+}
+
+class _AutoAvatarState extends State<_AutoAvatar> {
+  int _tldIndex = 0;
+  bool _exhausted = false;
+  late String _word;
+
+  @override
+  void initState() {
+    super.initState();
+    _word = _extractWord(widget.description);
+  }
+
+  @override
+  void didUpdateWidget(_AutoAvatar old) {
+    super.didUpdateWidget(old);
+    if (old.description != widget.description) {
+      setState(() {
+        _word = _extractWord(widget.description);
+        _tldIndex = 0;
+        _exhausted = false;
+      });
+    }
+  }
+
+  // Pulls the first alphabetic-only word ≥3 chars that isn't a generic term.
+  static String _extractWord(String description) {
+    final words = description.toLowerCase().split(RegExp(r'[^a-z]+'));
+    for (final w in words) {
+      if (w.length >= 3 && !_skipWords.contains(w)) return w;
+    }
+    return '';
+  }
+
+  String? get _url {
+    if (_exhausted || _word.isEmpty || _tldIndex >= _tlds.length) return null;
+    return 'https://www.google.com/s2/favicons?sz=128&domain=$_word.${_tlds[_tldIndex]}';
+  }
+
+  void _advance() {
+    if (!mounted) return;
+    if (_tldIndex + 1 < _tlds.length) {
+      setState(() => _tldIndex++);
+    } else {
+      setState(() => _exhausted = true);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final double avatarDiameter = radius * 2;
-    final Widget iconChild = logoUrl != null
+    final double d = widget.radius * 2;
+    final url = _url;
+
+    final Widget innerChild = url != null
         ? ClipOval(
             child: CachedNetworkImage(
-              imageUrl: logoUrl!,
-              width: avatarDiameter,
-              height: avatarDiameter,
+              imageUrl: url,
+              width: d,
+              height: d,
               fit: BoxFit.cover,
-              placeholder: (ctx, url) =>
-                  SizedBox(width: avatarDiameter, height: avatarDiameter),
-              errorWidget: (ctx, url, err) =>
-                  Icon(iconData, color: iconColor, size: iconSize),
+              placeholder: (ctx2, url2) => SizedBox(width: d, height: d),
+              errorWidget: (ctx2, url2, err2) {
+                WidgetsBinding.instance.addPostFrameCallback((_) => _advance());
+                return Icon(widget.iconData,
+                    color: widget.iconColor, size: widget.iconSize);
+              },
             ),
           )
-        : Icon(iconData, color: iconColor, size: iconSize);
+        : Icon(widget.iconData, color: widget.iconColor, size: widget.iconSize);
+
     return Stack(
       clipBehavior: Clip.none,
       children: [
         CircleAvatar(
-          radius: radius,
-          backgroundColor: iconColor.withValues(alpha: 0.15),
-          child: iconChild,
+          radius: widget.radius,
+          backgroundColor: widget.iconColor.withValues(alpha: 0.15),
+          child: innerChild,
         ),
-        if (badgeIcon != null)
+        if (widget.badgeIcon != null)
           Positioned(
             bottom: -2,
             right: -3,
             child: Container(
-              width: badgeSize,
-              height: badgeSize,
+              width: widget.badgeSize,
+              height: widget.badgeSize,
               decoration: BoxDecoration(
                 color: cs.primary,
                 shape: BoxShape.circle,
@@ -218,8 +288,8 @@ class _AutoAvatar extends StatelessWidget {
               ),
               child: Center(
                 child: Icon(
-                  badgeIcon,
-                  size: badgeIconSize,
+                  widget.badgeIcon!,
+                  size: widget.badgeIconSize,
                   color: cs.onPrimary,
                 ),
               ),
@@ -261,7 +331,7 @@ class _AutoBadge extends StatelessWidget {
             Icon(Icons.bolt_rounded, size: 10, color: accentColor),
             const SizedBox(width: 2),
             Text(
-              'Auto',
+              context.l10n.auto,
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
@@ -278,7 +348,7 @@ class _AutoBadge extends StatelessWidget {
     if (smsRule == null) return badge;
 
     return Tooltip(
-      message: 'Rule: ${smsRule!.keyword}  •  tap to edit',
+      message: context.l10n.transactionRuleInfo(smsRule!.keyword),
       preferBelow: false,
       child: badge,
     );
@@ -296,14 +366,15 @@ class _RecurringBadge extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final accentColor = AppTheme.primaryText(cs);
 
+    final l10n = context.l10n;
     final label = rule != null
         ? switch (rule!.frequency) {
-            RecurringFrequency.daily => 'Daily',
-            RecurringFrequency.weekly => 'Weekly',
-            RecurringFrequency.monthly => 'Monthly',
-            RecurringFrequency.annually => 'Annually',
+            RecurringFrequency.daily => l10n.daily,
+            RecurringFrequency.weekly => l10n.weekly,
+            RecurringFrequency.monthly => l10n.monthly,
+            RecurringFrequency.annually => l10n.annually,
           }
-        : 'Recurring';
+        : l10n.recurring;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(4, 2, 6, 2),

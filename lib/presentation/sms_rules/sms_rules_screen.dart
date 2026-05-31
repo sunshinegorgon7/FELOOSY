@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../app/app_theme.dart';
+import '../../core/extensions/localizations_extension.dart';
 import '../../data/models/category.dart';
 import '../../data/models/sms_rule.dart';
 import '../../providers/accounts_provider.dart';
@@ -53,11 +54,11 @@ class _SmsRulesScreenState extends ConsumerState<SmsRulesScreen> {
     return Scaffold(
       backgroundColor: cs.surface,
       appBar: AppBar(
-        title: const Text('SMS Rules'),
+        title: Text(context.l10n.smsRulesTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.manage_search_outlined),
-            tooltip: 'Scan past SMS',
+            tooltip: context.l10n.smsRulesScanPast,
             onPressed: _smsPermission.isGranted ? _openScanSheet : null,
           ),
         ],
@@ -113,8 +114,9 @@ class _SmsRulesScreenState extends ConsumerState<SmsRulesScreen> {
         ref.read(smsImportCompletedProvider.notifier).fire();
       }
       String msg;
+      final l10n = context.l10n;
       if (count == 0) {
-        msg = 'No transactions imported.';
+        msg = l10n.smsRulesNoImports;
       } else {
         final uniqueDays = dates.map(DateUtils.dateOnly).toSet().toList()
           ..sort();
@@ -122,9 +124,9 @@ class _SmsRulesScreenState extends ConsumerState<SmsRulesScreen> {
             ? DateFormat('MMM d').format(uniqueDays.first)
             : '${DateFormat('MMM d').format(uniqueDays.first)} – '
               '${DateFormat('MMM d').format(uniqueDays.last)}';
-        msg = 'Created $count transaction${count == 1 ? '' : 's'} on $dateStr '
-            '— go back to the home screen to see them.';
+        msg = l10n.smsRulesImported(count, dateStr);
       }
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(msg), duration: const Duration(seconds: 5)),
       );
@@ -132,22 +134,22 @@ class _SmsRulesScreenState extends ConsumerState<SmsRulesScreen> {
   }
 
   Future<void> _confirmDelete(SmsRule rule) async {
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete rule?'),
-        content: Text('The rule for "${rule.keyword}" will be deleted. '
-            'Existing transactions it created will not be affected.'),
+        title: Text(l10n.smsRulesDeleteTitle),
+        content: Text(l10n.smsRulesDeleteMessage(rule.keyword)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: cs.error),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete'),
+            child: Text(l10n.delete),
           ),
         ],
       ),
@@ -164,22 +166,23 @@ class _PermissionBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     return Container(
       color: cs.errorContainer.withValues(alpha: 0.4),
       child: ListTile(
         leading: Icon(Icons.sms_failed_outlined, color: cs.error),
         title: Text(
-          'SMS permission required',
+          l10n.smsRulesPermissionTitle,
           style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: cs.error),
         ),
         subtitle: Text(
-          'Grant access so incoming messages can be matched against your rules.',
+          l10n.smsRulesPermissionMessage,
           style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
         ),
         trailing: TextButton(
           onPressed: onGrant,
-          child: const Text('Grant'),
+          child: Text(l10n.grant),
         ),
       ),
     );
@@ -202,10 +205,10 @@ class _EmptyState extends StatelessWidget {
           children: [
             Icon(Icons.sms_outlined, size: 56, color: cs.onSurfaceVariant.withValues(alpha: 0.4)),
             const SizedBox(height: 16),
-            Text('No rules yet', style: tt.titleMedium),
+            Text(context.l10n.smsRulesNone, style: tt.titleMedium),
             const SizedBox(height: 8),
             Text(
-              'Add a rule to automatically create transactions when you receive bank SMS messages.',
+              context.l10n.smsRulesNoneMessage,
               style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
               textAlign: TextAlign.center,
             ),
@@ -213,7 +216,7 @@ class _EmptyState extends StatelessWidget {
             FilledButton.icon(
               onPressed: onAdd,
               icon: const Icon(Icons.add),
-              label: const Text('Add first rule'),
+              label: Text(context.l10n.smsRulesAddFirst),
             ),
           ],
         ),
@@ -262,7 +265,7 @@ class _RuleTile extends StatelessWidget {
             backgroundColor: cs.error,
             foregroundColor: cs.onError,
             icon: Icons.delete_outline,
-            label: 'Delete',
+            label: context.l10n.delete,
             borderRadius: const BorderRadius.horizontal(right: Radius.circular(12)),
           ),
         ],

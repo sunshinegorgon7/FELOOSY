@@ -12,6 +12,8 @@ class AppSettings {
   final DateTime updatedAt;
   final bool tutorialCompleted;
   final DateTime? privacyAcceptedAt;
+  // BCP-47 language tag (e.g. 'en', 'ar'). Empty string = follow system locale.
+  final String languageCode;
 
   const AppSettings({
     this.id = 1,
@@ -27,6 +29,7 @@ class AppSettings {
     required this.updatedAt,
     this.tutorialCompleted = false,
     this.privacyAcceptedAt,
+    this.languageCode = '',
   });
 
   static AppSettings get defaults => AppSettings(updatedAt: DateTime.now());
@@ -43,6 +46,7 @@ class AppSettings {
     DateTime? lastBackupAt,
     bool? tutorialCompleted,
     DateTime? privacyAcceptedAt,
+    String? languageCode,
   }) {
     return AppSettings(
       id: id,
@@ -59,6 +63,7 @@ class AppSettings {
       updatedAt: DateTime.now(),
       tutorialCompleted: tutorialCompleted ?? this.tutorialCompleted,
       privacyAcceptedAt: privacyAcceptedAt ?? this.privacyAcceptedAt,
+      languageCode: languageCode ?? this.languageCode,
     );
   }
 
@@ -84,6 +89,7 @@ class AppSettings {
           ? DateTime.fromMillisecondsSinceEpoch(
               map['privacy_accepted_at'] as int)
           : null,
+      languageCode: map['language_code'] as String? ?? '',
     );
   }
 
@@ -102,6 +108,7 @@ class AppSettings {
       'updated_at': updatedAt.millisecondsSinceEpoch,
       'tutorial_completed': tutorialCompleted ? 1 : 0,
       'privacy_accepted_at': privacyAcceptedAt?.millisecondsSinceEpoch,
+      'language_code': languageCode,
     };
   }
 }

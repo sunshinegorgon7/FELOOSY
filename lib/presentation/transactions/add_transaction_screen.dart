@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import '../../app/app_theme.dart';
+import '../../core/extensions/localizations_extension.dart';
 import '../../core/widgets/category_icon.dart';
 import '../../data/models/category.dart';
 import '../../data/models/recurring_rule.dart';
@@ -151,24 +152,25 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   }
 
   void _manualSave() {
+    final l10n = context.l10n;
     final amount =
         double.tryParse(_amountController.text.replaceAll(',', ''));
     if (amount == null || amount <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter a valid amount.')),
+        SnackBar(content: Text(l10n.transactionValidAmount)),
       );
       return;
     }
     final desc = _descFieldController?.text.trim() ?? '';
     if (desc.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Add a description.')),
+        SnackBar(content: Text(l10n.transactionAddDescription)),
       );
       return;
     }
     if (_selectedCategoryUuid == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Select a category.')),
+        SnackBar(content: Text(l10n.transactionSelectCategory)),
       );
       return;
     }
@@ -416,7 +418,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
             else { context.go('/'); }
           },
         ),
-        title: Text(_isEditing ? 'Edit Transaction' : 'New Transaction'),
+        title: Text(_isEditing ? context.l10n.transactionTitleEdit : context.l10n.transactionTitleNew),
         actions: [
           if (_saving)
             const Padding(
@@ -442,7 +444,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                child: const Text('Save'),
+                child: Text(context.l10n.save),
               ),
             ),
         ],
@@ -608,7 +610,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                 keyboardDismissBehavior:
                     ScrollViewKeyboardDismissBehavior.onDrag,
                 children: [
-                  Text('Category', style: tt.titleSmall),
+                  Text(context.l10n.categories, style: tt.titleSmall),
 
                   // Hint when nothing selected yet
                   _SelectionHint(
@@ -668,8 +670,8 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final d = DateTime(date.year, date.month, date.day);
-    if (d == today) return 'Today';
-    if (d == today.subtract(const Duration(days: 1))) return 'Yesterday';
+    if (d == today) return context.l10n.today;
+    if (d == today.subtract(const Duration(days: 1))) return context.l10n.yesterday;
     return DateFormat('MMM d').format(date);
   }
 }
@@ -699,11 +701,12 @@ class _RecurringToggleRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
 
-    const freqLabels = {
-      RecurringFrequency.daily: 'Daily',
-      RecurringFrequency.weekly: 'Weekly',
-      RecurringFrequency.monthly: 'Monthly',
-      RecurringFrequency.annually: 'Annually',
+    final l10n = context.l10n;
+    final freqLabels = {
+      RecurringFrequency.daily: l10n.daily,
+      RecurringFrequency.weekly: l10n.weekly,
+      RecurringFrequency.monthly: l10n.monthly,
+      RecurringFrequency.annually: l10n.annually,
     };
 
     Widget frequencyChips() => SingleChildScrollView(
@@ -757,7 +760,7 @@ class _RecurringToggleRow extends StatelessWidget {
           Icon(Icons.repeat_rounded, size: 16, color: cs.primary),
           const SizedBox(width: 6),
           Text(
-            'Repeats',
+            l10n.transactionRepeats,
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
@@ -787,7 +790,7 @@ class _RecurringToggleRow extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Text(
-                'Recurring',
+                l10n.recurring,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: isRecurring
@@ -824,6 +827,7 @@ class _SelectionHint extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!amountMissing && !categoryMissing) return const SizedBox.shrink();
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final parts = <String>[
       if (amountMissing) 'amount',
@@ -832,7 +836,7 @@ class _SelectionHint extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Text(
-        'Add ${parts.join(' & ')} to continue',
+        l10n.transactionAddFieldsTooltip(parts.join(' & ')),
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
               color: cs.onSurfaceVariant,
               fontStyle: FontStyle.italic,
@@ -863,7 +867,7 @@ class _TypeToggle extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         _Chip(
-          label: 'Expense',
+          label: context.l10n.expense,
           symbol: '−',
           selected: isExpense,
           selectedColor: AppTheme.expenseText(Theme.of(context).colorScheme),
@@ -871,7 +875,7 @@ class _TypeToggle extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         _Chip(
-          label: 'Income',
+          label: context.l10n.income,
           symbol: '+',
           selected: !isExpense,
           selectedColor: AppTheme.incomeText(Theme.of(context).colorScheme),
@@ -1073,7 +1077,7 @@ class _DescriptionAutocomplete extends ConsumerWidget {
             onSubmitted?.call();
           },
           decoration: InputDecoration(
-            hintText: 'Description',
+            hintText: context.l10n.transactionDescription,
             filled: true,
             fillColor: cs.surfaceContainerLow,
             prefixIcon:
@@ -1136,7 +1140,7 @@ class _CategoryGrid extends StatelessWidget {
       children: [
         if (mostUsed.isNotEmpty) ...[
           Text(
-            'FREQUENT',
+            context.l10n.transactionFrequent,
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
@@ -1287,7 +1291,7 @@ class _AddCategoryCell extends StatelessWidget {
             Icon(Icons.add_rounded, size: 22, color: cs.onSurfaceVariant),
             const SizedBox(height: 4),
             Text(
-              'New',
+              context.l10n.transactionNewCategory,
               style: TextStyle(
                 fontSize: 12,
                 color: cs.onSurfaceVariant,

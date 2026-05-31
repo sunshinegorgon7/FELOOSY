@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/app_theme.dart';
+import '../../core/extensions/localizations_extension.dart';
 import '../../providers/purchase_provider.dart';
 import '../../providers/trial_provider.dart';
 
@@ -51,14 +52,14 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
       await Future.delayed(const Duration(seconds: 2));
       final purchased = ref.read(purchaseProvider).asData?.value ?? false;
       if (mounted && !purchased) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('No previous purchase found for this account.'),
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(context.l10n.paywallNoRestoreFound),
         ));
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Restore failed: $e'),
+          content: Text(context.l10n.paywallRestoreFailed(e.toString())),
           backgroundColor: Theme.of(context).colorScheme.error,
         ));
       }
@@ -69,6 +70,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final isPro = ref.watch(purchaseProvider).asData?.value ?? false;
     final trial = ref.watch(trialProvider).asData?.value;
 
@@ -124,7 +126,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
 
               // Title
               Text(
-                'FELOOSY PRO',
+                l10n.paywallTitle,
                 style: tt.headlineSmall?.copyWith(
                   color: accent,
                   fontWeight: FontWeight.w800,
@@ -134,7 +136,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
               ),
               const SizedBox(height: 6),
               Text(
-                'Everything unlocked, once. No subscriptions.',
+                l10n.paywallSubtitle,
                 style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
                 textAlign: TextAlign.center,
               ),
@@ -142,7 +144,15 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
               const SizedBox(height: 28),
 
               // Feature list
-              ..._proFeatures.map((f) => _FeatureRow(icon: f.$1, label: f.$2)),
+              ...[
+                (Icons.all_inclusive_outlined, l10n.paywallFeatureWallets),
+                (Icons.all_inclusive_outlined, l10n.paywallFeatureTransactions),
+                (Icons.history_outlined, l10n.paywallFeatureHistory),
+                (Icons.cloud_upload_outlined, l10n.paywallFeatureBackup),
+                (Icons.file_download_outlined, l10n.paywallFeatureExport),
+                (Icons.category_outlined, l10n.paywallFeatureCategories),
+                (Icons.sms_outlined, l10n.paywallFeatureSms),
+              ].map((f) => _FeatureRow(icon: f.$1, label: f.$2)),
 
               const SizedBox(height: 28),
 
@@ -151,7 +161,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                 const Center(child: _UnlockedChip())
               else
                 _BuyButton(
-                  label: 'Unlock Forever — $priceLabel',
+                  label: l10n.paywallUnlock(priceLabel),
                   buying: _buying,
                   busy: busy,
                   onTap: _buy,
@@ -169,7 +179,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : Text(
-                          'Restore Purchase',
+                          l10n.paywallRestore,
                           style: TextStyle(color: cs.onSurfaceVariant),
                         ),
                 ),
@@ -177,7 +187,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
 
               const SizedBox(height: 4),
               Text(
-                'One-time purchase · No recurring fees',
+                l10n.paywallRestoreNote,
                 style: tt.bodySmall?.copyWith(
                   color: cs.onSurfaceVariant.withValues(alpha: 0.5),
                 ),
@@ -214,7 +224,7 @@ class _TrialExpiredBanner extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Your 14-day free trial has ended',
+              context.l10n.paywallTrialEnded,
               style: tt.bodyMedium?.copyWith(
                 color: cs.onErrorContainer,
                 fontWeight: FontWeight.w600,
@@ -238,14 +248,14 @@ class _UnlockedChip extends StatelessWidget {
         color: Colors.green.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: const Row(
+      child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.check_circle_rounded, color: Colors.green, size: 16),
-          SizedBox(width: 6),
+          const Icon(Icons.check_circle_rounded, color: Colors.green, size: 16),
+          const SizedBox(width: 6),
           Text(
-            'Pro Unlocked',
-            style: TextStyle(
+            context.l10n.paywallProUnlocked,
+            style: const TextStyle(
                 color: Colors.green, fontWeight: FontWeight.w600),
           ),
         ],
@@ -334,14 +344,3 @@ class _FeatureRow extends StatelessWidget {
   }
 }
 
-// ── Feature list ──────────────────────────────────────────────────────────────
-
-const _proFeatures = [
-  (Icons.all_inclusive_outlined, 'Unlimited wallets'),
-  (Icons.all_inclusive_outlined, 'Unlimited transactions'),
-  (Icons.history_outlined, 'Full transaction history'),
-  (Icons.cloud_upload_outlined, 'Google Drive backup'),
-  (Icons.file_download_outlined, 'Export your data'),
-  (Icons.category_outlined, 'Custom categories'),
-  (Icons.sms_outlined, 'SMS auto-parsing (Android)'),
-];

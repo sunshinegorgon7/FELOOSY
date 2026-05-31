@@ -28,7 +28,7 @@ class DatabaseHelper {
     final dbPath = p.join(docDir.path, AppFlavor.databaseName);
     return openDatabase(
       dbPath,
-      version: 22,
+      version: 23,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -122,7 +122,8 @@ class DatabaseHelper {
         last_backup_at INTEGER,
         updated_at INTEGER NOT NULL,
         tutorial_completed INTEGER NOT NULL DEFAULT 0,
-        privacy_accepted_at INTEGER
+        privacy_accepted_at INTEGER,
+        language_code TEXT NOT NULL DEFAULT ''
       )
     ''');
 
@@ -512,6 +513,11 @@ class DatabaseHelper {
         "WHERE uuid = '00000000-0000-0000-0000-000000000023'",
       );
       debugPrint('[DB] v22 done: updated LuLu logo URL');
+    }
+    if (oldVersion < 23) {
+      await db.execute(
+        "ALTER TABLE app_settings ADD COLUMN language_code TEXT NOT NULL DEFAULT ''",
+      );
     }
   }
 

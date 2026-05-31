@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/extensions/localizations_extension.dart';
 import '../../../data/models/category.dart';
 import '../../../data/models/transaction.dart';
 import '../../transactions/widgets/transaction_tile.dart';
@@ -16,6 +17,7 @@ class RecentTransactionsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final tt = Theme.of(context).textTheme;
     final cs = Theme.of(context).colorScheme;
     final recent = transactions.take(5).toList();
@@ -27,11 +29,11 @@ class RecentTransactionsList extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
           child: Row(
             children: [
-              Text('Recent Transactions', style: tt.titleSmall),
+              Text(l10n.homeRecentTransactions, style: tt.titleSmall),
               const Spacer(),
               TextButton(
                 onPressed: () => context.go('/transactions'),
-                child: const Text('See all'),
+                child: Text(l10n.homeSeeAll),
               ),
             ],
           ),
@@ -41,7 +43,7 @@ class RecentTransactionsList extends StatelessWidget {
             padding: const EdgeInsets.all(24),
             child: Center(
               child: Text(
-                'No transactions yet.\nTap + to add one.',
+                l10n.homeNoTransactions,
                 textAlign: TextAlign.center,
                 style: tt.bodyMedium
                     ?.copyWith(color: cs.onSurfaceVariant),

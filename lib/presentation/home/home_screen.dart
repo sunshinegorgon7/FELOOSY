@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../app/app_theme.dart';
+import '../../core/extensions/localizations_extension.dart';
 import '../../core/widgets/category_icon.dart';
 import '../../data/models/category.dart';
 import '../../data/models/account.dart';
@@ -50,6 +51,7 @@ class _PrivacyConsentSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     final accentColor = AppTheme.primaryText(cs);
@@ -81,35 +83,28 @@ class _PrivacyConsentSheet extends StatelessWidget {
               Icon(Icons.shield_outlined, size: 22, color: accentColor),
               const SizedBox(width: 10),
               Text(
-                'Before you start',
+                l10n.privacyTitle,
                 style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
             ],
           ),
           const SizedBox(height: 16),
-          const _ConsentPoint(
+          _ConsentPoint(
             icon: Icons.sms_outlined,
-            title: 'SMS auto-detection',
-            body:
-                'If you grant SMS permission, incoming bank messages are '
-                'matched against your rules in memory. The message text is '
-                'never saved or shared.',
+            title: l10n.privacySmsTitle,
+            body: l10n.privacySmsMessage,
           ),
           const SizedBox(height: 12),
-          const _ConsentPoint(
+          _ConsentPoint(
             icon: Icons.phone_android_outlined,
-            title: 'Your data stays on your device',
-            body:
-                'Transactions and budgets are stored locally. We have no '
-                'servers and cannot see your financial data.',
+            title: l10n.privacyDataTitle,
+            body: l10n.privacyDataMessage,
           ),
           const SizedBox(height: 12),
-          const _ConsentPoint(
+          _ConsentPoint(
             icon: Icons.auto_awesome_outlined,
-            title: 'AI analysis (optional)',
-            body:
-                'If you use the AI feature, anonymised spending summaries '
-                '(category totals, no raw SMS) are sent to Google Gemini.',
+            title: l10n.privacyAiTitle,
+            body: l10n.privacyAiMessage,
           ),
           const SizedBox(height: 20),
           Row(
@@ -117,7 +112,7 @@ class _PrivacyConsentSheet extends StatelessWidget {
               Expanded(
                 child: OutlinedButton(
                   onPressed: onViewPolicy,
-                  child: const Text('Read full policy'),
+                  child: Text(l10n.privacyReadPolicy),
                 ),
               ),
               const SizedBox(width: 12),
@@ -125,7 +120,7 @@ class _PrivacyConsentSheet extends StatelessWidget {
                 flex: 2,
                 child: FilledButton(
                   onPressed: onAccept,
-                  child: const Text('Accept & Continue'),
+                  child: Text(l10n.privacyAccept),
                 ),
               ),
             ],
@@ -195,12 +190,12 @@ class _ConsentPoint extends StatelessWidget {
 
 // ---------------------------------------------------------------------------
 
-String _dayLabel(DateTime date) {
+String _dayLabel(DateTime date, {required String todayLabel, required String yesterdayLabel}) {
   final now = DateTime.now();
   final today = DateTime(now.year, now.month, now.day);
   final d = DateTime(date.year, date.month, date.day);
-  if (d == today) return 'Today';
-  if (d == today.subtract(const Duration(days: 1))) return 'Yesterday';
+  if (d == today) return todayLabel;
+  if (d == today.subtract(const Duration(days: 1))) return yesterdayLabel;
   return DateFormat('EEEE, MMMM d').format(date);
 }
 
@@ -400,7 +395,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 onChanged: (v) => setState(() => _searchQuery = v),
                 style: TextStyle(color: cs.onSurface, fontSize: 16),
                 decoration: InputDecoration(
-                  hintText: 'Search transactions…',
+                  hintText: context.l10n.homeSearchHint,
                   hintStyle: TextStyle(color: cs.onSurfaceVariant),
                   border: InputBorder.none,
                   isDense: true,
@@ -416,7 +411,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     children: [
                       // ── Wallet switcher bubble ────────────────────────
                       PopupMenuButton<int>(
-                        tooltip: accounts.length > 1 ? 'Switch wallet' : '',
+                        tooltip: accounts.length > 1 ? context.l10n.homeSwitchWallet : '',
                         enabled: accounts.length > 1,
                         initialValue: hasSelectedAccount ? selectedAccountId : -1,
                         onSelected: (value) {
@@ -667,7 +662,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               .where((tx) => tx.categoryUuid == _selectedCategoryFilter)
               .toList();
 
-    final groups = _groupByDate(categoryFilteredTxs);
+    final l10n = context.l10n;
+    final groups = _groupByDate(categoryFilteredTxs, todayLabel: l10n.today, yesterdayLabel: l10n.yesterday);
     _visibleGroups = groups;
     final txDays = filteredTxs
         .map((tx) => DateUtils.dateOnly(tx.transactionDate))
@@ -697,6 +693,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         })
         .whereType<_CatStat>()
         .toList();
+
+    // Clear a stale category filter the moment its category has no more
+    // transactions (e.g. all transactions moved to another category).
+    if (_selectedCategoryFilter != null &&
+        allCatStats.every((s) => s.category.uuid != _selectedCategoryFilter)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => _selectedCategoryFilter = null);
+      });
+    }
 
     final period = ref.watch(selectedBudgetPeriodProvider);
     final periodOffset = ref.watch(selectedPeriodOffsetProvider);
@@ -1159,9 +1164,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     BudgetSummary summary, {
     List<Transaction>? scopedTxs,
   }) {
+    final l10n = context.l10n;
     final overlayGroups = scopedTxs == null
         ? _visibleGroups
-        : _groupByDate(scopedTxs);
+        : _groupByDate(scopedTxs, todayLabel: l10n.today, yesterdayLabel: l10n.yesterday);
     final initialIndex = overlayGroups.indexWhere(
       (visible) => visible.day == group.day,
     );
@@ -1324,7 +1330,7 @@ class _DayGroup {
   _DayGroup(this.day, this.label, this.dayNet, this.txs);
 }
 
-List<_DayGroup> _groupByDate(List<Transaction> txs) {
+List<_DayGroup> _groupByDate(List<Transaction> txs, {String todayLabel = 'Today', String yesterdayLabel = 'Yesterday'}) {
   if (txs.isEmpty) return [];
   final groupTxs = <DateTime, List<Transaction>>{};
   final groupOrder = <DateTime>[];
@@ -1344,7 +1350,7 @@ List<_DayGroup> _groupByDate(List<Transaction> txs) {
           ? sum + tx.amount
           : sum - tx.amount,
     );
-    return _DayGroup(day, _dayLabel(day), dayNet, dayTxs);
+    return _DayGroup(day, _dayLabel(day, todayLabel: todayLabel, yesterdayLabel: yesterdayLabel), dayNet, dayTxs);
   }).toList();
 }
 
@@ -1409,13 +1415,7 @@ class _CategoryTimelineState extends ConsumerState<_CategoryTimeline> {
         .toList()
       ..sort((a, b) => b.transactionDate.compareTo(a.transactionDate));
 
-    if (catTxs.isEmpty && !allTxsAsync.isLoading) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) Navigator.pop(context);
-      });
-    }
-
-    final dayGroups = _groupByDate(catTxs);
+    final dayGroups = _groupByDate(catTxs, todayLabel: context.l10n.today, yesterdayLabel: context.l10n.yesterday);
 
     // Flatten into a mixed list of headers + transactions for the ListView.
     final items = <Object>[];
@@ -1622,12 +1622,6 @@ class _DayOverlayState extends ConsumerState<_DayOverlay> {
             ))
         .toList();
 
-    if (visibleDays.isEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) Navigator.pop(context);
-      });
-    }
-
     if (_currentIndex >= visibleDays.length && visibleDays.isNotEmpty) {
       _currentIndex = visibleDays.length - 1;
     }
@@ -1676,7 +1670,9 @@ class _DayOverlayState extends ConsumerState<_DayOverlay> {
               child: Row(
                 children: [
                   Text(
-                    currentDay == null ? '' : _dayLabel(currentDay),
+                    currentDay == null
+                        ? context.l10n.homeNoTransactions.split('\n').first
+                        : _dayLabel(currentDay, todayLabel: context.l10n.today, yesterdayLabel: context.l10n.yesterday),
                     style: tt.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),

@@ -62,24 +62,24 @@ const List<IconData> kPickableIcons = [
 ];
 
 const List<Color> kPickableColors = [
-  Color(0xFF5F7F8A),
-  Color(0xFF6F8392),
-  Color(0xFF7C7796),
-  Color(0xFF8B7589),
-  Color(0xFF8A6F5C),
-  Color(0xFF8F7A4F),
-  Color(0xFF7B7462),
-  Color(0xFF6E8F68),
-  Color(0xFF5F8A84),
-  Color(0xFF67849A),
-  Color(0xFF7F7299),
-  Color(0xFF8A7078),
-  Color(0xFF9A8652),
-  Color(0xFF7A8064),
-  Color(0xFF83786C),
-  Color(0xFF6E8790),
-  Color(0xFF5F7C76),
-  Color(0xFF776D8F),
-  Color(0xFF8A765F),
-  Color(0xFF6B7E9A),
+  Color(0xFFD32F2F),  // deep red
+  Color(0xFFE53935),  // vivid red
+  Color(0xFFE64A19),  // deep orange
+  Color(0xFFF57C00),  // orange
+  Color(0xFFFFB300),  // amber
+  Color(0xFFF9A825),  // golden amber
+  Color(0xFF7CB342),  // light green
+  Color(0xFF388E3C),  // medium green
+  Color(0xFF1B5E20),  // dark forest green
+  Color(0xFF00897B),  // teal
+  Color(0xFF0097A7),  // dark cyan
+  Color(0xFF039BE5),  // vivid sky blue
+  Color(0xFF1E88E5),  // blue
+  Color(0xFF1565C0),  // dark blue
+  Color(0xFF283593),  // deep navy
+  Color(0xFF6A1B9A),  // deep purple
+  Color(0xFF8E24AA),  // purple
+  Color(0xFFD81B60),  // deep pink
+  Color(0xFF6D4C41),  // warm brown
+  Color(0xFF37474F),  // dark slate
 ];

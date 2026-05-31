@@ -1,0 +1,478 @@
+{
+  "@@locale": "en",
+
+  "save": "Save",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "edit": "Edit",
+  "done": "Done",
+  "next": "Next",
+  "skip": "Skip",
+  "grant": "Grant",
+  "change": "Change",
+  "clear": "Clear",
+  "import": "Import",
+  "today": "Today",
+  "yesterday": "Yesterday",
+  "expense": "Expense",
+  "income": "Income",
+  "both": "Both",
+  "recurring": "Recurring",
+  "daily": "Daily",
+  "weekly": "Weekly",
+  "monthly": "Monthly",
+  "annually": "Annually",
+  "search": "Search",
+  "settings": "Settings",
+  "history": "History",
+  "budget": "Budget",
+  "currency": "Currency",
+  "categories": "Categories",
+  "version": "Version",
+  "auto": "Auto",
+  "noCategory": "No category",
+  "selectCategory": "Select a category",
+  "setBudget": "Set Budget",
+
+  "homeSearchHint": "Search transactions…",
+  "homeAllWallets": "All wallets",
+  "homeSwitchWallet": "Switch wallet",
+  "homeWallet": "Wallet",
+  "homePreviousMonth": "Previous month",
+  "homeNextMonth": "Next month",
+  "homeTapReturnCurrentMonth": "Tap to return to current month",
+  "homeNoBudget": "No budget set.",
+  "homeRemainingThisMonth": "remaining this month · {percent}% spent",
+  "@homeRemainingThisMonth": {
+    "placeholders": {
+      "percent": { "type": "int" }
+    }
+  },
+  "homeOverBudget": "over budget · {percent}% spent",
+  "@homeOverBudget": {
+    "placeholders": {
+      "percent": { "type": "int" }
+    }
+  },
+  "homeCarryOver": "+ {amount} carried from last month",
+  "@homeCarryOver": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "homeNoTransactions": "No transactions yet.\nTap + to add one.",
+  "homeNoTransactionsDay": "No transactions on this day.",
+  "homeNoTransactionsCategory": "No transactions in this\ncategory for this period.",
+  "homeByDay": "By Day",
+  "homeByCategory": "By Category",
+  "homeDeleteTitle": "Delete transaction?",
+  "homeDeleteMessage": "\"{description}\" will be permanently removed.",
+  "@homeDeleteMessage": {
+    "placeholders": {
+      "description": { "type": "String" }
+    }
+  },
+  "homeSeeAll": "See all",
+  "homeRecentTransactions": "Recent Transactions",
+
+  "budgetRemaining": "remaining",
+  "budgetSpent": "Spent",
+  "budgetPercentUsed": "{percent}% used",
+  "@budgetPercentUsed": {
+    "placeholders": {
+      "percent": { "type": "String" }
+    }
+  },
+  "budgetNoSet": "No budget set for this month yet.",
+
+  "setBudgetForPeriod": "Set budget for {period}",
+  "@setBudgetForPeriod": {
+    "placeholders": {
+      "period": { "type": "String" }
+    }
+  },
+  "setBudgetHint": "This is the total amount you want to track this month.",
+  "setBudgetAmount": "Budget amount",
+  "setBudgetEnterAmount": "Enter an amount",
+  "setBudgetValidAmount": "Enter a valid amount",
+  "setBudgetSave": "Save Budget",
+
+  "historyMonth": "Month",
+  "historyYear": "Year",
+
+  "transactionTitleEdit": "Edit Transaction",
+  "transactionTitleNew": "New Transaction",
+  "transactionValidAmount": "Enter a valid amount.",
+  "transactionAddDescription": "Add a description.",
+  "transactionSelectCategory": "Select a category.",
+  "transactionRepeats": "Repeats",
+  "transactionDescription": "Description",
+  "transactionFrequent": "FREQUENT",
+  "transactionNewCategory": "New",
+  "transactionEnterCategoryName": "Enter a category name",
+  "transactionAddFieldsTooltip": "Add {fields} to continue",
+  "@transactionAddFieldsTooltip": {
+    "placeholders": {
+      "fields": { "type": "String" }
+    }
+  },
+  "transactionRuleInfo": "Rule: {keyword}  •  tap to edit",
+  "@transactionRuleInfo": {
+    "placeholders": {
+      "keyword": { "type": "String" }
+    }
+  },
+  "transactionDeleteTitle": "Delete transaction?",
+  "transactionDeleteMessage": "\"{description}\" will be permanently removed.",
+  "@transactionDeleteMessage": {
+    "placeholders": {
+      "description": { "type": "String" }
+    }
+  },
+  "transactionDeleteRecurringTitle": "Delete recurring transaction",
+  "transactionDeleteRecurringQuestion": "How would you like to delete this?",
+  "transactionDeleteOnlyThis": "Only this",
+  "transactionDeleteThisAndFuture": "This & future",
+
+  "categoriesNoExpense": "No expense categories yet.",
+  "categoriesNoIncome": "No income categories yet.",
+  "categoriesActiveCount": "{count} active",
+  "@categoriesActiveCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "categoriesUnusedHeader": "UNUSED THIS MONTH · {count}",
+  "@categoriesUnusedHeader": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "categoriesUnused": "unused",
+  "categoriesPercentSpend": "{percent}% of spend",
+  "@categoriesPercentSpend": {
+    "placeholders": {
+      "percent": { "type": "String" }
+    }
+  },
+  "editCategoryTitleEdit": "Edit Category",
+  "editCategoryTitleAdd": "Add Category",
+  "editCategoryName": "Name",
+  "editCategoryUsedFor": "Used for",
+  "editCategoryColour": "Colour",
+  "editCategoryIcon": "Icon",
+  "editCategoryChartNote": "Chart bar colour is theme-managed for built-in categories.",
+
+  "settingsAppearance": "Appearance",
+  "settingsMonthStartsOn": "Month starts on",
+  "settingsMonthStartDay": "Day {day}{ordinal}",
+  "@settingsMonthStartDay": {
+    "placeholders": {
+      "day": { "type": "int" },
+      "ordinal": { "type": "String" }
+    }
+  },
+  "settingsDaysFebNote": "Days 29–31 unavailable to ensure February compatibility.",
+  "settingsDefaultMonthlyBudget": "Default monthly budget",
+  "settingsNotSet": "Not set",
+  "settingsManageCategories": "Manage categories",
+  "settingsWallets": "Wallets",
+  "settingsManageWallets": "Manage wallets",
+  "settingsAutomations": "Automations",
+  "settingsData": "Data",
+  "settingsAbout": "About",
+  "settingsPrivacyPolicy": "Privacy Policy",
+  "settingsDeveloperTools": "Developer Tools",
+  "settingsDangerZone": "Danger Zone",
+  "settingsResetApp": "Reset app",
+  "settingsResetAppDesc": "Erase all transactions and budgets, restore defaults",
+  "settingsSelectCurrency": "Select Currency",
+  "settingsMonthStartOnDay": "Month starts on day…",
+  "settingsResetTitle": "Reset app?",
+  "settingsResetMessage": "This will permanently delete:\n  • All transactions\n  • All budgets\n  • All custom categories\n\nSettings will be restored to defaults and you will be signed out of Google. Sign in again afterwards to restore from a backup.\n\nThis cannot be undone.",
+  "settingsResetConfirm": "Reset Everything",
+  "settingsChangeStartDayTitle": "Change start day?",
+  "settingsChangeStartDayMessage": "Changing from day {from} to day {to} will shift the period boundaries for all months. Existing transactions stay as-is.",
+  "@settingsChangeStartDayMessage": {
+    "placeholders": {
+      "from": { "type": "int" },
+      "to": { "type": "int" }
+    }
+  },
+  "settingsBackupToDrive": "Back up to Google Drive",
+  "settingsSignInForBackup": "Sign in to enable backup",
+  "settingsLastBackup": "Last backup: {time}",
+  "@settingsLastBackup": {
+    "placeholders": {
+      "time": { "type": "String" }
+    }
+  },
+  "settingsNoBackupYet": "No backup yet",
+  "settingsBackupNow": "Back up now",
+  "settingsRestoreFromDrive": "Restore from Drive",
+  "settingsRestoreFromDriveDesc": "Replace local data with Drive backup",
+  "settingsSignOut": "Sign out",
+  "settingsBackupSaved": "Backup saved to Google Drive.",
+  "settingsBackupNoChanges": "No changes since last backup — skipped.",
+  "settingsBackupFailed": "Backup failed: {error}",
+  "@settingsBackupFailed": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "settingsListBackupsFailed": "Could not list backups: {error}",
+  "@settingsListBackupsFailed": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "settingsNoBackupFound": "No backup found in Google Drive.",
+  "settingsReplaceLocalTitle": "Replace all local data?",
+  "settingsReplaceLocalMessage": "Restoring from Google Drive will permanently delete everything currently on this device — all transactions, budgets, and categories — and replace it with the backup.\n\nThis cannot be undone.",
+  "settingsReplaceMyData": "Replace my data",
+  "settingsDataRestored": "Data restored from Google Drive.",
+  "settingsRestoreFailed": "Restore failed: {error}",
+  "@settingsRestoreFailed": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "settingsSelectBackup": "Select backup to restore",
+  "settingsExportBackup": "Export backup",
+  "settingsExportBackupDesc": "Save all data as a JSON file",
+  "settingsRestoreFromFile": "Restore from file",
+  "settingsRestoreFromFileDesc": "Replace local data with an exported backup",
+  "settingsExportFailed": "Export failed: {error}",
+  "@settingsExportFailed": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "settingsCannotReadFile": "Cannot read file: {error}",
+  "@settingsCannotReadFile": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "settingsImportTitle": "Import backup?",
+  "settingsImportFound": "Found:\n  • {transactions} transactions\n  • {budgets} budgets\n  • {categories} categories\n\nThis will replace all local data. This cannot be undone.",
+  "@settingsImportFound": {
+    "placeholders": {
+      "transactions": { "type": "int" },
+      "budgets": { "type": "int" },
+      "categories": { "type": "int" }
+    }
+  },
+  "settingsImportConfirm": "Import",
+  "settingsImportDone": "Imported {count} transactions successfully.",
+  "@settingsImportDone": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "settingsImportFailed": "Import failed: {error}",
+  "@settingsImportFailed": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "settingsSmsRules": "SMS Rules",
+  "settingsSmsRulesDesc": "Auto-create transactions from incoming messages",
+  "settingsThemeLight": "Light",
+  "settingsThemeDark": "Dark",
+  "settingsThemeAuto": "Auto",
+  "settingsCarryOver": "Carry over unused budget",
+  "settingsCarryOverDesc": "Surplus rolls into the next month",
+  "settingsDefaultBudgetApplied": "Applied automatically when no budget has been set for the current month.",
+  "settingsJustNow": "Just now",
+  "settingsMinutesAgo": "{minutes}m ago",
+  "@settingsMinutesAgo": {
+    "placeholders": {
+      "minutes": { "type": "int" }
+    }
+  },
+  "settingsHoursAgo": "{hours}h ago",
+  "@settingsHoursAgo": {
+    "placeholders": {
+      "hours": { "type": "int" }
+    }
+  },
+  "settingsLanguage": "Language",
+  "settingsSelectLanguage": "Select Language",
+
+  "manageWalletsTitle": "Manage Wallets",
+  "manageWalletsNone": "No wallets yet.",
+  "manageWalletsAdd": "Add wallet",
+  "manageWalletsEditTitle": "Edit wallet",
+  "manageWalletsName": "Wallet name",
+  "manageWalletsDefaultBudget": "Default monthly budget (optional)",
+  "manageWalletsLeaveEmpty": "Leave empty to disable",
+  "manageWalletsMonthStart": "Month starts on (optional)",
+  "manageWalletsAppDefault": "App default",
+  "manageWalletsDay": "Day {day}",
+  "@manageWalletsDay": {
+    "placeholders": {
+      "day": { "type": "int" }
+    }
+  },
+  "manageWalletsLeaveAsDefault": "Leave as app default if not set",
+  "manageWalletsDefaultLabel": "Default wallet",
+  "manageWalletsSetAsDefault": "Set as default",
+  "manageWalletsNoBudget": "No default budget",
+  "manageWalletsAlreadyExists": "A wallet with this name already exists",
+  "manageWalletsBudgetCarryOver": "{budget} · Carry-over on",
+  "@manageWalletsBudgetCarryOver": {
+    "placeholders": {
+      "budget": { "type": "String" }
+    }
+  },
+
+  "smsRulesTitle": "SMS Rules",
+  "smsRulesScanPast": "Scan past SMS",
+  "smsRulesPermissionTitle": "SMS permission required",
+  "smsRulesPermissionMessage": "Grant access so incoming messages can be matched against your rules.",
+  "smsRulesNone": "No rules yet",
+  "smsRulesNoneMessage": "Add a rule to automatically create transactions when you receive bank SMS messages.",
+  "smsRulesAddFirst": "Add first rule",
+  "smsRulesDeleteTitle": "Delete rule?",
+  "smsRulesDeleteMessage": "The rule for \"{keyword}\" will be deleted. Existing transactions it created will not be affected.",
+  "@smsRulesDeleteMessage": {
+    "placeholders": {
+      "keyword": { "type": "String" }
+    }
+  },
+  "smsRulesImported": "Created {count} transactions on {date} — go back to the home screen to see them.",
+  "@smsRulesImported": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "date": { "type": "String" }
+    }
+  },
+  "smsRulesNoImports": "No transactions imported.",
+
+  "smsRuleFormTitleEdit": "Edit Rule",
+  "smsRuleFormTitleNew": "New Rule",
+  "smsRuleFormKeyword": "Keyword",
+  "smsRuleFormKeywordHint": "e.g. Carrefour, VODAFONE, Uber",
+  "smsRuleFormKeywordHelper": "Case-insensitive match anywhere in the SMS body.",
+  "smsRuleFormLabel": "Transaction Label",
+  "smsRuleFormLabelHint": "e.g. Gas, Coffee, Groceries (leave blank to use keyword)",
+  "smsRuleFormLabelHelper": "Shown as the transaction description. Defaults to the keyword.",
+  "smsRuleFormType": "Transaction Type",
+  "smsRuleFormCategory": "Category",
+  "smsRuleFormSelectCategory": "Select a category",
+  "smsRuleFormWallet": "Wallet",
+  "smsRuleFormAdvanced": "Advanced",
+  "smsRuleFormCustomRegex": "Custom amount regex",
+  "smsRuleFormRegexHint": "Amount regex (optional)",
+  "smsRuleFormRegexHelper": "Use capture group 1 to extract the amount. Leave empty to use built-in detection.",
+  "smsRuleFormSaveChanges": "Save Changes",
+  "smsRuleFormSaveNew": "Save Rule",
+  "smsRuleFormDeleteRule": "Delete Rule",
+  "smsRuleFormEnterKeyword": "Please enter a keyword.",
+  "smsRuleFormSelectCategoryError": "Please select a category.",
+  "smsRuleFormDeleteMessage": "The rule for \"{keyword}\" will be permanently deleted.",
+  "@smsRuleFormDeleteMessage": {
+    "placeholders": {
+      "keyword": { "type": "String" }
+    }
+  },
+  "smsRuleFormSelectCategoryTitle": "Select Category",
+
+  "smsScanTitle": "Scan existing SMS",
+  "smsScanDesc": "Apply your active rules to messages already in your inbox.",
+  "smsScanDateRange": "Date range",
+  "smsScan3Days": "3 days",
+  "smsScan7Days": "7 days",
+  "smsScan30Days": "30 days",
+  "smsScanCustom": "Custom…",
+  "smsScanSelectRange": "Select date range",
+  "smsScanPermissionRequired": "SMS permission is required to scan messages.",
+  "smsScanScanning": "Scanning messages…",
+  "smsScanNoMatches": "No matches found",
+  "smsScanNoMatchesMessage": "No messages in this range matched your active rules.\nTry a wider range or check your rule keywords.",
+  "smsScanTryDifferent": "Try different range",
+  "smsScanMatchesFound": "{count} matches found",
+  "@smsScanMatchesFound": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "smsScanDupNote": "{count} already exist today — unchecked by default",
+  "@smsScanDupNote": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "smsScanImportButton": "Import {count} transactions",
+  "@smsScanImportButton": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "smsScanNothingSelected": "Nothing selected",
+  "smsScanEditLabel": "Edit label",
+  "smsScanTransactionDesc": "Transaction description",
+  "smsScanExists": "exists",
+  "smsScanDupWarning": "Transaction for this amount and category already exists on this day",
+
+  "paywallTitle": "FELOOSY PRO",
+  "paywallSubtitle": "Everything unlocked, once. No subscriptions.",
+  "paywallUnlock": "Unlock Forever — {price}",
+  "@paywallUnlock": {
+    "placeholders": {
+      "price": { "type": "String" }
+    }
+  },
+  "paywallRestore": "Restore Purchase",
+  "paywallRestoreNote": "One-time purchase · No recurring fees",
+  "paywallTrialEnded": "Your 14-day free trial has ended",
+  "paywallProUnlocked": "Pro Unlocked",
+  "paywallFeatureWallets": "Unlimited wallets",
+  "paywallFeatureTransactions": "Unlimited transactions",
+  "paywallFeatureHistory": "Full transaction history",
+  "paywallFeatureBackup": "Google Drive backup",
+  "paywallFeatureExport": "Export your data",
+  "paywallFeatureCategories": "Custom categories",
+  "paywallFeatureSms": "SMS auto-parsing (Android)",
+  "paywallNoRestoreFound": "No previous purchase found for this account.",
+  "paywallRestoreFailed": "Restore failed: {error}",
+  "@paywallRestoreFailed": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+
+  "tutorialStepOf": "{current} of {total}",
+  "@tutorialStepOf": {
+    "placeholders": {
+      "current": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "tutorialGetStarted": "Get Started",
+  "tutorialWelcomeTitle": "Welcome to FELOOSY",
+  "tutorialWelcomeMessage": "Your personal budget, beautifully simple.\nLet's take a quick tour of the key features.",
+  "tutorialBudgetTitle": "Monthly Budget",
+  "tutorialBudgetMessage": "This card shows your budget vs. spending for the month. Tap \"Set Budget\" to define your monthly limit.",
+  "tutorialCarryoverTitle": "Carry Over Surplus",
+  "tutorialCarryoverMessage": "Enable carry-over in Settings → Manage Wallets for any wallet. Unused budget from last month rolls into this month automatically.",
+  "tutorialAddTitle": "Add a Transaction",
+  "tutorialAddMessage": "Tap the + button to record a purchase, bill, or income. Pick a category to see where your money goes.",
+  "tutorialBrowseTitle": "Browse Past Months",
+  "tutorialBrowseMessage": "Tap the arrows or swipe left/right on the home screen to review any previous month.",
+  "tutorialSettingsTitle": "Settings & More",
+  "tutorialSettingsMessage": "Change currency, manage accounts, customise categories, and back up your data from here.",
+  "tutorialDoneTitle": "You're all set!",
+  "tutorialDoneMessage": "Start by adding your first transaction. FELOOSY will track the rest.",
+
+  "privacyTitle": "Before you start",
+  "privacySmsTitle": "SMS auto-detection",
+  "privacySmsMessage": "If you grant SMS permission, incoming bank messages are matched against your rules in memory. The message text is never saved or shared.",
+  "privacyDataTitle": "Your data stays on your device",
+  "privacyDataMessage": "Transactions and budgets are stored locally. We have no servers and cannot see your financial data.",
+  "privacyAiTitle": "AI analysis (optional)",
+  "privacyAiMessage": "If you use the AI feature, anonymised spending summaries (category totals, no raw SMS) are sent to Google Gemini.",
+  "privacyReadPolicy": "Read full policy",
+  "privacyAccept": "Accept & Continue"
+}

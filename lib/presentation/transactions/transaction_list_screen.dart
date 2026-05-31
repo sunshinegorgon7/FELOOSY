@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import '../../core/extensions/localizations_extension.dart';
 import '../../data/models/transaction.dart';
 import '../../providers/categories_provider.dart';
 import '../../providers/database_provider.dart';
@@ -26,6 +27,7 @@ class TransactionListScreen extends ConsumerWidget {
         error: (e, _) => Center(child: Text('Error: $e')),
         data: (txs) {
           if (txs.isEmpty) {
+            final l10n = context.l10n;
             return Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -36,10 +38,10 @@ class TransactionListScreen extends ConsumerWidget {
                           .colorScheme
                           .onSurfaceVariant),
                   const SizedBox(height: 12),
-                  Text('No transactions yet.',
+                  Text(l10n.homeNoTransactions.split('\n').first,
                       style: Theme.of(context).textTheme.titleMedium),
                   const SizedBox(height: 4),
-                  Text('Tap + to add one.',
+                  Text(l10n.homeNoTransactions.split('\n').last,
                       style: Theme.of(context)
                           .textTheme
                           .bodyMedium
@@ -53,7 +55,7 @@ class TransactionListScreen extends ConsumerWidget {
           }
 
           final cats = catAsync.value ?? [];
-          final grouped = _groupByDate(txs);
+          final grouped = _groupByDate(txs, context);
 
           return ListView.builder(
             itemCount: grouped.length,
@@ -90,7 +92,7 @@ class TransactionListScreen extends ConsumerWidget {
                       backgroundColor: Theme.of(context).colorScheme.error,
                       foregroundColor: Theme.of(context).colorScheme.onError,
                       icon: Icons.delete_outline,
-                      label: 'Delete',
+                      label: context.l10n.delete,
                       borderRadius: const BorderRadius.horizontal(
                           right: Radius.circular(12)),
                     ),
@@ -109,11 +111,11 @@ class TransactionListScreen extends ConsumerWidget {
     );
   }
 
-  List<Object> _groupByDate(List<Transaction> txs) {
+  List<Object> _groupByDate(List<Transaction> txs, BuildContext context) {
     final result = <Object>[];
     String? lastLabel;
     for (final tx in txs) {
-      final label = _dateLabel(tx.transactionDate);
+      final label = _dateLabel(tx.transactionDate, context);
       if (label != lastLabel) {
         result.add(_DateHeader(label));
         lastLabel = label;
@@ -123,12 +125,12 @@ class TransactionListScreen extends ConsumerWidget {
     return result;
   }
 
-  String _dateLabel(DateTime date) {
+  String _dateLabel(DateTime date, BuildContext context) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final d = DateTime(date.year, date.month, date.day);
-    if (d == today) return 'Today';
-    if (d == today.subtract(const Duration(days: 1))) return 'Yesterday';
+    if (d == today) return context.l10n.today;
+    if (d == today.subtract(const Duration(days: 1))) return context.l10n.yesterday;
     return DateFormat('EEEE, MMMM d').format(date);
   }
 
@@ -138,21 +140,22 @@ class TransactionListScreen extends ConsumerWidget {
       await _showDeleteScopeDialog(context, ref, tx);
       return;
     }
+    final l10n = context.l10n;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete transaction?'),
-        content: Text('"${tx.description}" will be permanently removed.'),
+        title: Text(l10n.transactionDeleteTitle),
+        content: Text(l10n.transactionDeleteMessage(tx.description)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(
                 backgroundColor: Theme.of(ctx).colorScheme.error),
-            child: const Text('Delete'),
+            child: Text(l10n.delete),
           ),
         ],
       ),
@@ -164,25 +167,26 @@ class TransactionListScreen extends ConsumerWidget {
 
   Future<void> _showDeleteScopeDialog(
       BuildContext context, WidgetRef ref, Transaction tx) async {
+    final l10n = context.l10n;
     final scope = await showDialog<_DeleteScope>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete recurring transaction'),
-        content: const Text('How would you like to delete this?'),
+        title: Text(l10n.transactionDeleteRecurringTitle),
+        content: Text(l10n.transactionDeleteRecurringQuestion),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, _DeleteScope.thisOnly),
-            child: const Text('Only this'),
+            child: Text(l10n.transactionDeleteOnlyThis),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, _DeleteScope.thisAndFuture),
             style: FilledButton.styleFrom(
                 backgroundColor: Theme.of(ctx).colorScheme.error),
-            child: const Text('This & future'),
+            child: Text(l10n.transactionDeleteThisAndFuture),
           ),
         ],
       ),

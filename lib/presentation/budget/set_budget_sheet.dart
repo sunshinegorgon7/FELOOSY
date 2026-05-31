@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
+import '../../core/extensions/localizations_extension.dart';
 import '../../providers/budget_period_provider.dart';
 import '../../providers/budget_provider.dart';
 import '../../providers/accounts_provider.dart';
@@ -50,6 +51,7 @@ class _SetBudgetSheetState extends ConsumerState<SetBudgetSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final period = ref.watch(currentBudgetPeriodProvider);
     final account = ref.watch(activeAccountProvider);
     final settingsAsync = ref.watch(settingsProvider);
@@ -81,11 +83,11 @@ class _SetBudgetSheetState extends ConsumerState<SetBudgetSheet> {
                   ),
                 ),
                 const Gap(16),
-                Text('Set budget for ${period.label}',
+                Text(l10n.setBudgetForPeriod(period.label),
                     style: Theme.of(context).textTheme.titleMedium),
                 const Gap(4),
                 Text(
-                  'This is the total amount you want to track this month.',
+                  l10n.setBudgetHint,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context)
                           .colorScheme
@@ -103,7 +105,7 @@ class _SetBudgetSheetState extends ConsumerState<SetBudgetSheet> {
                   style: const TextStyle(
                       fontSize: 28, fontWeight: FontWeight.w600),
                   decoration: InputDecoration(
-                    labelText: 'Budget amount',
+                    labelText: l10n.setBudgetAmount,
                     prefixText: '$symbol  ',
                     prefixStyle: const TextStyle(
                         fontSize: 20, fontWeight: FontWeight.w500),
@@ -111,10 +113,10 @@ class _SetBudgetSheetState extends ConsumerState<SetBudgetSheet> {
                     hintText: '0.00',
                   ),
                   validator: (v) {
-                    if (v == null || v.isEmpty) return 'Enter an amount';
+                    if (v == null || v.isEmpty) return l10n.setBudgetEnterAmount;
                     final n =
                         double.tryParse(v.replaceAll(',', ''));
-                    if (n == null || n <= 0) return 'Enter a valid amount';
+                    if (n == null || n <= 0) return l10n.setBudgetValidAmount;
                     return null;
                   },
                 ),
@@ -131,7 +133,7 @@ class _SetBudgetSheetState extends ConsumerState<SetBudgetSheet> {
                               strokeWidth: 2,
                               color: Theme.of(context).colorScheme.onPrimary,
                             ))
-                        : const Text('Save Budget'),
+                        : Text(l10n.setBudgetSave),
                   ),
                 ),
               ],

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 
 import '../../app/app_theme.dart';
+import '../../core/extensions/localizations_extension.dart';
 import '../../data/models/category.dart';
 import '../../data/models/sms_rule.dart';
 import '../../data/repositories/transaction_repository.dart';
@@ -58,13 +59,14 @@ class _SmsRuleFormScreenState extends ConsumerState<SmsRuleFormScreen> {
   }
 
   Future<void> _save() async {
+    final l10n = context.l10n;
     final keyword = _keywordCtrl.text.trim();
     if (keyword.isEmpty) {
-      _showError('Please enter a keyword.');
+      _showError(l10n.smsRuleFormEnterKeyword);
       return;
     }
     if (_categoryUuid == null) {
-      _showError('Please select a category.');
+      _showError(l10n.smsRuleFormSelectCategoryError);
       return;
     }
 
@@ -112,21 +114,21 @@ class _SmsRuleFormScreenState extends ConsumerState<SmsRuleFormScreen> {
 
   Future<void> _delete() async {
     if (widget.rule?.id == null) return;
+    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete rule?'),
-        content: Text(
-            'The rule for "${widget.rule!.keyword}" will be permanently deleted.'),
+        title: Text(l10n.smsRulesDeleteTitle),
+        content: Text(l10n.smsRuleFormDeleteMessage(widget.rule!.keyword)),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
+              child: Text(l10n.cancel)),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: cs.error),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete'),
+            child: Text(l10n.delete),
           ),
         ],
       ),
@@ -172,7 +174,7 @@ class _SmsRuleFormScreenState extends ConsumerState<SmsRuleFormScreen> {
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-              child: Text('Select Category',
+              child: Text(context.l10n.smsRuleFormSelectCategoryTitle,
                   style: Theme.of(ctx).textTheme.titleMedium),
             ),
             const Divider(height: 1),
@@ -223,7 +225,7 @@ class _SmsRuleFormScreenState extends ConsumerState<SmsRuleFormScreen> {
     return Scaffold(
       backgroundColor: cs.surface,
       appBar: AppBar(
-        title: Text(_isEditing ? 'Edit Rule' : 'New Rule'),
+        title: Text(_isEditing ? context.l10n.smsRuleFormTitleEdit : context.l10n.smsRuleFormTitleNew),
       ),
       body: ListView(
         padding: EdgeInsets.only(
@@ -233,22 +235,22 @@ class _SmsRuleFormScreenState extends ConsumerState<SmsRuleFormScreen> {
           bottom: MediaQuery.paddingOf(context).bottom + 24,
         ),
         children: [
-          const _SectionLabel('Keyword'),
+          _SectionLabel(context.l10n.smsRuleFormKeyword),
           const SizedBox(height: 6),
           TextField(
             controller: _keywordCtrl,
             autofocus: !_isEditing,
             textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(
-              hintText: 'e.g. Carrefour, VODAFONE, Uber',
-              border: OutlineInputBorder(),
-              helperText: 'Case-insensitive match anywhere in the SMS body.',
+            decoration: InputDecoration(
+              hintText: context.l10n.smsRuleFormKeywordHint,
+              border: const OutlineInputBorder(),
+              helperText: context.l10n.smsRuleFormKeywordHelper,
               helperMaxLines: 2,
             ),
           ),
 
           const SizedBox(height: 24),
-          const _SectionLabel('Transaction Label'),
+          _SectionLabel(context.l10n.smsRuleFormLabel),
           const SizedBox(height: 6),
           _DescriptionAutocomplete(
             initialDescription: widget.rule?.description,
@@ -263,10 +265,12 @@ class _SmsRuleFormScreenState extends ConsumerState<SmsRuleFormScreen> {
           ),
 
           const SizedBox(height: 24),
-          const _SectionLabel('Transaction Type'),
+          _SectionLabel(context.l10n.smsRuleFormType),
           const SizedBox(height: 8),
           _TypeToggle(
             selected: _type,
+            expenseLabel: context.l10n.expense,
+            incomeLabel: context.l10n.income,
             onChanged: (t) {
               setState(() {
                 _type = t;
@@ -280,7 +284,7 @@ class _SmsRuleFormScreenState extends ConsumerState<SmsRuleFormScreen> {
           ),
 
           const SizedBox(height: 24),
-          const _SectionLabel('Category'),
+          _SectionLabel(context.l10n.smsRuleFormCategory),
           const SizedBox(height: 6),
           InkWell(
             borderRadius: BorderRadius.circular(8),
@@ -313,7 +317,7 @@ class _SmsRuleFormScreenState extends ConsumerState<SmsRuleFormScreen> {
                     )
                   : Row(
                       children: [
-                        Text('Select a category',
+                        Text(context.l10n.smsRuleFormSelectCategory,
                             style: tt.bodyMedium
                                 ?.copyWith(color: cs.onSurfaceVariant)),
                         const Spacer(),
@@ -325,7 +329,7 @@ class _SmsRuleFormScreenState extends ConsumerState<SmsRuleFormScreen> {
 
           if (showAccountPicker) ...[
             const SizedBox(height: 24),
-            const _SectionLabel('Wallet'),
+            _SectionLabel(context.l10n.smsRuleFormWallet),
             const SizedBox(height: 6),
             DropdownButtonFormField<int>(
               initialValue: _accountId ?? (accounts.isNotEmpty ? accounts.first.id : null),
@@ -339,19 +343,18 @@ class _SmsRuleFormScreenState extends ConsumerState<SmsRuleFormScreen> {
 
           const SizedBox(height: 24),
           ExpansionTile(
-            title: Text('Advanced', style: tt.bodyMedium),
-            subtitle: Text('Custom amount regex', style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
+            title: Text(context.l10n.smsRuleFormAdvanced, style: tt.bodyMedium),
+            subtitle: Text(context.l10n.smsRuleFormCustomRegex, style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
             tilePadding: EdgeInsets.zero,
             children: [
               const SizedBox(height: 8),
               TextField(
                 controller: _regexCtrl,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  labelText: 'Amount regex (optional)',
+                decoration: InputDecoration(
+                  border: const OutlineInputBorder(),
+                  labelText: context.l10n.smsRuleFormRegexHint,
                   hintText: r'r"(\d+(?:\.\d{1,2})?)"',
-                  helperText:
-                      'Use capture group 1 to extract the amount. Leave empty to use built-in detection.',
+                  helperText: context.l10n.smsRuleFormRegexHelper,
                   helperMaxLines: 3,
                 ),
               ),
@@ -368,7 +371,7 @@ class _SmsRuleFormScreenState extends ConsumerState<SmsRuleFormScreen> {
                     height: 18,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : Text(_isEditing ? 'Save Changes' : 'Save Rule'),
+                : Text(_isEditing ? context.l10n.smsRuleFormSaveChanges : context.l10n.smsRuleFormSaveNew),
           ),
 
           if (_isEditing) ...[
@@ -376,7 +379,7 @@ class _SmsRuleFormScreenState extends ConsumerState<SmsRuleFormScreen> {
             TextButton(
               onPressed: _saving ? null : _delete,
               style: TextButton.styleFrom(foregroundColor: cs.error),
-              child: const Text('Delete Rule'),
+              child: Text(context.l10n.smsRuleFormDeleteRule),
             ),
           ],
         ],
@@ -405,8 +408,10 @@ class _SectionLabel extends StatelessWidget {
 
 class _TypeToggle extends StatelessWidget {
   final String selected;
+  final String expenseLabel;
+  final String incomeLabel;
   final ValueChanged<String> onChanged;
-  const _TypeToggle({required this.selected, required this.onChanged});
+  const _TypeToggle({required this.selected, required this.expenseLabel, required this.incomeLabel, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -420,12 +425,12 @@ class _TypeToggle extends StatelessWidget {
       child: Row(
         children: [
           _Segment(
-            label: 'Expense',
+            label: expenseLabel,
             active: selected == 'expense',
             onTap: () => onChanged('expense'),
           ),
           _Segment(
-            label: 'Income',
+            label: incomeLabel,
             active: selected == 'income',
             onTap: () => onChanged('income'),
           ),
@@ -542,12 +547,10 @@ class _DescriptionAutocompleteState extends State<_DescriptionAutocomplete> {
         TextField(
           controller: _ctrl,
           textCapitalization: TextCapitalization.sentences,
-          decoration: const InputDecoration(
-            hintText:
-                'e.g. Gas, Coffee, Groceries (leave blank to use keyword)',
-            border: OutlineInputBorder(),
-            helperText:
-                'Shown as the transaction description. Defaults to the keyword.',
+          decoration: InputDecoration(
+            hintText: context.l10n.smsRuleFormLabelHint,
+            border: const OutlineInputBorder(),
+            helperText: context.l10n.smsRuleFormLabelHelper,
             helperMaxLines: 2,
           ),
         ),

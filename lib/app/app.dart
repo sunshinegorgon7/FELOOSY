@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../dev/seed_snapshot_service.dart';
 import '../providers/accounts_provider.dart';
@@ -59,7 +60,7 @@ class _FeloosyAppState extends ConsumerState<FeloosyApp>
     ref.listenManual(transactionsProvider, (_, _) => _scheduleWidgetSync());
     ref.listenManual(currentBudgetProvider, (_, _) => _scheduleWidgetSync());
     ref.listenManual(settingsProvider, (_, _) => _scheduleWidgetSync());
-    if (AppFlavor.isDev) _smsService.start(ref);
+    _smsService.start(ref);
   }
 
   @override
@@ -89,6 +90,10 @@ class _FeloosyAppState extends ConsumerState<FeloosyApp>
       data: (s) => AppTheme.resolveMode(s.themeMode),
       orElse: () => ThemeMode.system,
     );
+    final locale = settingsAsync.maybeWhen(
+      data: (s) => s.languageCode.isEmpty ? null : Locale(s.languageCode),
+      orElse: () => null,
+    );
 
     final snapshotActive = AppFlavor.isDev
         ? (ref.watch(snapshotModeProvider).value ?? false)
@@ -97,6 +102,9 @@ class _FeloosyAppState extends ConsumerState<FeloosyApp>
     return MaterialApp.router(
       title: 'FELOOSY',
       debugShowCheckedModeBanner: !AppFlavor.isProd,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: locale,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: themeMode,

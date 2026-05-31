@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../app/app_theme.dart';
+import '../../core/extensions/localizations_extension.dart';
 import '../../data/models/category.dart';
 import '../../data/models/transaction.dart';
 import '../../providers/accounts_provider.dart';
@@ -37,7 +38,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     return Scaffold(
       backgroundColor: cs.surface,
       appBar: AppBar(
-        title: const Text('History'),
+        title: Text(context.l10n.history),
         centerTitle: true,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(44),
@@ -165,8 +166,8 @@ class _GroupingPicker extends StatelessWidget {
         children: _LedgerGrouping.values.map((g) {
           final selected = g == value;
           final label = switch (g) {
-            _LedgerGrouping.month => 'Month',
-            _LedgerGrouping.year  => 'Year',
+            _LedgerGrouping.month => context.l10n.historyMonth,
+            _LedgerGrouping.year  => context.l10n.historyYear,
           };
           return Expanded(
             child: GestureDetector(
