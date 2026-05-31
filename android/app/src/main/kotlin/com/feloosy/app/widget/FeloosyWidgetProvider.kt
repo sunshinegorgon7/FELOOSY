@@ -19,7 +19,6 @@ import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
 import com.feloosy.app.R
-import es.antonborri.home_widget.HomeWidgetPlugin
 import org.json.JSONArray
 
 class FeloosyWidgetProvider : AppWidgetProvider() {
@@ -27,7 +26,7 @@ class FeloosyWidgetProvider : AppWidgetProvider() {
     override fun onReceive(context: Context, intent: Intent) {
         Log.d(TAG, "onReceive action=${intent.action}")
         if (intent.action == "android.app.action.NIGHT_MODE_CHANGED") {
-            val themeMode = HomeWidgetPlugin.getData(context)
+            val themeMode = context.getSharedPreferences("HomeWidgetPreferences", Context.MODE_PRIVATE)
                 .getString("fw_theme_mode", "system") ?: "system"
             if (themeMode == "system") {
                 val manager = AppWidgetManager.getInstance(context)
@@ -121,7 +120,7 @@ class FeloosyWidgetProvider : AppWidgetProvider() {
         }
 
         private fun buildViewsInternal(context: Context, maxCategories: Int): RemoteViews {
-            val prefs = HomeWidgetPlugin.getData(context)
+            val prefs = context.getSharedPreferences("HomeWidgetPreferences", Context.MODE_PRIVATE)
             val accountName = prefs.getString("fw_account_name", "Wallet") ?: "Wallet"
             val currencyCode = prefs.getString("fw_currency_code", "AED") ?: "AED"
             val availableStr = prefs.getString("fw_available", "0") ?: "0"

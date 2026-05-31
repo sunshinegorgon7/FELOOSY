@@ -28,14 +28,6 @@ const _languages = [
   ('', 'System default'),
   ('en', 'English'),
   ('ar', 'العربية'),
-  ('es', 'Español'),
-  ('fr', 'Français'),
-  ('de', 'Deutsch'),
-  ('hi', 'हिन्दी'),
-  ('ur', 'اردو'),
-  ('pt', 'Português'),
-  ('tr', 'Türkçe'),
-  ('id', 'Bahasa Indonesia'),
 ];
 
 class SettingsScreen extends ConsumerWidget {
