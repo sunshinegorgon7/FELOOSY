@@ -25,17 +25,38 @@ Why prediction/destructive logic works the way it does. Not a changelog — this
 
 ## Carry-Over Logic
 
-**Decision:** Carry-over is per-account, opt-in (`carry_over_enabled` on the `accounts` table). When enabled, any budget surplus from a prior period is added to the current period's effective budget; deficits reduce it.
+**Decision:** Carry-over is per-account, opt-in (`carry_over_enabled` on the `accounts` table). When enabled, both surplus and deficit from the prior period carry into the current period as a **persistent transaction** — income if surplus, expense if deficit.
 
-**Why:** Not all users want carry-over (some prefer fresh-start budgeting). Opt-in prevents surprising users who set a monthly budget and expect it to stay flat.
+**Why persistent transaction (not a display-only number):**
+- Transparent: the user sees exactly where the adjustment came from in the transaction list
+- Stable: computed once per period, not recalculated on every load
+- Filterable: `source = 'carryover'` lets analysis exclude it cleanly
 
-**Computed in:** `BudgetSummaryNotifier` / `budget_summary_provider.dart`.
+**Cascade prevention:** When computing the previous period's net, carry-over transactions in that prior period are excluded. This prevents a chain effect where each month's carry-over compounds the previous month's carry-over.
+
+**Signed carry-over:** `net = prevBudget - prevExpenses + prevIncome`
+- `net > 0` → income transaction (surplus rolled forward, increases available budget)
+- `net < 0` → expense transaction (deficit rolled forward, reduces available budget)
+- `net == 0` → no transaction created
+
+**Idempotency:** Before generating, `CarryOverService` checks whether a `source = 'carryover'` transaction already exists in the current period. Safe to call on every home screen load.
+
+**Budget math:** `budgetSummaryProvider` passes carry-over transactions as `carryOverAmount` (signed) and excludes them from `regularTxs` sent to `BudgetService.computeSummary`. This avoids double-counting: the transaction is in the DB (visible in the list) but the budget formula uses the dedicated field.
+
+**Excluded from analysis:** `LocalAnalysisService` filters `isCarryOver` before aggregating category totals or building AI insights. Carry-over is a system adjustment, not real spending.
+
+**Triggered in:** `budget_summary_provider.dart` — calls `CarryOverService.generateIfNeeded()` on every build. Idempotency makes repeated calls harmless; first call for a new period triggers the insertion.
+
+**Implemented in:** `lib/services/carry_over_service.dart`, `lib/providers/budget_summary_provider.dart`.
 
 **Don't break this if you…**
-- Change how budget amounts are fetched — carry-over requires reading the *previous* period's spent vs budgeted, not just the current row.
+- Change how budget amounts are fetched — the carry-over net uses the previous period's budget, not the current one.
 - Add multi-currency support — carry-over comparison only makes sense within a single currency account.
+- Touch `resetAll()` in `database_helper.dart` — must also re-insert the `kCarryOverCategoryUuid` system category.
 
 **Rejected alternative:** Global carry-over toggle in `app_settings`. Rejected because different wallets may have different preferences.
+
+**Rejected alternative:** Display-only `carryOverAmount` field with no DB transaction. Rejected because it recalculated on every load (fragile), couldn't be excluded from analysis cleanly, and gave the user no transaction-level transparency.
 
 ---
 

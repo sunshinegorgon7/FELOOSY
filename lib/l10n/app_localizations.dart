@@ -200,6 +200,12 @@ abstract class AppLocalizations {
   /// **'Recurring'**
   String get recurring;
 
+  /// No description provided for @carryOver.
+  ///
+  /// In en, this message translates to:
+  /// **'Carry-over'**
+  String get carryOver;
+
   /// No description provided for @daily.
   ///
   /// In en, this message translates to:

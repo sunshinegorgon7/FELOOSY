@@ -60,6 +60,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recurring => 'Recurring';
 
   @override
+  String get carryOver => 'Carry-over';
+
+  @override
   String get daily => 'Daily';
 
   @override

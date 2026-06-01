@@ -1867,10 +1867,12 @@ class _BudgetHero extends StatelessWidget {
               : 'remaining this month · ${(pct * 100).round()}% spent',
           style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
         ),
-        if (summary.carryOverAmount > 0) ...[
+        if (summary.carryOverAmount != 0) ...[
           const SizedBox(height: 2),
           Text(
-            '+ ${summary.formatAmount(summary.carryOverAmount)} carried from last month',
+            summary.carryOverAmount > 0
+                ? '+ ${summary.formatAmount(summary.carryOverAmount)} carried from last month'
+                : '- ${summary.formatAmount(summary.carryOverAmount.abs())} deficit from last month',
             style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
           ),
         ],

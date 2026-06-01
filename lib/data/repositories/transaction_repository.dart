@@ -107,7 +107,7 @@ class TransactionRepository {
             ORDER BY created_at DESC, id DESC
           ) AS row_num
         FROM transactions
-        WHERE LOWER(description) LIKE LOWER(?)
+        WHERE LOWER(description) LIKE LOWER(?) AND source != 'carryover'
       )
       SELECT description, category_uuid
       FROM ranked
@@ -123,6 +123,41 @@ class TransactionRepository {
               categoryUuid: r['category_uuid'] as String,
             ))
         .toList();
+  }
+
+  /// Atomically checks that no carry-over transaction exists for [accountId]
+  /// within [[periodStart], [periodEnd]], then inserts [tx] if clear.
+  /// Returns true when the insert happened; false when one already existed.
+  /// Using a DB transaction prevents the race condition where two concurrent
+  /// provider builds both pass an in-memory check before either write commits.
+  Future<bool> insertCarryOverIfAbsent({
+    required model.Transaction tx,
+    required int accountId,
+    required DateTime periodStart,
+    required DateTime periodEnd,
+  }) async {
+    final db = await _db.database;
+    bool inserted = false;
+    await db.transaction((txn) async {
+      final existing = await txn.query(
+        'transactions',
+        columns: ['id'],
+        where:
+            "account_id = ? AND source = 'carryover' "
+            'AND transaction_date >= ? AND transaction_date <= ?',
+        whereArgs: [
+          accountId,
+          periodStart.millisecondsSinceEpoch,
+          periodEnd.millisecondsSinceEpoch,
+        ],
+        limit: 1,
+      );
+      if (existing.isEmpty) {
+        await txn.insert('transactions', tx.toMap());
+        inserted = true;
+      }
+    });
+    return inserted;
   }
 
   Future<List<model.Transaction>> getByRecurringRule(String ruleUuid) async {
@@ -160,7 +195,7 @@ class TransactionRepository {
       '''
       SELECT category_uuid, COUNT(*) as cnt
       FROM transactions
-      ${accountId == null ? '' : 'WHERE account_id = ?'}
+      WHERE source != 'carryover'${accountId == null ? '' : ' AND account_id = ?'}
       GROUP BY category_uuid
       ORDER BY cnt DESC
       LIMIT ?

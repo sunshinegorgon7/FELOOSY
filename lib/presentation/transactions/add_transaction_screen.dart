@@ -80,6 +80,20 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
 
     final initial = widget.initialTransaction;
     if (initial != null) {
+      if (initial.isCarryOver) {
+        // System-generated; pop immediately after the frame.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            if (context.canPop()) context.pop();
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('System transactions cannot be edited.'),
+              ),
+            );
+          }
+        });
+        return;
+      }
       _type = initial.type;
       _amountController.text = initial.amount.toStringAsFixed(2);
       _date = initial.transactionDate;

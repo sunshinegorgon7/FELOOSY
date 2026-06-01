@@ -60,6 +60,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get recurring => 'متكرر';
 
   @override
+  String get carryOver => 'ترحيل';
+
+  @override
   String get daily => 'يومي';
 
   @override

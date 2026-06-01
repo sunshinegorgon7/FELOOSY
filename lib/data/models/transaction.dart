@@ -59,6 +59,8 @@ class Transaction {
 
   bool get isRecurring => source.startsWith('recurring:');
 
+  bool get isCarryOver => source == 'carryover';
+
   String? get recurringRuleUuid =>
       isRecurring ? source.split(':').last : null;
 

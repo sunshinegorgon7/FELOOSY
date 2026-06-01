@@ -1,4 +1,4 @@
-﻿import 'package:flutter/foundation.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
@@ -28,7 +28,7 @@ class DatabaseHelper {
     final dbPath = p.join(docDir.path, AppFlavor.databaseName);
     return openDatabase(
       dbPath,
-      version: 23,
+      version: 25,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -519,7 +519,62 @@ class DatabaseHelper {
         "ALTER TABLE app_settings ADD COLUMN language_code TEXT NOT NULL DEFAULT ''",
       );
     }
+    if (oldVersion < 24) {
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final exists = (await db.query(
+        'categories',
+        columns: ['id'],
+        where: 'uuid = ?',
+        whereArgs: [kCarryOverCategoryUuid],
+      )).isNotEmpty;
+      if (!exists) {
+        await db.insert('categories', _carryOverCategoryMap(now));
+      }
+      debugPrint('[DB] v24 done: carry-over system category ensured');
+    }
+    if (oldVersion < 25) {
+      // Remove duplicate carry-over transactions that were created by the race
+      // condition in the initial implementation. Keep the earliest insert
+      // (lowest id) for each (account_id, transaction_date) pair.
+      final deleted = await db.rawDelete(
+        "DELETE FROM transactions "
+        "WHERE source = 'carryover' AND id NOT IN ("
+        "  SELECT MIN(id) FROM transactions "
+        "  WHERE source = 'carryover' "
+        "  GROUP BY account_id, transaction_date"
+        ")",
+      );
+      // Also delete carry-overs from periods with no other transactions
+      // (phantom carry-overs from empty prior periods).
+      final phantomDeleted = await db.rawDelete(
+        "DELETE FROM transactions "
+        "WHERE source = 'carryover' AND id IN ("
+        "  SELECT co.id FROM transactions co "
+        "  WHERE co.source = 'carryover' "
+        "  AND NOT EXISTS ("
+        "    SELECT 1 FROM transactions t "
+        "    WHERE t.account_id = co.account_id "
+        "    AND t.source != 'carryover' "
+        "    AND t.transaction_date < co.transaction_date"
+        "  )"
+        ")",
+      );
+      debugPrint('[DB] v25 done: removed $deleted duplicate and $phantomDeleted phantom carry-overs');
+    }
   }
+
+  static Map<String, dynamic> _carryOverCategoryMap(int createdAt) => {
+    'uuid': kCarryOverCategoryUuid,
+    'name': 'Carry-over',
+    'color_value': 4288585374, // Colors.grey 0xFF9E9E9E
+    'icon_code_point': Icons.swap_horiz.codePoint,
+    'icon_font_family': 'MaterialIcons',
+    'is_custom': 0,
+    'is_active': 0,
+    'sort_order': 999,
+    'transaction_type': 'expense',
+    'created_at': createdAt,
+  };
 
   Future<void> _seed(Database db) async {
     final defaults = AppSettings.defaults;
@@ -544,6 +599,7 @@ class DatabaseHelper {
     for (final cat in buildBrandCategories()) {
       batch.insert('categories', cat.toMap());
     }
+    batch.insert('categories', _carryOverCategoryMap(now));
     await batch.commit(noResult: true);
   }
 
@@ -577,6 +633,7 @@ class DatabaseHelper {
       for (final cat in buildBrandCategories()) {
         await txn.insert('categories', cat.toMap());
       }
+      await txn.insert('categories', _carryOverCategoryMap(now));
     });
   }
 

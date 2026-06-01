@@ -81,6 +81,9 @@ class TransactionListScreen extends ConsumerWidget {
               final cat =
                   cats.where((c) => c.uuid == tx.categoryUuid).firstOrNull;
 
+              if (tx.isCarryOver) {
+                return TransactionTile(transaction: tx, category: cat);
+              }
               return Slidable(
                 key: ValueKey(tx.uuid),
                 endActionPane: ActionPane(

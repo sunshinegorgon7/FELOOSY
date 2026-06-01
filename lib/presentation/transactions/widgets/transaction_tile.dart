@@ -66,11 +66,13 @@ class TransactionTile extends ConsumerWidget {
           .firstOrNull;
     }
 
-    final badgeIcon = transaction.isFromSms
-        ? Icons.bolt_rounded
-        : transaction.isRecurring
-            ? Icons.repeat_rounded
-            : null;
+    final badgeIcon = transaction.isCarryOver
+        ? Icons.swap_horiz_rounded
+        : transaction.isFromSms
+            ? Icons.bolt_rounded
+            : transaction.isRecurring
+                ? Icons.repeat_rounded
+                : null;
 
     if (compact) {
       return ListTile(
@@ -133,11 +135,13 @@ class TransactionTile extends ConsumerWidget {
             category?.name ?? context.l10n.noCategory,
             style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12),
           ),
-          if (transaction.isFromSms) ...[
+          if (transaction.isCarryOver) ...[
+            const SizedBox(width: 6),
+            const _CarryOverBadge(),
+          ] else if (transaction.isFromSms) ...[
             const SizedBox(width: 6),
             _AutoBadge(smsRule: smsRule),
-          ],
-          if (transaction.isRecurring) ...[
+          ] else if (transaction.isRecurring) ...[
             const SizedBox(width: 6),
             _RecurringBadge(rule: recurringRule),
           ],
@@ -201,11 +205,13 @@ class _AutoAvatarState extends State<_AutoAvatar> {
   int _tldIndex = 0;
   bool _exhausted = false;
   late String _word;
+  late String _combined; // all meaningful words joined, tried after _word TLDs are exhausted
 
   @override
   void initState() {
     super.initState();
     _word = _extractWord(widget.description);
+    _combined = _extractCombined(widget.description);
   }
 
   @override
@@ -214,19 +220,29 @@ class _AutoAvatarState extends State<_AutoAvatar> {
     if (old.description != widget.description) {
       setState(() {
         _word = _extractWord(widget.description);
+        _combined = _extractCombined(widget.description);
         _tldIndex = 0;
         _exhausted = false;
       });
     }
   }
 
-  // Pulls the first alphabetic-only word ≥3 chars that isn't a generic term.
+  // First alphabetic-only word ≥3 chars that isn't a generic term.
   static String _extractWord(String description) {
     final words = description.toLowerCase().split(RegExp(r'[^a-z]+'));
     for (final w in words) {
       if (w.length >= 3 && !_skipWords.contains(w)) return w;
     }
     return '';
+  }
+
+  // All meaningful words joined without spaces (e.g. "Costa Coffee" → "costacoffee").
+  // Returns '' when there is only one meaningful word (no point retrying).
+  static String _extractCombined(String description) {
+    final words = description.toLowerCase().split(RegExp(r'[^a-z]+'));
+    final parts = words.where((w) => w.length >= 2 && !_skipWords.contains(w)).toList();
+    if (parts.length < 2) return '';
+    return parts.join('');
   }
 
   String? get _url {
@@ -238,6 +254,13 @@ class _AutoAvatarState extends State<_AutoAvatar> {
     if (!mounted) return;
     if (_tldIndex + 1 < _tlds.length) {
       setState(() => _tldIndex++);
+    } else if (_combined.isNotEmpty && _word != _combined) {
+      // First word exhausted all TLDs — retry with the no-spaces combined form.
+      setState(() {
+        _word = _combined;
+        _combined = '';
+        _tldIndex = 0;
+      });
     } else {
       setState(() => _exhausted = true);
     }
@@ -393,6 +416,47 @@ class _RecurringBadge extends StatelessWidget {
           const SizedBox(width: 2),
           Text(
             label,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: accentColor,
+              letterSpacing: 0.3,
+              height: 1.1,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Carry-over pill badge in the subtitle ─────────────────────────────────────
+
+class _CarryOverBadge extends StatelessWidget {
+  const _CarryOverBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final accentColor = AppTheme.primaryText(cs);
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(4, 2, 6, 2),
+      decoration: BoxDecoration(
+        color: cs.primary.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: cs.primary.withValues(alpha: 0.22),
+          width: 0.75,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.swap_horiz_rounded, size: 10, color: accentColor),
+          const SizedBox(width: 2),
+          Text(
+            context.l10n.carryOver,
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w700,

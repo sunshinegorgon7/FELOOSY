@@ -13,11 +13,15 @@ class LocalAnalysisService {
   }) {
     final catMap = {for (final c in categories) c.uuid: c};
 
+    // Exclude carry-over system transactions — they are budget adjustments,
+    // not real spending, and would skew category breakdowns and advice.
+    final analysisTransactions = transactions.where((t) => !t.isCarryOver).toList();
+
     final catTotals = <String, double>{};
     double totalExpenses = 0;
     double totalIncome = 0;
 
-    for (final tx in transactions) {
+    for (final tx in analysisTransactions) {
       if (tx.type == TransactionType.expense) {
         totalExpenses += tx.amount;
         final name = catMap[tx.categoryUuid]?.name ?? 'Other';
@@ -44,7 +48,7 @@ class LocalAnalysisService {
             ? 'stayed ${fmt(net)} under budget'
             : 'had no budget set';
     final summary = 'In $groupLabel, you brought in ${fmt(totalIncome)} '
-        'and spent ${fmt(totalExpenses)} across ${transactions.length} transactions. '
+        'and spent ${fmt(totalExpenses)} across ${analysisTransactions.length} transactions. '
         'You $overUnder.';
 
     // Insights

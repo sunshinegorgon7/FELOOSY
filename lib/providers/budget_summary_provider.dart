@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/models/transaction.dart';
 import '../domain/entities/budget_summary.dart';
 import '../domain/services/budget_service.dart';
-import '../core/utils/month_calculator.dart';
+import '../services/carry_over_service.dart';
 import 'budget_period_provider.dart';
 import 'budget_provider.dart';
 import 'accounts_provider.dart';
@@ -13,13 +13,15 @@ import 'database_provider.dart';
 final budgetSummaryProvider = FutureProvider<BudgetSummary>((ref) async {
   final period = ref.watch(selectedBudgetPeriodProvider);
   final selectedAccountId = ref.watch(selectedHomeAccountIdProvider);
-  final transactions = await ref.watch(transactionsProvider.future);
+  // Watch for reactivity — rebuilds this provider when transactions mutate.
+  ref.watch(transactionsProvider);
+
   final settings = await ref.watch(settingsProvider.future);
 
   if (selectedAccountId == null) {
     return BudgetService.computeSummary(
       budgetAmount: 0,
-      transactions: transactions,
+      transactions: const [],
       settings: settings,
       period: period,
     );
@@ -30,43 +32,50 @@ final budgetSummaryProvider = FutureProvider<BudgetSummary>((ref) async {
   final budgetAmount =
       budget?.amount ?? account?.defaultMonthlyBudget ?? settings.defaultMonthlyBudget;
 
-  double carryOverAmount = 0.0;
-  if ((account?.carryOverEnabled ?? false) && budgetAmount > 0) {
-    final effectiveDay = ref.read(effectiveMonthStartDayProvider);
-    final prevPeriod = MonthCalculator.previousPeriod(period, effectiveDay);
-    final txRepo = ref.read(transactionRepositoryProvider);
-    final budgetRepo = ref.read(budgetRepositoryProvider);
+  final txRepo = ref.read(transactionRepositoryProvider);
+  final budgetRepo = ref.read(budgetRepositoryProvider);
 
-    final prevTxs = await txRepo.getForPeriod(
-      prevPeriod.start,
-      prevPeriod.end,
-      accountId: selectedAccountId,
+  if (account != null && account.carryOverEnabled) {
+    final monthStartDay = ref.read(effectiveMonthStartDayProvider);
+    final inserted = await CarryOverService.generateIfNeeded(
+      account: account,
+      period: period,
+      monthStartDay: monthStartDay,
+      txRepo: txRepo,
+      budgetRepo: budgetRepo,
+      settings: settings,
     );
-    final prevBudget = await budgetRepo.getForPeriod(
-      prevPeriod.budgetYear,
-      prevPeriod.budgetMonth,
-      accountId: selectedAccountId,
-    );
-    final prevBudgetAmount =
-        prevBudget?.amount ?? account?.defaultMonthlyBudget ?? settings.defaultMonthlyBudget;
-
-    if (prevTxs.isNotEmpty) {
-      final prevExpenses = prevTxs
-          .where((t) => t.type == TransactionType.expense)
-          .fold(0.0, (s, t) => s + t.amount);
-      final prevIncome = prevTxs
-          .where((t) => t.type == TransactionType.income)
-          .fold(0.0, (s, t) => s + t.amount);
-      final prevRemaining = prevBudgetAmount - prevExpenses + prevIncome;
-      carryOverAmount = prevRemaining > 0 ? prevRemaining : 0.0;
+    if (inserted) {
+      // Refresh the transaction list so carry-over appears there too.
+      ref.invalidate(transactionsProvider);
     }
   }
 
+  // Fetch fresh from the repo (includes any just-inserted carry-over).
+  final transactions = await txRepo.getForPeriod(
+    period.start,
+    period.end,
+    accountId: selectedAccountId,
+  );
+
+  // Separate carry-over from regular transactions.
+  // Regular transactions go into computeSummary; carry-over adjusts the budget
+  // via the carryOverAmount field so it is not double-counted.
+  final regularTxs = transactions.where((t) => !t.isCarryOver).toList();
+  final coIncome = transactions
+      .where((t) => t.isCarryOver && t.type == TransactionType.income)
+      .fold(0.0, (s, t) => s + t.amount);
+  final coExpense = transactions
+      .where((t) => t.isCarryOver && t.type == TransactionType.expense)
+      .fold(0.0, (s, t) => s + t.amount);
+  // Signed: positive = surplus carried in, negative = deficit carried in.
+  final carryOverNet = coIncome - coExpense;
+
   return BudgetService.computeSummary(
     budgetAmount: budgetAmount,
-    transactions: transactions,
+    transactions: regularTxs,
     settings: settings,
     period: period,
-    carryOverAmount: carryOverAmount,
+    carryOverAmount: carryOverNet,
   );
 });

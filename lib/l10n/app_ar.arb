@@ -18,6 +18,8 @@
   "income": "دخل",
   "both": "كلاهما",
   "recurring": "متكرر",
+  "carryOver": "ترحيل",
+  "@carryOver": {},
   "daily": "يومي",
   "weekly": "أسبوعي",
   "monthly": "شهري",

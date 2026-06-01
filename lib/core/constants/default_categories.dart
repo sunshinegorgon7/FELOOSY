@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../data/models/category.dart';
 
+// System-only UUID for carry-over transactions — hidden from all pickers/charts.
+// Never appears in kDefaultCategoryUuids (those are the 18 user-facing defaults).
+const kCarryOverCategoryUuid = '00000000-0000-0000-0000-000000000099';
+
 // Stable hardcoded UUIDs — must never change, as transactions reference them.
 // Using deterministic IDs prevents category-UUID drift across reinstalls.
 const kDefaultCategoryUuids = [

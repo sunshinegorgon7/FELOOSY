@@ -156,7 +156,7 @@ final categorySpendThisPeriodProvider = FutureProvider<Map<String, double>>((ref
   final txs = await ref.watch(transactionsProvider.future);
   final map = <String, double>{};
   for (final tx in txs) {
-    if (tx.type != TransactionType.expense) continue;
+    if (tx.type != TransactionType.expense || tx.isCarryOver) continue;
     map[tx.categoryUuid] = (map[tx.categoryUuid] ?? 0) + tx.amount;
   }
   return map;
@@ -167,7 +167,7 @@ final categoryIncomeThisPeriodProvider = FutureProvider<Map<String, double>>((re
   final txs = await ref.watch(transactionsProvider.future);
   final map = <String, double>{};
   for (final tx in txs) {
-    if (tx.type != TransactionType.income) continue;
+    if (tx.type != TransactionType.income || tx.isCarryOver) continue;
     map[tx.categoryUuid] = (map[tx.categoryUuid] ?? 0) + tx.amount;
   }
   return map;

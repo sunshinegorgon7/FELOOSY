@@ -18,6 +18,8 @@
   "income": "Income",
   "both": "Both",
   "recurring": "Recurring",
+  "carryOver": "Carry-over",
+  "@carryOver": {},
   "daily": "Daily",
   "weekly": "Weekly",
   "monthly": "Monthly",
