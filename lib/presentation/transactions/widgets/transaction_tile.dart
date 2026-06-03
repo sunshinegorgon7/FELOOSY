@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -83,7 +82,6 @@ class TransactionTile extends ConsumerWidget {
             const EdgeInsets.only(left: 32, right: 16, top: 0, bottom: 0),
         minLeadingWidth: 32,
         leading: _AutoAvatar(
-          description: transaction.description,
           iconData: iconData,
           iconColor: iconColor,
           badgeIcon: badgeIcon,
@@ -115,7 +113,6 @@ class TransactionTile extends ConsumerWidget {
       tileColor: tileColor,
       contentPadding: const EdgeInsets.only(left: 28, right: 16),
       leading: _AutoAvatar(
-        description: transaction.description,
         iconData: iconData,
         iconColor: iconColor,
         badgeIcon: badgeIcon,
@@ -160,24 +157,9 @@ class TransactionTile extends ConsumerWidget {
   }
 }
 
-// ── Avatar: tries merchant favicon from description, falls back to icon ───────
+// ── Category icon avatar with optional badge ──────────────────────────────────
 
-// TLDs tried in order when looking up a merchant favicon.
-const _tlds = [
-  'com', 'ae', 'sa', 'net', 'org', 'co', 'io',
-  'eg', 'in', 'pk', 'qa', 'kw', 'bh', 'om', 'gb', 'de', 'fr',
-];
-
-// Generic words that have no meaningful domain to look up.
-const _skipWords = {
-  'atm', 'pos', 'cash', 'card', 'bank', 'debit', 'credit', 'payment',
-  'transfer', 'purchase', 'transaction', 'fee', 'charge', 'refund',
-  'withdrawal', 'deposit', 'salary', 'expense', 'income', 'misc',
-  'other', 'unknown', 'via', 'for', 'from', 'the', 'and', 'ref',
-};
-
-class _AutoAvatar extends StatefulWidget {
-  final String description;
+class _AutoAvatar extends StatelessWidget {
   final IconData iconData;
   final Color iconColor;
   final IconData? badgeIcon;
@@ -187,7 +169,6 @@ class _AutoAvatar extends StatefulWidget {
   final double badgeIconSize;
 
   const _AutoAvatar({
-    required this.description,
     required this.iconData,
     required this.iconColor,
     required this.badgeIcon,
@@ -198,112 +179,23 @@ class _AutoAvatar extends StatefulWidget {
   });
 
   @override
-  State<_AutoAvatar> createState() => _AutoAvatarState();
-}
-
-class _AutoAvatarState extends State<_AutoAvatar> {
-  int _tldIndex = 0;
-  bool _exhausted = false;
-  late String _word;
-  late String _combined; // all meaningful words joined, tried after _word TLDs are exhausted
-
-  @override
-  void initState() {
-    super.initState();
-    _word = _extractWord(widget.description);
-    _combined = _extractCombined(widget.description);
-  }
-
-  @override
-  void didUpdateWidget(_AutoAvatar old) {
-    super.didUpdateWidget(old);
-    if (old.description != widget.description) {
-      setState(() {
-        _word = _extractWord(widget.description);
-        _combined = _extractCombined(widget.description);
-        _tldIndex = 0;
-        _exhausted = false;
-      });
-    }
-  }
-
-  // First alphabetic-only word ≥3 chars that isn't a generic term.
-  static String _extractWord(String description) {
-    final words = description.toLowerCase().split(RegExp(r'[^a-z]+'));
-    for (final w in words) {
-      if (w.length >= 3 && !_skipWords.contains(w)) return w;
-    }
-    return '';
-  }
-
-  // All meaningful words joined without spaces (e.g. "Costa Coffee" → "costacoffee").
-  // Returns '' when there is only one meaningful word (no point retrying).
-  static String _extractCombined(String description) {
-    final words = description.toLowerCase().split(RegExp(r'[^a-z]+'));
-    final parts = words.where((w) => w.length >= 2 && !_skipWords.contains(w)).toList();
-    if (parts.length < 2) return '';
-    return parts.join('');
-  }
-
-  String? get _url {
-    if (_exhausted || _word.isEmpty || _tldIndex >= _tlds.length) return null;
-    return 'https://www.google.com/s2/favicons?sz=128&domain=$_word.${_tlds[_tldIndex]}';
-  }
-
-  void _advance() {
-    if (!mounted) return;
-    if (_tldIndex + 1 < _tlds.length) {
-      setState(() => _tldIndex++);
-    } else if (_combined.isNotEmpty && _word != _combined) {
-      // First word exhausted all TLDs — retry with the no-spaces combined form.
-      setState(() {
-        _word = _combined;
-        _combined = '';
-        _tldIndex = 0;
-      });
-    } else {
-      setState(() => _exhausted = true);
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final double d = widget.radius * 2;
-    final url = _url;
-
-    final Widget innerChild = url != null
-        ? ClipOval(
-            child: CachedNetworkImage(
-              imageUrl: url,
-              width: d,
-              height: d,
-              fit: BoxFit.cover,
-              placeholder: (ctx2, url2) => SizedBox(width: d, height: d),
-              errorWidget: (ctx2, url2, err2) {
-                WidgetsBinding.instance.addPostFrameCallback((_) => _advance());
-                return Icon(widget.iconData,
-                    color: widget.iconColor, size: widget.iconSize);
-              },
-            ),
-          )
-        : Icon(widget.iconData, color: widget.iconColor, size: widget.iconSize);
-
     return Stack(
       clipBehavior: Clip.none,
       children: [
         CircleAvatar(
-          radius: widget.radius,
-          backgroundColor: widget.iconColor.withValues(alpha: 0.15),
-          child: innerChild,
+          radius: radius,
+          backgroundColor: iconColor.withValues(alpha: 0.15),
+          child: Icon(iconData, color: iconColor, size: iconSize),
         ),
-        if (widget.badgeIcon != null)
+        if (badgeIcon != null)
           Positioned(
             bottom: -2,
             right: -3,
             child: Container(
-              width: widget.badgeSize,
-              height: widget.badgeSize,
+              width: badgeSize,
+              height: badgeSize,
               decoration: BoxDecoration(
                 color: cs.primary,
                 shape: BoxShape.circle,
@@ -311,8 +203,8 @@ class _AutoAvatarState extends State<_AutoAvatar> {
               ),
               child: Center(
                 child: Icon(
-                  widget.badgeIcon!,
-                  size: widget.badgeIconSize,
+                  badgeIcon!,
+                  size: badgeIconSize,
                   color: cs.onPrimary,
                 ),
               ),

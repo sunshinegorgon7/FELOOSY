@@ -8,6 +8,7 @@ import '../../core/extensions/localizations_extension.dart';
 import '../../data/models/account.dart';
 import '../../providers/accounts_provider.dart';
 import '../../providers/access_tier_provider.dart';
+import '../../providers/transactions_provider.dart';
 
 class ManageAccountsScreen extends ConsumerWidget {
   const ManageAccountsScreen({super.key});
@@ -216,6 +217,7 @@ class ManageAccountsScreen extends ConsumerWidget {
                         carryOverEnabled: carryOverEnabled,
                       );
                 } else {
+                  final wasCarryOver = account.carryOverEnabled;
                   await ref.read(accountsProvider.notifier).save(
                         account.copyWith(
                           name: name,
@@ -229,6 +231,9 @@ class ManageAccountsScreen extends ConsumerWidget {
                           carryOverEnabled: carryOverEnabled,
                         ),
                       );
+                  if (wasCarryOver && !carryOverEnabled) {
+                    ref.invalidate(transactionsProvider);
+                  }
                 }
                 if (ctx.mounted) Navigator.pop(ctx);
               },

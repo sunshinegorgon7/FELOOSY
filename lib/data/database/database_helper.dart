@@ -28,7 +28,7 @@ class DatabaseHelper {
     final dbPath = p.join(docDir.path, AppFlavor.databaseName);
     return openDatabase(
       dbPath,
-      version: 25,
+      version: 26,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -560,6 +560,36 @@ class DatabaseHelper {
         ")",
       );
       debugPrint('[DB] v25 done: removed $deleted duplicate and $phantomDeleted phantom carry-overs');
+    }
+    if (oldVersion < 26) {
+      final now = DateTime.now().millisecondsSinceEpoch;
+      // New categories start at index 18 in kDefaultCategoryData/kDefaultCategoryUuids.
+      // Sort orders 18–33 are unused (defaults are 0–17, brands are 1000+).
+      for (int i = 18; i < kDefaultCategoryData.length; i++) {
+        final (name, icon, color, type) = kDefaultCategoryData[i];
+        final uuid = kDefaultCategoryUuids[i];
+        final exists = (await db.query(
+          'categories',
+          columns: ['id'],
+          where: 'uuid = ?',
+          whereArgs: [uuid],
+        )).isNotEmpty;
+        if (!exists) {
+          await db.insert('categories', {
+            'uuid': uuid,
+            'name': name,
+            'color_value': color.toARGB32(),
+            'icon_code_point': icon.codePoint,
+            'icon_font_family': icon.fontFamily ?? 'MaterialIcons',
+            'is_custom': 0,
+            'is_active': 1,
+            'sort_order': i,
+            'transaction_type': type,
+            'created_at': now,
+          });
+        }
+      }
+      debugPrint('[DB] v26 done: inserted new default categories');
     }
   }
 

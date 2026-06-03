@@ -160,6 +160,15 @@ class TransactionRepository {
     return inserted;
   }
 
+  Future<int> deleteCarryOversForAccount(int accountId) async {
+    final db = await _db.database;
+    return db.delete(
+      'transactions',
+      where: "account_id = ? AND source = 'carryover'",
+      whereArgs: [accountId],
+    );
+  }
+
   Future<List<model.Transaction>> getByRecurringRule(String ruleUuid) async {
     final db = await _db.database;
     final rows = await db.query(

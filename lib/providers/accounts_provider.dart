@@ -34,6 +34,17 @@ class AccountsNotifier extends AsyncNotifier<List<Account>> {
   }
 
   Future<void> save(Account account) async {
+    if (account.id != null && !account.carryOverEnabled) {
+      final prev = state.asData?.value.firstWhere(
+        (a) => a.id == account.id,
+        orElse: () => account,
+      );
+      if (prev?.carryOverEnabled == true) {
+        await ref
+            .read(transactionRepositoryProvider)
+            .deleteCarryOversForAccount(account.id!);
+      }
+    }
     await ref.read(accountRepositoryProvider).save(account);
     ref.invalidateSelf();
   }

@@ -26,6 +26,22 @@ const kDefaultCategoryUuids = [
   '00000000-0000-0000-0000-000000000016', // Refund
   '00000000-0000-0000-0000-000000000017', // Reimbursement
   '00000000-0000-0000-0000-000000000018', // Insurance
+  '00000000-0000-0000-0000-000000000069', // Education
+  '00000000-0000-0000-0000-000000000070', // Subscriptions
+  '00000000-0000-0000-0000-000000000071', // Personal Care
+  '00000000-0000-0000-0000-000000000072', // Clothing
+  '00000000-0000-0000-0000-000000000073', // Electronics
+  '00000000-0000-0000-0000-000000000074', // Kids & Family
+  '00000000-0000-0000-0000-000000000075', // Gifts & Charity
+  '00000000-0000-0000-0000-000000000076', // Pets
+  '00000000-0000-0000-0000-000000000077', // Home & Repairs
+  '00000000-0000-0000-0000-000000000078', // Parking & Tolls
+  '00000000-0000-0000-0000-000000000079', // Phone & Internet
+  '00000000-0000-0000-0000-000000000080', // Taxes & Fees
+  '00000000-0000-0000-0000-000000000081', // Freelance
+  '00000000-0000-0000-0000-000000000082', // Investments
+  '00000000-0000-0000-0000-000000000083', // Rental Income
+  '00000000-0000-0000-0000-000000000084', // Bonus
 ];
 
 // (name, icon, color, transactionType)
@@ -47,7 +63,23 @@ const kDefaultCategoryData = [
   ('Cashback',       Icons.card_giftcard,           Color(0xFF7A8064), 'income'),
   ('Refund',         Icons.replay,                  Color(0xFF6E8790), 'income'),
   ('Reimbursement',  Icons.receipt_long,            Color(0xFF776D8F), 'income'),
-  ('Insurance',      Icons.health_and_safety,       Color(0xFF5F7C76), 'income'),
+  ('Insurance',       Icons.health_and_safety,       Color(0xFF5F7C76), 'income'),
+  ('Education',       Icons.school,                  Color(0xFF5F7A8A), 'expense'),
+  ('Subscriptions',   Icons.autorenew,               Color(0xFF7A5F8A), 'expense'),
+  ('Personal Care',   Icons.spa,                     Color(0xFF8A6A76), 'expense'),
+  ('Clothing',        Icons.checkroom,               Color(0xFF7A6A8A), 'expense'),
+  ('Electronics',     Icons.devices,                 Color(0xFF5A6A7A), 'expense'),
+  ('Kids & Family',   Icons.child_care,              Color(0xFF7A8A5F), 'expense'),
+  ('Gifts & Charity', Icons.redeem,                  Color(0xFF8A7A5F), 'expense'),
+  ('Pets',            Icons.pets,                    Color(0xFF7A6A5A), 'expense'),
+  ('Home & Repairs',  Icons.home_repair_service,     Color(0xFF6A7A5F), 'expense'),
+  ('Parking & Tolls', Icons.local_parking,           Color(0xFF6A6A7A), 'expense'),
+  ('Phone & Internet',Icons.wifi,                    Color(0xFF5F7A7A), 'expense'),
+  ('Taxes & Fees',    Icons.account_balance,         Color(0xFF8A8070), 'expense'),
+  ('Freelance',       Icons.work,                    Color(0xFF6A8A70), 'income'),
+  ('Investments',     Icons.trending_up,             Color(0xFF5F8A78), 'income'),
+  ('Rental Income',   Icons.apartment,               Color(0xFF6A6A8A), 'income'),
+  ('Bonus',           Icons.stars,                   Color(0xFF8A7A60), 'income'),
 ];
 
 List<Category> buildDefaultCategories() {
