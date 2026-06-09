@@ -59,7 +59,6 @@ class _SmsRulesScreenState extends ConsumerState<SmsRulesScreen> {
       body: Column(
         children: [
           if (!_smsPermission.isGranted) _PermissionBanner(onGrant: _requestPermission),
-          _RulesInfoStrip(),
           Expanded(
             child: rulesAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
@@ -168,28 +167,6 @@ class _SmsRulesScreenState extends ConsumerState<SmsRulesScreen> {
   }
 }
 
-class _RulesInfoStrip extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 10, 20, 6),
-      child: Row(
-        children: [
-          Icon(Icons.sms_outlined, size: 15, color: cs.onSurfaceVariant),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              context.l10n.smsScanDesc,
-              style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _PermissionBanner extends StatelessWidget {
   final VoidCallback onGrant;
