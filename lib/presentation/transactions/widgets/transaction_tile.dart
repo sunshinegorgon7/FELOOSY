@@ -96,6 +96,13 @@ class TransactionTile extends ConsumerWidget {
           overflow: TextOverflow.ellipsis,
           style: const TextStyle(fontSize: 13),
         ),
+        subtitle: transaction.isCarryOver
+            ? const _CarryOverBadge()
+            : transaction.isFromSms
+                ? _AutoBadge(smsRule: smsRule)
+                : transaction.isRecurring
+                    ? _RecurringBadge(rule: recurringRule)
+                    : null,
         trailing: Text(
           amountText,
           style: TextStyle(
