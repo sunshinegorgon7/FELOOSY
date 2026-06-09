@@ -743,12 +743,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get smsScan3Days => '3 أيام';
 
   @override
-  String get smsScan7Days => '7 أيام';
-
-  @override
-  String get smsScan30Days => '30 يوماً';
-
-  @override
   String get smsScanCustom => 'مخصص…';
 
   @override

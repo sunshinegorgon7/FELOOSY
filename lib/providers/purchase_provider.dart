@@ -8,7 +8,13 @@ import '../app/app_flavor.dart';
 import 'trial_provider.dart';
 
 const _purchasedKey = 'feloosy_pro_purchased';
-const kProProductId = 'feloosy_pro_lifetime';
+
+/// All recognized subscription product IDs.
+/// Both are auto-renewing subscriptions in the same subscription group.
+const kProProductIds = {'feloosy_pro_monthly', 'feloosy_pro_annual'};
+
+const kProductMonthly = 'feloosy_pro_monthly';
+const kProductAnnual  = 'feloosy_pro_annual';
 
 final purchaseProvider =
     AsyncNotifierProvider<PurchaseNotifier, bool>(PurchaseNotifier.new);
@@ -27,6 +33,10 @@ class PurchaseNotifier extends AsyncNotifier<bool> {
 
     if (await _readStorage()) return true;
 
+    // Background restore so subscription status is refreshed on every launch.
+    // Fired-and-forgotten — the stream listener picks up any restored events.
+    InAppPurchase.instance.restorePurchases();
+
     final trial = await ref.watch(trialProvider.future);
     return trial.isActive;
   }
@@ -38,7 +48,7 @@ class PurchaseNotifier extends AsyncNotifier<bool> {
 
   Future<void> _onPurchaseUpdate(List<PurchaseDetails> purchases) async {
     for (final p in purchases) {
-      if (p.productID != kProProductId) continue;
+      if (!kProProductIds.contains(p.productID)) continue;
       if (p.status == PurchaseStatus.purchased ||
           p.status == PurchaseStatus.restored) {
         await _storage.write(key: _purchasedKey, value: 'true');
@@ -50,23 +60,29 @@ class PurchaseNotifier extends AsyncNotifier<bool> {
     }
   }
 
-  /// Returns the localized price string from the store, or null if unavailable.
-  Future<String?> fetchPrice() async {
+  /// Returns localized prices for both plans. Null value = unavailable.
+  Future<Map<String, String?>> fetchPrices() async {
     try {
-      final response = await InAppPurchase.instance
-          .queryProductDetails({kProProductId});
-      return response.productDetails.firstOrNull?.price;
+      final response =
+          await InAppPurchase.instance.queryProductDetails(kProProductIds);
+      return {
+        for (final id in kProProductIds)
+          id: response.productDetails
+              .where((d) => d.id == id)
+              .firstOrNull
+              ?.price,
+      };
     } catch (_) {
-      return null;
+      return {for (final id in kProProductIds) id: null};
     }
   }
 
-  Future<void> buy() async {
+  Future<void> buy(String productId) async {
     final available = await InAppPurchase.instance.isAvailable();
     if (!available) throw Exception('Store not available');
 
-    final response = await InAppPurchase.instance
-        .queryProductDetails({kProProductId});
+    final response =
+        await InAppPurchase.instance.queryProductDetails({productId});
     final product = response.productDetails.firstOrNull;
     if (product == null) throw Exception('Product not found in store');
 

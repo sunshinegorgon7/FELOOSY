@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
+import '../../core/utils/backup_encryption.dart';
 import 'package:extension_google_sign_in_as_googleapis_auth/extension_google_sign_in_as_googleapis_auth.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:google_sign_in/google_sign_in.dart';
@@ -193,15 +195,15 @@ class GoogleDriveBackupService {
       },
     });
 
-    final bytes = utf8.encode(payload);
+    final encrypted = await BackupEncryption.encrypt(utf8.encode(payload));
     final newFile = await api.files.create(
       drive.File()
-        ..name = '${_backupPrefix}_$timestamp.json'
+        ..name = '${_backupPrefix}_$timestamp.feloosybkp'
         ..parents = ['appDataFolder'],
       uploadMedia: drive.Media(
-        Stream.value(bytes),
-        bytes.length,
-        contentType: 'application/json',
+        Stream.value(encrypted),
+        encrypted.length,
+        contentType: 'application/octet-stream',
       ),
     );
 
@@ -238,8 +240,22 @@ class GoogleDriveBackupService {
       downloadOptions: drive.DownloadOptions.fullMedia,
     ) as drive.Media;
 
-    final bytes = await response.stream.expand((x) => x).toList();
-    final json = jsonDecode(utf8.decode(bytes)) as Map<String, dynamic>;
+    final rawBytes = Uint8List.fromList(
+        await response.stream.expand((x) => x).toList());
+
+    List<int> jsonBytes;
+    if (BackupEncryption.isEncrypted(rawBytes)) {
+      final decrypted = await BackupEncryption.decrypt(rawBytes);
+      if (decrypted == null) {
+        throw const FormatException('Backup file could not be decrypted.');
+      }
+      jsonBytes = decrypted;
+    } else {
+      // Backwards compatibility: plain-JSON backups created before encryption.
+      jsonBytes = rawBytes;
+    }
+
+    final json = jsonDecode(utf8.decode(jsonBytes)) as Map<String, dynamic>;
     final tables = json['data'] as Map<String, dynamic>;
 
     final db = await _db.database;

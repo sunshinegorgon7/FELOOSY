@@ -19,6 +19,7 @@ class SmsTransactionService {
 
   void start(WidgetRef ref, {void Function(Transaction)? onCreated}) {
     if (!Platform.isAndroid) return;
+    _sub?.cancel();
     _sub = _channel.receiveBroadcastStream().listen(
       (event) => _onSms(ref, event as Map, onCreated: onCreated),
       onError: (_) {},

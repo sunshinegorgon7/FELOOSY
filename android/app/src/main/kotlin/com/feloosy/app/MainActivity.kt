@@ -17,10 +17,10 @@ class MainActivity : FlutterActivity() {
         EventChannel(flutterEngine.dartExecutor.binaryMessenger, "com.feloosy/sms")
             .setStreamHandler(object : EventChannel.StreamHandler {
                 override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
-                    SmsSink.register(events)
+                    SmsSink.register(events, applicationContext)
                 }
                 override fun onCancel(arguments: Any?) {
-                    SmsSink.register(null)
+                    SmsSink.register(null, applicationContext)
                 }
             })
 

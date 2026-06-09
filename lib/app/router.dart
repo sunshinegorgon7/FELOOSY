@@ -14,6 +14,7 @@ import '../presentation/sms_rules/sms_rule_form_screen.dart';
 import '../presentation/sms_rules/sms_rules_screen.dart';
 import '../presentation/transactions/add_transaction_screen.dart';
 import '../presentation/paywall/paywall_screen.dart';
+import '../presentation/admin/license_admin_screen.dart';
 import 'package:flutter/material.dart';
 
 final appRouter = GoRouter(
@@ -80,6 +81,11 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/paywall',
       builder: (context, state) => const PaywallScreen(),
+    ),
+
+    GoRoute(
+      path: '/admin/licenses',
+      builder: (context, state) => const LicenseAdminScreen(),
     ),
 
     GoRoute(

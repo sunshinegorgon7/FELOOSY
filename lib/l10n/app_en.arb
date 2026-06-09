@@ -385,8 +385,6 @@
   "smsScanDesc": "Apply your active rules to messages already in your inbox.",
   "smsScanDateRange": "Date range",
   "smsScan3Days": "3 days",
-  "smsScan7Days": "7 days",
-  "smsScan30Days": "30 days",
   "smsScanCustom": "Custom…",
   "smsScanSelectRange": "Select date range",
   "smsScanPermissionRequired": "SMS permission is required to scan messages.",

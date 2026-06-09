@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart' show ShareParams, SharePlus, XFile;
 import 'package:sqflite/sqflite.dart' hide Transaction;
 
+import '../../core/utils/backup_encryption.dart';
 import '../../data/database/database_helper.dart';
 
 class ImportSummary {
@@ -38,15 +39,15 @@ class LocalExportService {
       'settings': (await db.query('app_settings')).firstOrNull,
     };
 
-    final json = const JsonEncoder.withIndent('  ').convert(payload);
+    final encrypted = await BackupEncryption.encrypt(utf8.encode(jsonEncode(payload)));
     final dir = await getTemporaryDirectory();
     final ts = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
-    final file = File(p.join(dir.path, 'feloosy_$ts.json'));
-    await file.writeAsString(json, flush: true);
+    final file = File(p.join(dir.path, 'feloosy_$ts.feloosybkp'));
+    await file.writeAsBytes(encrypted, flush: true);
 
     await SharePlus.instance.share(
       ShareParams(
-        files: [XFile(file.path, mimeType: 'application/json')],
+        files: [XFile(file.path, mimeType: 'application/octet-stream')],
         subject: 'FELOOSY backup',
       ),
     );
@@ -121,19 +122,33 @@ class LocalExportService {
   // ── Internal ─────────────────────────────────────────────────────────────
 
   Future<Map<String, dynamic>> _parse(String filePath) async {
-    final raw = await File(filePath).readAsString();
+    final rawBytes = await File(filePath).readAsBytes();
+
+    List<int> jsonBytes;
+    if (BackupEncryption.isEncrypted(rawBytes)) {
+      final decrypted = await BackupEncryption.decrypt(rawBytes);
+      if (decrypted == null) {
+        throw const FormatException('Backup file could not be decrypted.');
+      }
+      jsonBytes = decrypted;
+    } else {
+      // Backwards compatibility: accept old plain-JSON backups.
+      jsonBytes = rawBytes;
+    }
+
     final Map<String, dynamic> data;
     try {
-      data = jsonDecode(raw) as Map<String, dynamic>;
+      data = jsonDecode(utf8.decode(jsonBytes)) as Map<String, dynamic>;
     } catch (_) {
-      throw const FormatException('File is not valid JSON.');
+      throw const FormatException('File is not a valid FELOOSY backup.');
     }
     if (data['feloosy_backup'] != true) {
       throw const FormatException('Not a FELOOSY backup file.');
     }
     final version = data['version'] as int? ?? 0;
     if (version > 1) {
-      throw FormatException('Backup version $version is not supported by this app version.');
+      throw FormatException(
+          'Backup version $version is not supported by this app version.');
     }
     return data;
   }

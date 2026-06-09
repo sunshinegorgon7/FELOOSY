@@ -1400,18 +1400,6 @@ abstract class AppLocalizations {
   /// **'3 days'**
   String get smsScan3Days;
 
-  /// No description provided for @smsScan7Days.
-  ///
-  /// In en, this message translates to:
-  /// **'7 days'**
-  String get smsScan7Days;
-
-  /// No description provided for @smsScan30Days.
-  ///
-  /// In en, this message translates to:
-  /// **'30 days'**
-  String get smsScan30Days;
-
   /// No description provided for @smsScanCustom.
   ///
   /// In en, this message translates to:

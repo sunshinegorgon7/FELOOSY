@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../app/app_flavor.dart';
+import 'license_provider.dart';
 import 'purchase_provider.dart';
 
 enum AccessTier { free, pro }
@@ -21,8 +22,10 @@ extension AccessTierLimits on AccessTier {
 
 /// Synchronous tier resolution. Loading async providers → treated as free
 /// (conservative default; never grants access on loading state).
+/// Resolution order: dev flavor > valid license key > active subscription > free.
 final accessTierProvider = Provider<AccessTier>((ref) {
   if (AppFlavor.isDev) return AccessTier.pro;
+  if (ref.watch(licenseProvider).value ?? false) return AccessTier.pro;
   if (ref.watch(purchaseProvider).value ?? false) return AccessTier.pro;
   return AccessTier.free;
 });

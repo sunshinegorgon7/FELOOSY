@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:feloosy/l10n/app_localizations.dart';
@@ -76,6 +77,7 @@ class _FeloosyAppState extends ConsumerState<FeloosyApp>
     if (state == AppLifecycleState.resumed) {
       _scheduleWidgetSync();
       _generateRecurring();
+      if (Platform.isAndroid) _smsService.start(ref);
     }
     if (state == AppLifecycleState.paused &&
         ref.read(googleAccountProvider) != null) {

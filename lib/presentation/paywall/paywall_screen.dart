@@ -3,8 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/app_theme.dart';
 import '../../core/extensions/localizations_extension.dart';
+import '../../providers/access_tier_provider.dart';
+import '../../providers/license_provider.dart';
 import '../../providers/purchase_provider.dart';
 import '../../providers/trial_provider.dart';
+import '../../services/license_service.dart';
 
 class PaywallScreen extends ConsumerStatefulWidget {
   const PaywallScreen({super.key});
@@ -14,25 +17,25 @@ class PaywallScreen extends ConsumerStatefulWidget {
 }
 
 class _PaywallScreenState extends ConsumerState<PaywallScreen> {
-  bool _buying = false;
+  String? _buyingProductId;
   bool _restoring = false;
-  String? _price;
+  Map<String, String?> _prices = {};
 
   @override
   void initState() {
     super.initState();
-    _loadPrice();
+    _loadPrices();
   }
 
-  Future<void> _loadPrice() async {
-    final p = await ref.read(purchaseProvider.notifier).fetchPrice();
-    if (mounted) setState(() => _price = p);
+  Future<void> _loadPrices() async {
+    final p = await ref.read(purchaseProvider.notifier).fetchPrices();
+    if (mounted) setState(() => _prices = p);
   }
 
-  Future<void> _buy() async {
-    setState(() => _buying = true);
+  Future<void> _buy(String productId) async {
+    setState(() => _buyingProductId = productId);
     try {
-      await ref.read(purchaseProvider.notifier).buy();
+      await ref.read(purchaseProvider.notifier).buy(productId);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -41,7 +44,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
         ));
       }
     } finally {
-      if (mounted) setState(() => _buying = false);
+      if (mounted) setState(() => _buyingProductId = null);
     }
   }
 
@@ -68,11 +71,75 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
     }
   }
 
+  void _showLicenseDialog() {
+    final ctrl = TextEditingController();
+    showDialog<void>(
+      context: context,
+      builder: (ctx) {
+        String? error;
+        bool activating = false;
+        return StatefulBuilder(
+          builder: (ctx, setDS) => AlertDialog(
+            title: const Text('License Key'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Paste the license key you received.',
+                  style: TextStyle(fontSize: 13),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: ctrl,
+                  decoration: InputDecoration(
+                    labelText: 'License key',
+                    errorText: error,
+                    border: const OutlineInputBorder(),
+                  ),
+                  autofocus: true,
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: activating
+                    ? null
+                    : () async {
+                        setDS(() { activating = true; error = null; });
+                        final ok = await LicenseService.activate(ctrl.text);
+                        if (!ctx.mounted) return;
+                        if (ok) {
+                          ref.invalidate(licenseProvider);
+                          Navigator.pop(ctx);
+                        } else {
+                          setDS(() { activating = false; error = 'Invalid license key'; });
+                        }
+                      },
+                child: activating
+                    ? const SizedBox(
+                        width: 18, height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Activate'),
+              ),
+            ],
+          ),
+        );
+      },
+    ).then((_) => ctrl.dispose());
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final isPro = ref.watch(purchaseProvider).asData?.value ?? false;
+    final isPro = ref.watch(accessTierProvider) == AccessTier.pro;
     final trial = ref.watch(trialProvider).asData?.value;
+    final busy  = _buyingProductId != null || _restoring;
 
     if (isPro) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -80,11 +147,12 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
       });
     }
 
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
+    final cs     = Theme.of(context).colorScheme;
+    final tt     = Theme.of(context).textTheme;
     final accent = AppTheme.primaryText(cs);
-    final busy = _buying || _restoring;
-    final priceLabel = _price ?? r'$9.99';
+
+    final monthlyPrice = _prices[kProductMonthly] ?? r'$12.99';
+    final annualPrice  = _prices[kProductAnnual]  ?? r'$100';
 
     return Scaffold(
       backgroundColor: cs.surface,
@@ -112,19 +180,16 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
               // Icon
               Center(
                 child: Container(
-                  width: 80,
-                  height: 80,
+                  width: 80, height: 80,
                   decoration: BoxDecoration(
                     color: cs.primary.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.lock_open_rounded,
-                      color: accent, size: 38),
+                  child: Icon(Icons.lock_open_rounded, color: accent, size: 38),
                 ),
               ),
               const SizedBox(height: 16),
 
-              // Title
               Text(
                 l10n.paywallTitle,
                 style: tt.headlineSmall?.copyWith(
@@ -147,25 +212,41 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
               ...[
                 (Icons.all_inclusive_outlined, l10n.paywallFeatureWallets),
                 (Icons.all_inclusive_outlined, l10n.paywallFeatureTransactions),
-                (Icons.history_outlined, l10n.paywallFeatureHistory),
-                (Icons.cloud_upload_outlined, l10n.paywallFeatureBackup),
+                (Icons.history_outlined,       l10n.paywallFeatureHistory),
+                (Icons.cloud_upload_outlined,  l10n.paywallFeatureBackup),
                 (Icons.file_download_outlined, l10n.paywallFeatureExport),
-                (Icons.category_outlined, l10n.paywallFeatureCategories),
-                (Icons.sms_outlined, l10n.paywallFeatureSms),
+                (Icons.category_outlined,      l10n.paywallFeatureCategories),
+                (Icons.sms_outlined,           l10n.paywallFeatureSms),
               ].map((f) => _FeatureRow(icon: f.$1, label: f.$2)),
 
               const SizedBox(height: 28),
 
-              // Buy / unlocked state
+              // Plans or unlocked state
               if (isPro)
                 const Center(child: _UnlockedChip())
-              else
-                _BuyButton(
-                  label: l10n.paywallUnlock(priceLabel),
-                  buying: _buying,
+              else ...[
+                // Monthly plan
+                _PlanCard(
+                  label: monthlyPrice,
+                  period: '/ month',
+                  badge: null,
+                  buying: _buyingProductId == kProductMonthly,
                   busy: busy,
-                  onTap: _buy,
+                  onTap: () => _buy(kProductMonthly),
+                  cs: cs,
                 ),
+                const SizedBox(height: 10),
+                // Annual plan
+                _PlanCard(
+                  label: annualPrice,
+                  period: '/ year',
+                  badge: 'Save ~36%',
+                  buying: _buyingProductId == kProductAnnual,
+                  busy: busy,
+                  onTap: () => _buy(kProductAnnual),
+                  cs: cs,
+                ),
+              ],
 
               const SizedBox(height: 16),
 
@@ -174,8 +255,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                   onPressed: busy ? null : _restore,
                   child: _restoring
                       ? const SizedBox(
-                          width: 16,
-                          height: 16,
+                          width: 16, height: 16,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : Text(
@@ -193,7 +273,20 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 8),
+
+              const SizedBox(height: 12),
+              Center(
+                child: TextButton(
+                  onPressed: busy ? null : _showLicenseDialog,
+                  child: Text(
+                    'Have a license key?',
+                    style: TextStyle(
+                      color: cs.onSurfaceVariant.withValues(alpha: 0.7),
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -202,7 +295,121 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
   }
 }
 
-// ── Widgets ───────────────────────────────────────────────────────────────────
+// ── Plan card ─────────────────────────────────────────────────────────────────
+
+class _PlanCard extends StatelessWidget {
+  final String label;
+  final String period;
+  final String? badge;
+  final bool buying;
+  final bool busy;
+  final VoidCallback onTap;
+  final ColorScheme cs;
+
+  const _PlanCard({
+    required this.label,
+    required this.period,
+    required this.badge,
+    required this.buying,
+    required this.busy,
+    required this.onTap,
+    required this.cs,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isBest = badge != null;
+    final borderColor = isBest ? cs.primary : cs.outlineVariant;
+    final bgColor = isBest
+        ? cs.primary.withValues(alpha: 0.07)
+        : cs.surfaceContainerHighest.withValues(alpha: 0.4);
+
+    return GestureDetector(
+      onTap: busy ? null : onTap,
+      child: AnimatedOpacity(
+        opacity: busy && !buying ? 0.5 : 1.0,
+        duration: const Duration(milliseconds: 150),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+          decoration: BoxDecoration(
+            color: bgColor,
+            border: Border.all(
+              color: borderColor,
+              width: isBest ? 1.5 : 1.0,
+            ),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          label,
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: isBest ? cs.primary : cs.onSurface,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          period,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: cs.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (badge != null) ...[
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: cs.primary.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          badge!,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: cs.primary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              if (buying)
+                SizedBox(
+                  width: 22, height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    color: isBest ? cs.primary : cs.onSurface,
+                  ),
+                )
+              else
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 16,
+                  color: isBest ? cs.primary : cs.onSurfaceVariant,
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Shared widgets ─────────────────────────────────────────────────────────────
 
 class _TrialExpiredBanner extends StatelessWidget {
   final ColorScheme cs;
@@ -264,48 +471,6 @@ class _UnlockedChip extends StatelessWidget {
   }
 }
 
-class _BuyButton extends StatelessWidget {
-  final String label;
-  final bool buying;
-  final bool busy;
-  final VoidCallback onTap;
-
-  const _BuyButton({
-    required this.label,
-    required this.buying,
-    required this.busy,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return SizedBox(
-      width: double.infinity,
-      height: 54,
-      child: FilledButton(
-        style: FilledButton.styleFrom(
-          backgroundColor: cs.primary,
-          foregroundColor: cs.onPrimary,
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14)),
-        ),
-        onPressed: busy ? null : onTap,
-        child: buying
-            ? SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(
-                    strokeWidth: 2.5, color: cs.onPrimary),
-              )
-            : Text(label,
-                style: const TextStyle(
-                    fontWeight: FontWeight.w700, fontSize: 16)),
-      ),
-    );
-  }
-}
-
 class _FeatureRow extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -313,15 +478,14 @@ class _FeatureRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final cs     = Theme.of(context).colorScheme;
     final accent = AppTheme.primaryText(cs);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 7),
       child: Row(
         children: [
           Container(
-            width: 36,
-            height: 36,
+            width: 36, height: 36,
             decoration: BoxDecoration(
               color: cs.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
@@ -343,4 +507,3 @@ class _FeatureRow extends StatelessWidget {
     );
   }
 }
-

@@ -230,8 +230,6 @@
   "smsScanDesc": "تطبيق قواعدك النشطة على الرسائل الموجودة في صندوق الوارد.",
   "smsScanDateRange": "نطاق التاريخ",
   "smsScan3Days": "3 أيام",
-  "smsScan7Days": "7 أيام",
-  "smsScan30Days": "30 يوماً",
   "smsScanCustom": "مخصص…",
   "smsScanSelectRange": "اختر نطاق التاريخ",
   "smsScanPermissionRequired": "مطلوب إذن الرسائل القصيرة لمسح الرسائل.",

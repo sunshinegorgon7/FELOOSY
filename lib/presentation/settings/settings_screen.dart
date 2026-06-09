@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -136,7 +138,7 @@ class _SettingsBody extends ConsumerWidget {
           onTap: () => context.push('/settings/accounts'),
         ),
 
-        if (AppFlavor.isDev) ...[
+        if (Platform.isAndroid) ...[
           _SectionHeader(l10n.settingsAutomations),
           _SmsRulesTile(isModal: isModal),
         ],
@@ -155,6 +157,11 @@ class _SettingsBody extends ConsumerWidget {
         if (AppFlavor.isDev) ...[
           _SectionHeader(l10n.settingsDeveloperTools),
           const _DevSnapshotTile(),
+          _SettingsRow(
+            title: 'License Keys',
+            subtitle: 'Generate and manage Ed25519 license keys',
+            onTap: () => context.push('/admin/licenses'),
+          ),
         ],
 
         _SectionHeader(l10n.settingsDangerZone, danger: true),

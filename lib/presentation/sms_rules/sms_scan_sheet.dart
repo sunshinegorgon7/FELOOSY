@@ -27,11 +27,21 @@ void showSmsScanSheet(
   BuildContext context, {
   void Function(int created, List<DateTime> dates)? onImported,
 }) {
-  showModalBottomSheet<void>(
+  showDialog<void>(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (_) => _SmsScanSheet(onImported: onImported),
+    barrierColor: AppTheme.deepNimbus.withValues(alpha: 0.54),
+    builder: (ctx) {
+      final topPad = MediaQuery.paddingOf(context).top;
+      final botPad = MediaQuery.paddingOf(context).bottom;
+      return Dialog(
+        insetPadding: EdgeInsets.fromLTRB(20, topPad + 16, 20, botPad + 16),
+        clipBehavior: Clip.antiAlias,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(20)),
+        ),
+        child: _SmsScanSheet(onImported: onImported),
+      );
+    },
   );
 }
 
@@ -74,7 +84,7 @@ class _SmsScanSheet extends ConsumerStatefulWidget {
 }
 
 class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
-  static const _presetDays = [0, 1, 3, 7, 30];
+  static const _presetDays = [0, 3];
 
   _Step _step = _Step.range;
   int _preset = 0; // default: Today
@@ -89,7 +99,7 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
   DateTimeRange _computeRange() {
     final now = DateTime.now();
     final endOfToday = DateTime(now.year, now.month, now.day, 23, 59, 59, 999);
-    if (_preset == 5 && _customRange != null) {
+    if (_preset == 2 && _customRange != null) {
       return DateTimeRange(
         start: DateTime(
           _customRange!.start.year,
@@ -129,7 +139,7 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
     if (range != null && mounted) {
       setState(() {
         _customRange = range;
-        _preset = 5;
+        _preset = 2;
       });
     }
   }
@@ -327,45 +337,55 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
 
   // ── Build helpers ─────────────────────────────────────────────────────────
 
-  Widget _buildHandle(ColorScheme cs) => Center(
-        child: Container(
-          width: 40,
-          height: 4,
-          margin: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: cs.onSurfaceVariant.withValues(alpha: 0.3),
-            borderRadius: BorderRadius.circular(2),
+  Widget _buildDialogHeader(TextTheme tt, String title, {VoidCallback? onBack}) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 4, 4, 0),
+      child: Row(
+        children: [
+          if (onBack != null)
+            IconButton(icon: const Icon(Icons.arrow_back), onPressed: onBack)
+          else
+            const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              title,
+              style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+            ),
           ),
-        ),
-      );
+          IconButton(
+            icon: const Icon(Icons.close),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  bool? _selectAllValue() {
+    final n = _candidates.where((c) => c.selected).length;
+    if (n == 0) return false;
+    if (n == _candidates.length) return true;
+    return null;
+  }
 
   Widget _buildRangeStep(ColorScheme cs, TextTheme tt) {
     final l10n = context.l10n;
-    final hasCustom = _preset == 5 && _customRange != null;
+    final hasCustom = _preset == 2 && _customRange != null;
     final customLabel = hasCustom
-        ? '${DateFormat('MMM d').format(_customRange!.start)} – '
+        ? '${DateFormat('MMM d').format(_customRange!.start)} –\n'
           '${DateFormat('MMM d').format(_customRange!.end)}'
         : l10n.smsScanCustom;
 
     return Column(
+      key: const ValueKey('range'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        _buildHandle(cs),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
-          child: Text(l10n.smsScanTitle, style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
-          child: Text(
-            l10n.smsScanDesc,
-            style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-          ),
-        ),
+        _buildDialogHeader(tt, l10n.smsScanTitle),
+        Divider(height: 1, color: cs.outlineVariant),
         if (_error != null)
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -376,7 +396,7 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
             ),
           ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
           child: Text(l10n.smsScanDateRange, style: tt.labelSmall?.copyWith(
             color: AppTheme.primaryText(cs),
             fontWeight: FontWeight.w600,
@@ -385,47 +405,70 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _RangeChip(label: l10n.today, selected: _preset == 0, onTap: () => setState(() => _preset = 0)),
-              _RangeChip(label: l10n.yesterday, selected: _preset == 1, onTap: () => setState(() => _preset = 1)),
-              _RangeChip(label: l10n.smsScan3Days, selected: _preset == 2, onTap: () => setState(() => _preset = 2)),
-              _RangeChip(label: l10n.smsScan7Days, selected: _preset == 3, onTap: () => setState(() => _preset = 3)),
-              _RangeChip(label: l10n.smsScan30Days, selected: _preset == 4, onTap: () => setState(() => _preset = 4)),
-              _RangeChip(
-                label: customLabel,
-                selected: _preset == 5,
-                onTap: _pickCustomRange,
-                icon: Icons.calendar_month_outlined,
-              ),
-            ],
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: _RangeCard(
+                    label: l10n.today,
+                    icon: Icons.today_outlined,
+                    selected: _preset == 0,
+                    onTap: () => setState(() => _preset = 0),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _RangeCard(
+                    label: l10n.smsScan3Days,
+                    icon: Icons.date_range_outlined,
+                    selected: _preset == 1,
+                    onTap: () => setState(() => _preset = 1),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _RangeCard(
+                    label: customLabel,
+                    icon: Icons.calendar_month_outlined,
+                    selected: _preset == 2,
+                    onTap: _pickCustomRange,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
         const SizedBox(height: 24),
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
           child: FilledButton(
             onPressed: _scan,
-            child: const Text('Scan'),
+            child: Text(l10n.smsScanTitle),
           ),
         ),
-        SizedBox(height: MediaQuery.paddingOf(context).bottom + 20),
       ],
     );
   }
 
   Widget _buildScanningStep(ColorScheme cs, TextTheme tt) {
     return Column(
+      key: const ValueKey('scanning'),
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildHandle(cs),
-        const SizedBox(height: 32),
-        const CircularProgressIndicator(),
+        _buildDialogHeader(tt, context.l10n.smsScanScanning),
+        Divider(height: 1, color: cs.outlineVariant),
+        const SizedBox(height: 40),
+        const Center(child: CircularProgressIndicator()),
         const SizedBox(height: 16),
-        Text(context.l10n.smsScanScanning, style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
-        SizedBox(height: MediaQuery.paddingOf(context).bottom + 48),
+        Center(
+          child: Text(
+            context.l10n.smsScanScanning,
+            style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+          ),
+        ),
+        const SizedBox(height: 40),
       ],
     );
   }
@@ -436,71 +479,84 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
 
     if (_candidates.isEmpty) {
       return Column(
+        key: const ValueKey('results-empty'),
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _buildHandle(cs),
-          Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () => setState(() => _step = _Step.range),
-              ),
-              Text(context.l10n.smsScanNoMatches, style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-            ],
+          _buildDialogHeader(
+            tt,
+            context.l10n.smsScanNoMatches,
+            onBack: () => setState(() => _step = _Step.range),
           ),
+          Divider(height: 1, color: cs.outlineVariant),
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
             child: Text(
               context.l10n.smsScanNoMatchesMessage,
               style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
             child: OutlinedButton(
               onPressed: () => setState(() => _step = _Step.range),
               child: Text(context.l10n.smsScanTryDifferent),
             ),
           ),
-          SizedBox(height: MediaQuery.paddingOf(context).bottom + 20),
         ],
       );
     }
 
     return Column(
+      key: const ValueKey('results'),
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildHandle(cs),
-        Row(
-          children: [
-            IconButton(
-              icon: const Icon(Icons.arrow_back),
-              onPressed: () => setState(() => _step = _Step.range),
-            ),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    context.l10n.smsScanMatchesFound(_candidates.length),
-                    style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-                  ),
-                  if (dupCount > 0)
-                    Text(
-                      context.l10n.smsScanDupNote(dupCount),
-                      style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
-                    ),
-                ],
+        Padding(
+          padding: const EdgeInsets.fromLTRB(4, 4, 4, 0),
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => setState(() => _step = _Step.range),
               ),
-            ),
-          ],
+              Checkbox(
+                tristate: true,
+                value: _selectAllValue(),
+                onChanged: (v) => setState(() {
+                  final target = v ?? true;
+                  for (final c in _candidates) {
+                    c.selected = target;
+                  }
+                }),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      context.l10n.smsScanMatchesFound(_candidates.length),
+                      style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                    if (dupCount > 0)
+                      Text(
+                        context.l10n.smsScanDupNote(dupCount),
+                        style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
+                      ),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ],
+          ),
         ),
         const Divider(height: 1),
         ConstrainedBox(
           constraints: BoxConstraints(
-            maxHeight: MediaQuery.sizeOf(context).height * 0.52,
+            maxHeight: MediaQuery.sizeOf(context).height * 0.42,
           ),
           child: ListView.separated(
             shrinkWrap: true,
@@ -530,9 +586,7 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
             ),
           ),
         Padding(
-          padding: EdgeInsets.fromLTRB(
-            20, 12, 20, MediaQuery.paddingOf(context).bottom + 16,
-          ),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
           child: FilledButton(
             onPressed: selected == 0 || _importing ? null : _import,
             child: _importing
@@ -556,45 +610,32 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-
-    return DraggableScrollableSheet(
-      initialChildSize: 0.6,
-      minChildSize: 0.4,
-      maxChildSize: 0.92,
-      expand: false,
-      builder: (ctx, _) => Container(
-        decoration: BoxDecoration(
-          color: cs.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 220),
-          child: switch (_step) {
-            _Step.range    => _buildRangeStep(cs, tt),
-            _Step.scanning => _buildScanningStep(cs, tt),
-            _Step.results  => _buildResultsStep(cs, tt),
-          },
-        ),
-      ),
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 220),
+      child: switch (_step) {
+        _Step.range    => _buildRangeStep(cs, tt),
+        _Step.scanning => _buildScanningStep(cs, tt),
+        _Step.results  => _buildResultsStep(cs, tt),
+      },
     );
   }
 }
 
 // ---------------------------------------------------------------------------
-// Range chip
+// Range card (replaces _RangeChip)
 // ---------------------------------------------------------------------------
 
-class _RangeChip extends StatelessWidget {
+class _RangeCard extends StatelessWidget {
   final String label;
+  final IconData icon;
   final bool selected;
   final VoidCallback onTap;
-  final IconData? icon;
 
-  const _RangeChip({
+  const _RangeCard({
     required this.label,
+    required this.icon,
     required this.selected,
     required this.onTap,
-    this.icon,
   });
 
   @override
@@ -604,28 +645,33 @@ class _RangeChip extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
         decoration: BoxDecoration(
-          color: selected ? cs.primary.withValues(alpha: 0.12) : cs.surfaceContainerHigh,
-          borderRadius: BorderRadius.circular(20),
+          color: selected ? cs.primary : cs.surfaceContainerHigh,
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: selected ? cs.primary : cs.outlineVariant,
             width: selected ? 1.5 : 1.0,
           ),
         ),
-        child: Row(
+        child: Column(
           mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            if (icon != null) ...[
-              Icon(icon, size: 14, color: selected ? AppTheme.primaryText(cs) : cs.onSurfaceVariant),
-              const SizedBox(width: 5),
-            ],
+            Icon(
+              icon,
+              size: 22,
+              color: selected ? cs.onPrimary : cs.onSurfaceVariant,
+            ),
+            const SizedBox(height: 6),
             Text(
               label,
+              textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 13,
-                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                color: selected ? AppTheme.primaryText(cs) : cs.onSurfaceVariant,
+                fontSize: 12,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
+                color: selected ? cs.onPrimary : cs.onSurfaceVariant,
+                height: 1.3,
               ),
             ),
           ],
@@ -678,7 +724,7 @@ class _CandidateTile extends StatelessWidget {
       secondary: isDup
           ? Tooltip(
               message: context.l10n.smsScanDupWarning,
-              child: Icon(Icons.warning_amber_rounded, size: 18, color: cs.error),
+              child: Icon(Icons.warning_amber_rounded, size: 18, color: AppTheme.warningText(cs)),
             )
           : null,
       title: Row(
@@ -756,13 +802,23 @@ class _CandidateTile extends StatelessWidget {
                     ],
                     if (isDup) ...[
                       const SizedBox(width: 6),
-                      Text('·', style: TextStyle(fontSize: 11, color: cs.error)),
-                      const SizedBox(width: 6),
-                      Text(
-                        context.l10n.smsScanExists,
-                        style: tt.labelSmall?.copyWith(
-                          color: cs.error,
-                          fontWeight: FontWeight.w600,
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppTheme.warningText(cs).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(
+                            color: AppTheme.warningText(cs).withValues(alpha: 0.4),
+                            width: 0.5,
+                          ),
+                        ),
+                        child: Text(
+                          context.l10n.smsScanExists,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.warningText(cs),
+                          ),
                         ),
                       ),
                     ],

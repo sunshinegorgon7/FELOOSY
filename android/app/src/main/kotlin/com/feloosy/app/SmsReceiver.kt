@@ -12,6 +12,6 @@ class SmsReceiver : BroadcastReceiver() {
         if (messages.isNullOrEmpty()) return
         val body = messages.joinToString("") { it.messageBody ?: "" }
         val sender = messages.firstOrNull()?.originatingAddress ?: ""
-        SmsSink.push(mapOf("body" to body, "sender" to sender))
+        SmsSink.push(mapOf("body" to body, "sender" to sender), context)
     }
 }
