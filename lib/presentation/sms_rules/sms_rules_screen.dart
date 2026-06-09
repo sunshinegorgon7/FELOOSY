@@ -55,13 +55,6 @@ class _SmsRulesScreenState extends ConsumerState<SmsRulesScreen> {
       backgroundColor: cs.surface,
       appBar: AppBar(
         title: Text(context.l10n.smsRulesTitle),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.manage_search_outlined),
-            tooltip: context.l10n.smsRulesScanPast,
-            onPressed: _smsPermission.isGranted ? _openScanSheet : null,
-          ),
-        ],
       ),
       body: Column(
         children: [
@@ -93,9 +86,23 @@ class _SmsRulesScreenState extends ConsumerState<SmsRulesScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _navigateToAdd,
-        child: const Icon(Icons.add),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          FloatingActionButton.small(
+            heroTag: 'scan',
+            tooltip: context.l10n.smsRulesScanPast,
+            onPressed: _smsPermission.isGranted ? _openScanSheet : null,
+            child: const Icon(Icons.manage_search_outlined),
+          ),
+          const SizedBox(height: 12),
+          FloatingActionButton(
+            heroTag: 'add',
+            onPressed: _navigateToAdd,
+            child: const Icon(Icons.add),
+          ),
+        ],
       ),
     );
   }
