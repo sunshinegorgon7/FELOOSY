@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -6,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../app/app_theme.dart';
 import '../../core/extensions/localizations_extension.dart';
+import '../../l10n/app_localizations.dart';
 import '../../core/widgets/category_icon.dart';
 import '../../data/models/category.dart';
 import '../../data/models/account.dart';
@@ -19,6 +21,7 @@ import '../../providers/categories_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/transactions_provider.dart';
 import '../settings/settings_screen.dart';
+import '../sms_rules/sms_scan_sheet.dart';
 import '../transactions/widgets/transaction_tile.dart';
 import '../tutorial/tutorial_overlay.dart';
 import '../../domain/services/insights_service.dart';
@@ -37,106 +40,171 @@ final smsImportCompletedProvider =
     NotifierProvider<_ImportSignalNotifier, int>(_ImportSignalNotifier.new);
 
 // ---------------------------------------------------------------------------
-// First-launch privacy consent sheet
+// First-launch consent overlay (privacy → optional SMS opt-in)
 // ---------------------------------------------------------------------------
 
-class _PrivacyConsentSheet extends StatelessWidget {
-  final VoidCallback onAccept;
+enum _ConsentStep { privacy, smsOptIn }
+
+class _ConsentFlow extends StatefulWidget {
+  final void Function(bool smsEnabled) onComplete;
   final VoidCallback onViewPolicy;
 
-  const _PrivacyConsentSheet({
-    required this.onAccept,
+  const _ConsentFlow({
+    required this.onComplete,
     required this.onViewPolicy,
   });
 
   @override
+  State<_ConsentFlow> createState() => _ConsentFlowState();
+}
+
+class _ConsentFlowState extends State<_ConsentFlow> {
+  _ConsentStep _step = _ConsentStep.privacy;
+
+  @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     final accentColor = AppTheme.primaryText(cs);
-    final bottom = MediaQuery.paddingOf(context).bottom;
+    final l10n = context.l10n;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: cs.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      padding: EdgeInsets.fromLTRB(24, 12, 24, bottom + 24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
+    return Material(
+      color: AppTheme.deepNimbus.withValues(alpha: 0.72),
+      child: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
             child: Container(
-              width: 40,
-              height: 4,
               decoration: BoxDecoration(
-                color: cs.outlineVariant,
-                borderRadius: BorderRadius.circular(2),
+                color: cs.surface,
+                borderRadius: BorderRadius.circular(24),
               ),
+              padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+              child: _step == _ConsentStep.privacy
+                  ? _buildPrivacyStep(context, cs, tt, accentColor, l10n)
+                  : _buildSmsStep(context, cs, tt, accentColor, l10n),
             ),
           ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Icon(Icons.shield_outlined, size: 22, color: accentColor),
-              const SizedBox(width: 10),
-              Text(
-                l10n.privacyTitle,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPrivacyStep(BuildContext context, ColorScheme cs,
+      TextTheme tt, Color accentColor, AppLocalizations l10n) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.shield_outlined, size: 22, color: accentColor),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                l10n.consentTitle,
                 style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _ConsentPoint(
-            icon: Icons.sms_outlined,
-            title: l10n.privacySmsTitle,
-            body: l10n.privacySmsMessage,
-          ),
-          const SizedBox(height: 12),
-          _ConsentPoint(
-            icon: Icons.phone_android_outlined,
-            title: l10n.privacyDataTitle,
-            body: l10n.privacyDataMessage,
-          ),
-          const SizedBox(height: 12),
-          _ConsentPoint(
-            icon: Icons.auto_awesome_outlined,
-            title: l10n.privacyAiTitle,
-            body: l10n.privacyAiMessage,
-          ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: onViewPolicy,
-                  child: Text(l10n.privacyReadPolicy),
-                ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+        _ConsentBullet(
+          icon: Icons.phone_android_outlined,
+          title: l10n.consentDataTitle,
+          body: l10n.consentDataBody,
+        ),
+        const SizedBox(height: 12),
+        _ConsentBullet(
+          icon: Icons.cloud_upload_outlined,
+          title: l10n.consentBackupTitle,
+          body: l10n.consentBackupBody,
+        ),
+        const SizedBox(height: 24),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: widget.onViewPolicy,
+                child: Text(l10n.consentReadPolicy),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                flex: 2,
-                child: FilledButton(
-                  onPressed: onAccept,
-                  child: Text(l10n.privacyAccept),
-                ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              flex: 2,
+              child: FilledButton(
+                onPressed: () {
+                  if (Platform.isAndroid) {
+                    setState(() => _step = _ConsentStep.smsOptIn);
+                  } else {
+                    widget.onComplete(false);
+                  }
+                },
+                child: Text(l10n.consentAccept),
               ),
-            ],
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSmsStep(BuildContext context, ColorScheme cs,
+      TextTheme tt, Color accentColor, AppLocalizations l10n) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.sms_outlined, size: 22, color: accentColor),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                l10n.smsOptInTitle,
+                style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Text(
+          l10n.smsOptInBody,
+          style: tt.bodyMedium?.copyWith(
+            color: cs.onSurfaceVariant,
+            height: 1.5,
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 24),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => widget.onComplete(false),
+                child: Text(l10n.smsOptInSkip),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              flex: 2,
+              child: FilledButton(
+                onPressed: () => widget.onComplete(true),
+                child: Text(l10n.smsOptInEnable),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
 
-class _ConsentPoint extends StatelessWidget {
+class _ConsentBullet extends StatelessWidget {
   final IconData icon;
   final String title;
   final String body;
 
-  const _ConsentPoint({
+  const _ConsentBullet({
     required this.icon,
     required this.title,
     required this.body,
@@ -251,8 +319,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   DateTime? _selectedDay;
   final _scrollController = ScrollController();
   bool _tutorialDismissed = false;
-  bool _privacyConsentScheduled = false;
   final _addFabKey = GlobalKey();
+  final _scanFabKey = GlobalKey();
   final _settingsIconKey = GlobalKey();
   final _budgetHeroKey = GlobalKey();
   final _periodNavKey = GlobalKey();
@@ -370,19 +438,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final tt = Theme.of(context).textTheme;
     final accentColor = AppTheme.primaryText(cs);
 
+    // When tutorialCompleted is reset to false from settings, clear the local
+    // dismissed flag so the tutorial re-shows in this session too.
+    ref.listen(settingsProvider, (prev, next) {
+      final wasComplete = prev?.value?.tutorialCompleted ?? true;
+      final nowIncomplete = !(next.value?.tutorialCompleted ?? true);
+      if (wasComplete && nowIncomplete && _tutorialDismissed) {
+        setState(() => _tutorialDismissed = false);
+      }
+    });
+
     final showTutorial =
         !_tutorialDismissed &&
         settingsAsync.value?.tutorialCompleted == false;
 
-    final needsPrivacyConsent = !_privacyConsentScheduled &&
-        settingsAsync.value != null &&
+    final showConsent = settingsAsync.value != null &&
         settingsAsync.value!.privacyAcceptedAt == null;
-    if (needsPrivacyConsent) {
-      _privacyConsentScheduled = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _showPrivacyConsent();
-      });
-    }
+    final smsOptIn = settingsAsync.value?.smsOptIn ?? false;
 
     final scaffold = Scaffold(
       backgroundColor: cs.surface,
@@ -585,51 +657,67 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               left: 0,
               right: 0,
               child: Center(
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(26),
-                    boxShadow: [
-                      BoxShadow(
-                        color: cs.shadow.withValues(alpha: 0.18),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (Platform.isAndroid && smsOptIn) ...[
+                      FloatingActionButton.small(
+                        key: _scanFabKey,
+                        heroTag: 'scan_fab',
+                        tooltip: 'Scan SMS inbox',
+                        elevation: 0,
+                        highlightElevation: 0,
+                        onPressed: () => showSmsScanSheet(context),
+                        child: const Icon(Icons.manage_search_outlined),
                       ),
+                      const SizedBox(width: 12),
                     ],
-                  ),
-                  child: SizedBox(
-                    width: 64,
-                    height: 64,
-                    child: FloatingActionButton(
+                    FloatingActionButton.small(
                       key: _addFabKey,
                       heroTag: 'add_fab',
                       elevation: 0,
                       highlightElevation: 0,
                       backgroundColor: cs.primary,
                       foregroundColor: cs.onPrimary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(22),
-                      ),
                       onPressed: () =>
                           context.push('/transactions/add?type=expense'),
-                      child: const Icon(Icons.add, size: 28),
+                      child: const Icon(Icons.add),
                     ),
-                  ),
+                  ],
                 ),
               ),
             ),
         ],
       ),
     );
-    if (!showTutorial) return scaffold;
-    return Stack(
-      children: [
-        scaffold,
-        TutorialOverlay(
-          steps: _buildTutorialSteps(),
-          onComplete: _completeTutorial,
-        ),
-      ],
-    );
+    Widget result = scaffold;
+    if (showConsent) {
+      result = Stack(
+        children: [
+          result,
+          _ConsentFlow(
+            onComplete: (smsEnabled) {
+              ref.read(settingsProvider.notifier).acceptPrivacy();
+              if (smsEnabled) {
+                ref.read(settingsProvider.notifier).setSmsOptIn(true);
+              }
+            },
+            onViewPolicy: () => context.push('/settings/privacy'),
+          ),
+        ],
+      );
+    } else if (showTutorial) {
+      result = Stack(
+        children: [
+          result,
+          TutorialOverlay(
+            steps: _buildTutorialSteps(),
+            onComplete: _completeTutorial,
+          ),
+        ],
+      );
+    }
+    return result;
   }
 
   Widget _buildBody(
@@ -1238,26 +1326,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ref.read(settingsProvider.notifier).markTutorialComplete();
   }
 
-  void _showPrivacyConsent() {
-    showModalBottomSheet<void>(
-      context: context,
-      isDismissible: false,
-      enableDrag: false,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _PrivacyConsentSheet(
-        onAccept: () {
-          Navigator.of(context).pop();
-          ref.read(settingsProvider.notifier).acceptPrivacy();
-        },
-        onViewPolicy: () {
-          context.push('/settings/privacy');
-        },
-      ),
-    );
-  }
-
-  List<TutorialStep> _buildTutorialSteps() => [
+  List<TutorialStep> _buildTutorialSteps() {
+    final smsOptIn = ref.read(settingsProvider).value?.smsOptIn ?? false;
+    return [
         const TutorialStep(
           title: 'Welcome to FELOOSY',
           body:
@@ -1280,9 +1351,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         TutorialStep(
           title: 'Add a Transaction',
           body:
-              'Tap the + button to record a purchase, bill, or income. Pick a category to see where your money goes.',
+              'Tap + to record a purchase, bill, or income. Pick a category to see where your money goes. Recurring and SMS-matched entries are auto-tagged with a small badge.',
           spotlightKey: _addFabKey,
         ),
+        if (Platform.isAndroid && smsOptIn)
+          TutorialStep(
+            title: 'Scan SMS Inbox',
+            body:
+                'Tap the scan button to bulk-import past bank messages. FELOOSY matches them to your SMS rules and lets you review every transaction before saving.',
+            spotlightKey: _scanFabKey,
+          ),
         TutorialStep(
           title: 'Browse Past Months',
           body:
@@ -1292,7 +1370,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         TutorialStep(
           title: 'Settings & More',
           body:
-              'Change currency, manage accounts, customise categories, and back up your data from here.',
+              'Change currency, manage accounts, customise categories, set up SMS auto-creation rules, and back up your data from here.',
           spotlightKey: _settingsIconKey,
           padding: 18,
         ),
@@ -1302,6 +1380,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               'Start by adding your first transaction. FELOOSY will track the rest.',
         ),
       ];
+  }
 
   void _showCategoryTimeline(
     BuildContext context,

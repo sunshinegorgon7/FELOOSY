@@ -1682,59 +1682,101 @@ abstract class AppLocalizations {
   /// **'Start by adding your first transaction. FELOOSY will track the rest.'**
   String get tutorialDoneMessage;
 
-  /// No description provided for @privacyTitle.
+  /// No description provided for @consentTitle.
   ///
   /// In en, this message translates to:
-  /// **'Before you start'**
-  String get privacyTitle;
+  /// **'Before you begin'**
+  String get consentTitle;
 
-  /// No description provided for @privacySmsTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'SMS auto-detection'**
-  String get privacySmsTitle;
-
-  /// No description provided for @privacySmsMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'If you grant SMS permission, incoming bank messages are matched against your rules in memory. The message text is never saved or shared.'**
-  String get privacySmsMessage;
-
-  /// No description provided for @privacyDataTitle.
+  /// No description provided for @consentDataTitle.
   ///
   /// In en, this message translates to:
   /// **'Your data stays on your device'**
-  String get privacyDataTitle;
+  String get consentDataTitle;
 
-  /// No description provided for @privacyDataMessage.
+  /// No description provided for @consentDataBody.
   ///
   /// In en, this message translates to:
-  /// **'Transactions and budgets are stored locally. We have no servers and cannot see your financial data.'**
-  String get privacyDataMessage;
+  /// **'Transactions and budgets are stored locally in SQLite. We have no servers and cannot access your financial data.'**
+  String get consentDataBody;
 
-  /// No description provided for @privacyAiTitle.
+  /// No description provided for @consentBackupTitle.
   ///
   /// In en, this message translates to:
-  /// **'AI analysis (optional)'**
-  String get privacyAiTitle;
+  /// **'Optional cloud backup'**
+  String get consentBackupTitle;
 
-  /// No description provided for @privacyAiMessage.
+  /// No description provided for @consentBackupBody.
   ///
   /// In en, this message translates to:
-  /// **'If you use the AI feature, anonymised spending summaries (category totals, no raw SMS) are sent to Google Gemini.'**
-  String get privacyAiMessage;
+  /// **'You can connect Google Drive to back up your data. It goes to your own Drive folder — we never see it.'**
+  String get consentBackupBody;
 
-  /// No description provided for @privacyReadPolicy.
+  /// No description provided for @consentReadPolicy.
   ///
   /// In en, this message translates to:
   /// **'Read full policy'**
-  String get privacyReadPolicy;
+  String get consentReadPolicy;
 
-  /// No description provided for @privacyAccept.
+  /// No description provided for @consentAccept.
   ///
   /// In en, this message translates to:
   /// **'Accept & Continue'**
-  String get privacyAccept;
+  String get consentAccept;
+
+  /// No description provided for @smsOptInTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'SMS Auto-Import'**
+  String get smsOptInTitle;
+
+  /// No description provided for @smsOptInBody.
+  ///
+  /// In en, this message translates to:
+  /// **'FELOOSY can read bank SMS messages and create transactions automatically. Messages are matched locally — never stored as text or shared.'**
+  String get smsOptInBody;
+
+  /// No description provided for @smsOptInEnable.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable SMS'**
+  String get smsOptInEnable;
+
+  /// No description provided for @smsOptInSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip for now'**
+  String get smsOptInSkip;
+
+  /// No description provided for @smsToggleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'SMS Auto-Import'**
+  String get smsToggleLabel;
+
+  /// No description provided for @smsToggleSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-create transactions from bank messages'**
+  String get smsToggleSubtitle;
+
+  /// No description provided for @smsTermsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable SMS Auto-Import?'**
+  String get smsTermsTitle;
+
+  /// No description provided for @smsTermsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'FELOOSY will read incoming bank SMS messages and match them against your rules to create transactions automatically. Message text is never stored or shared. You can disable this anytime.'**
+  String get smsTermsBody;
+
+  /// No description provided for @smsTermsEnable.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable'**
+  String get smsTermsEnable;
 }
 
 class _AppLocalizationsDelegate

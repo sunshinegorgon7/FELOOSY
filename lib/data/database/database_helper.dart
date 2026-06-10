@@ -28,7 +28,7 @@ class DatabaseHelper {
     final dbPath = p.join(docDir.path, AppFlavor.databaseName);
     return openDatabase(
       dbPath,
-      version: 26,
+      version: 27,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -123,7 +123,8 @@ class DatabaseHelper {
         updated_at INTEGER NOT NULL,
         tutorial_completed INTEGER NOT NULL DEFAULT 0,
         privacy_accepted_at INTEGER,
-        language_code TEXT NOT NULL DEFAULT ''
+        language_code TEXT NOT NULL DEFAULT '',
+        sms_opt_in INTEGER NOT NULL DEFAULT 0
       )
     ''');
 
@@ -590,6 +591,12 @@ class DatabaseHelper {
         }
       }
       debugPrint('[DB] v26 done: inserted new default categories');
+    }
+    if (oldVersion < 27) {
+      await db.execute(
+        'ALTER TABLE app_settings ADD COLUMN sms_opt_in INTEGER NOT NULL DEFAULT 0',
+      );
+      debugPrint('[DB] v27 done: added sms_opt_in column');
     }
   }
 

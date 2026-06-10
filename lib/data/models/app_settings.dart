@@ -14,6 +14,7 @@ class AppSettings {
   final DateTime? privacyAcceptedAt;
   // BCP-47 language tag (e.g. 'en', 'ar'). Empty string = follow system locale.
   final String languageCode;
+  final bool smsOptIn;
 
   const AppSettings({
     this.id = 1,
@@ -30,6 +31,7 @@ class AppSettings {
     this.tutorialCompleted = false,
     this.privacyAcceptedAt,
     this.languageCode = '',
+    this.smsOptIn = false,
   });
 
   static AppSettings get defaults => AppSettings(updatedAt: DateTime.now());
@@ -47,6 +49,7 @@ class AppSettings {
     bool? tutorialCompleted,
     DateTime? privacyAcceptedAt,
     String? languageCode,
+    bool? smsOptIn,
   }) {
     return AppSettings(
       id: id,
@@ -64,6 +67,7 @@ class AppSettings {
       tutorialCompleted: tutorialCompleted ?? this.tutorialCompleted,
       privacyAcceptedAt: privacyAcceptedAt ?? this.privacyAcceptedAt,
       languageCode: languageCode ?? this.languageCode,
+      smsOptIn: smsOptIn ?? this.smsOptIn,
     );
   }
 
@@ -90,6 +94,7 @@ class AppSettings {
               map['privacy_accepted_at'] as int)
           : null,
       languageCode: map['language_code'] as String? ?? '',
+      smsOptIn: (map['sms_opt_in'] as int? ?? 0) == 1,
     );
   }
 
@@ -109,6 +114,7 @@ class AppSettings {
       'tutorial_completed': tutorialCompleted ? 1 : 0,
       'privacy_accepted_at': privacyAcceptedAt?.millisecondsSinceEpoch,
       'language_code': languageCode,
+      'sms_opt_in': smsOptIn ? 1 : 0,
     };
   }
 }

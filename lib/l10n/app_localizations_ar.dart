@@ -907,32 +907,54 @@ class AppLocalizationsAr extends AppLocalizations {
       'ابدأ بإضافة أول معاملة. سيتتبع FELOOSY الباقي.';
 
   @override
-  String get privacyTitle => 'قبل البدء';
+  String get consentTitle => 'قبل البدء';
 
   @override
-  String get privacySmsTitle => 'الكشف التلقائي عن الرسائل القصيرة';
+  String get consentDataTitle => 'بياناتك تبقى على جهازك';
 
   @override
-  String get privacySmsMessage =>
-      'إذا منحت إذن الرسائل القصيرة، يتم مطابقة الرسائل المصرفية الواردة مع قواعدك في الذاكرة. لا يتم حفظ نص الرسالة أو مشاركته.';
+  String get consentDataBody =>
+      'يتم تخزين المعاملات والميزانيات محلياً في SQLite. لا توجد لدينا خوادم ولا يمكننا الوصول إلى بياناتك المالية.';
 
   @override
-  String get privacyDataTitle => 'بياناتك تبقى على جهازك';
+  String get consentBackupTitle => 'النسخ الاحتياطي السحابي (اختياري)';
 
   @override
-  String get privacyDataMessage =>
-      'يتم تخزين المعاملات والميزانيات محلياً. لا توجد لدينا خوادم ولا يمكننا رؤية بياناتك المالية.';
+  String get consentBackupBody =>
+      'يمكنك ربط Google Drive لنسخ بياناتك احتياطياً. تذهب إلى مجلد Drive الخاص بك فقط — نحن لا نراها.';
 
   @override
-  String get privacyAiTitle => 'تحليل الذكاء الاصطناعي (اختياري)';
+  String get consentReadPolicy => 'قراءة السياسة الكاملة';
 
   @override
-  String get privacyAiMessage =>
-      'إذا استخدمت ميزة الذكاء الاصطناعي، يتم إرسال ملخصات الإنفاق المجهولة (إجماليات الفئات، بدون رسائل SMS) إلى Google Gemini.';
+  String get consentAccept => 'قبول والمتابعة';
 
   @override
-  String get privacyReadPolicy => 'قراءة السياسة الكاملة';
+  String get smsOptInTitle => 'استيراد الرسائل القصيرة تلقائياً';
 
   @override
-  String get privacyAccept => 'قبول والمتابعة';
+  String get smsOptInBody =>
+      'يستطيع FELOOSY قراءة رسائل البنك القصيرة وإنشاء معاملات تلقائياً. تتم المطابقة محلياً — لا يتم تخزين نص الرسائل أو مشاركته.';
+
+  @override
+  String get smsOptInEnable => 'تفعيل SMS';
+
+  @override
+  String get smsOptInSkip => 'تخطي الآن';
+
+  @override
+  String get smsToggleLabel => 'استيراد الرسائل القصيرة تلقائياً';
+
+  @override
+  String get smsToggleSubtitle => 'إنشاء معاملات تلقائياً من رسائل البنك';
+
+  @override
+  String get smsTermsTitle => 'تفعيل استيراد الرسائل القصيرة؟';
+
+  @override
+  String get smsTermsBody =>
+      'سيقرأ FELOOSY رسائل البنك القصيرة الواردة ويطابقها مع قواعدك لإنشاء معاملات تلقائياً. لا يتم تخزين نص الرسائل أو مشاركته. يمكنك تعطيل هذا في أي وقت.';
+
+  @override
+  String get smsTermsEnable => 'تفعيل';
 }

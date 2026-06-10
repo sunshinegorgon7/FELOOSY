@@ -34,6 +34,18 @@ class SettingsNotifier extends AsyncNotifier<AppSettings> {
     if (current == null) return;
     await saveSettings(current.copyWith(languageCode: languageCode));
   }
+
+  Future<void> resetTutorial() async {
+    final current = state.value;
+    if (current == null) return;
+    await saveSettings(current.copyWith(tutorialCompleted: false));
+  }
+
+  Future<void> setSmsOptIn(bool value) async {
+    final current = state.value;
+    if (current == null) return;
+    await saveSettings(current.copyWith(smsOptIn: value));
+  }
 }
 
 final settingsProvider =

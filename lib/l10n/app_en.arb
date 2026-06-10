@@ -466,13 +466,22 @@
   "tutorialDoneTitle": "You're all set!",
   "tutorialDoneMessage": "Start by adding your first transaction. FELOOSY will track the rest.",
 
-  "privacyTitle": "Before you start",
-  "privacySmsTitle": "SMS auto-detection",
-  "privacySmsMessage": "If you grant SMS permission, incoming bank messages are matched against your rules in memory. The message text is never saved or shared.",
-  "privacyDataTitle": "Your data stays on your device",
-  "privacyDataMessage": "Transactions and budgets are stored locally. We have no servers and cannot see your financial data.",
-  "privacyAiTitle": "AI analysis (optional)",
-  "privacyAiMessage": "If you use the AI feature, anonymised spending summaries (category totals, no raw SMS) are sent to Google Gemini.",
-  "privacyReadPolicy": "Read full policy",
-  "privacyAccept": "Accept & Continue"
+  "consentTitle": "Before you begin",
+  "consentDataTitle": "Your data stays on your device",
+  "consentDataBody": "Transactions and budgets are stored locally in SQLite. We have no servers and cannot access your financial data.",
+  "consentBackupTitle": "Optional cloud backup",
+  "consentBackupBody": "You can connect Google Drive to back up your data. It goes to your own Drive folder — we never see it.",
+  "consentReadPolicy": "Read full policy",
+  "consentAccept": "Accept & Continue",
+
+  "smsOptInTitle": "SMS Auto-Import",
+  "smsOptInBody": "FELOOSY can read bank SMS messages and create transactions automatically. Messages are matched locally — never stored as text or shared.",
+  "smsOptInEnable": "Enable SMS",
+  "smsOptInSkip": "Skip for now",
+
+  "smsToggleLabel": "SMS Auto-Import",
+  "smsToggleSubtitle": "Auto-create transactions from bank messages",
+  "smsTermsTitle": "Enable SMS Auto-Import?",
+  "smsTermsBody": "FELOOSY will read incoming bank SMS messages and match them against your rules to create transactions automatically. Message text is never stored or shared. You can disable this anytime.",
+  "smsTermsEnable": "Enable"
 }

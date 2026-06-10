@@ -27,10 +27,9 @@ class PrivacyPolicyScreen extends StatelessWidget {
                 'Feloosy is a local-first budgeting app. Your financial data '
                 'stays on your device. We have no user accounts and no servers '
                 'that store your personal information. The only optional '
-                'external data flows are Google Drive backup (your own Drive) '
-                'and AI spending analysis (anonymised summaries sent to Google '
-                'Gemini). SMS messages are processed entirely in memory and '
-                'are never stored or transmitted.',
+                'external data flow is Google Drive backup (your own Drive '
+                'folder). SMS auto-import is an opt-in feature; messages are '
+                'processed entirely in memory and never stored or transmitted.',
           ),
           _Section(
             title: '1. Data We Store Locally',
@@ -47,11 +46,11 @@ class PrivacyPolicyScreen extends StatelessWidget {
                 'Uninstalling the app permanently deletes all of this data.',
           ),
           _Section(
-            title: '2. SMS Permission',
+            title: '2. SMS Auto-Import (Opt-In, Android Only)',
             body:
+                'SMS auto-import is entirely opt-in. If you enable it, '
                 'Feloosy requests READ_SMS and RECEIVE_SMS permissions '
-                'on Android so that it can detect bank transaction '
-                'notifications automatically.\n\n'
+                'to detect bank transaction notifications.\n\n'
                 'How SMS data is used:\n'
                 '• Each incoming or scanned SMS is matched in memory against '
                 'your rules to identify the sender and extract a transaction '
@@ -59,11 +58,10 @@ class PrivacyPolicyScreen extends StatelessWidget {
                 '• If a match is found, only the extracted amount and matched '
                 'rule metadata are saved as a transaction.\n'
                 '• The raw SMS text is never written to our database, never '
-                'sent to our servers, and never shared with any third party.\n\n'
-                'You can revoke SMS permission at any time in your device '
-                'Settings → Apps → Feloosy → Permissions. Revoking permission '
-                'disables automatic SMS detection but does not affect any '
-                'existing data.',
+                'sent to any server, and never shared with any third party.\n\n'
+                'You can disable SMS auto-import at any time in '
+                'Settings → Automations. Disabling does not affect any '
+                'existing transactions.',
           ),
           _Section(
             title: '3. Financial Data & Local Storage',
@@ -72,8 +70,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                 'device using SQLite. We operate no servers and have no '
                 'ability to access your financial data remotely.\n\n'
                 'Your data never leaves your device unless you explicitly '
-                'enable one of the optional features described below '
-                '(Google Drive backup or AI analysis).',
+                'enable Google Drive backup (described below).',
           ),
           _Section(
             title: '4. Google Drive Backup (Optional)',
@@ -94,70 +91,48 @@ class PrivacyPolicyScreen extends StatelessWidget {
                 'created for Feloosy.',
           ),
           _Section(
-            title: '5. AI Spending Analysis (Optional, Pro / SMS tier)',
+            title: '5. In-App Purchases',
             body:
-                'The AI analysis feature sends a summarised snapshot of your '
-                'spending to Google\'s Gemini API to generate insights.\n\n'
-                'What is sent:\n'
-                '• Category names and aggregated spending amounts\n'
-                '• Your budget total for the period\n\n'
-                'What is NOT sent:\n'
-                '• Raw SMS message content\n'
-                '• Your name or email address\n'
-                '• Individual transaction descriptions\n'
-                '• Any device identifiers\n\n'
-                'Results are cached locally and re-used until your data '
-                'changes. Google\'s use of API data is governed by their '
-                'Privacy Policy and API Terms of Service.',
+                'Feloosy offers an optional Pro lifetime purchase processed '
+                'through Google Play Billing. We receive only a purchase '
+                'confirmation token; payment details and card information are '
+                'handled entirely by Google. Purchase status is stored locally '
+                'on your device in encrypted secure storage.',
           ),
           _Section(
-            title: '6. In-App Purchases',
-            body:
-                'Feloosy offers optional paid tiers (Pro lifetime and SMS '
-                'subscription) processed through Google Play Billing. We '
-                'receive only a purchase confirmation token; payment details '
-                'and card information are handled entirely by Google. Purchase '
-                'status is stored locally on your device in encrypted secure '
-                'storage.',
-          ),
-          _Section(
-            title: '7. Third-Party Data Sharing',
+            title: '6. Third-Party Data Sharing',
             body:
                 'We do not sell, rent, or share your personal data with '
                 'third parties for advertising or any commercial purpose.\n\n'
                 'The only third-party services that may receive any data are:\n\n'
-                '• Google Gemini API — anonymised spending summaries '
-                '(optional, AI analysis feature only)\n'
                 '• Google Drive — your own backup files (optional, Drive '
                 'backup feature only)\n'
                 '• Google Play Billing — purchase confirmation (when buying '
-                'a paid tier)\n\n'
-                'No analytics SDKs, advertising networks, or crash-reporting '
-                'services are integrated in this app.',
+                'Pro)\n\n'
+                'No analytics SDKs, advertising networks, AI APIs, or '
+                'crash-reporting services are integrated in this app.',
           ),
           _Section(
-            title: '8. Data Retention & Deletion',
+            title: '7. Data Retention & Deletion',
             body:
                 'Local data: retained until you uninstall the app or use the '
                 '"Reset app" option in Settings → Danger Zone.\n\n'
                 'Drive backups: retained in your Google Drive until you delete '
                 'them manually. Feloosy automatically keeps at most 5 backups '
-                'and deletes the oldest when a new one is created.\n\n'
-                'AI cache: retained locally for up to 25 hours per analysis '
-                'group, then refreshed on the next analysis run.',
+                'and deletes the oldest when a new one is created.',
           ),
           _Section(
-            title: '9. Security',
+            title: '8. Security',
             body:
                 'Local data is stored in your device\'s private app storage, '
                 'which other apps cannot access without root access.\n\n'
-                'All network communication (Gemini API, Google Drive, Google '
-                'Sign-In, Google Play) uses HTTPS/TLS encryption.\n\n'
+                'All network communication (Google Drive, Google Sign-In, '
+                'Google Play) uses HTTPS/TLS encryption.\n\n'
                 'Purchase status is stored using the platform\'s secure '
                 'encrypted storage (flutter_secure_storage).',
           ),
           _Section(
-            title: '10. Children\'s Privacy',
+            title: '9. Children\'s Privacy',
             body:
                 'Feloosy is not directed at children under the age of 13. '
                 'We do not knowingly collect personal information from children. '
@@ -165,7 +140,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                 'this app, please contact us so we can address it.',
           ),
           _Section(
-            title: '11. Changes to This Policy',
+            title: '10. Changes to This Policy',
             body:
                 'We may update this Privacy Policy from time to time. When we '
                 'do, the effective date at the top of this page will be updated. '
@@ -174,7 +149,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                 'notified via an in-app notice.',
           ),
           _Section(
-            title: '12. Contact Us',
+            title: '11. Contact Us',
             body:
                 'If you have any questions or concerns about this Privacy Policy '
                 'or how your data is handled, please contact us at:\n\n'
@@ -217,7 +192,7 @@ class _PolicyHeader extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'Effective Date: May 27, 2026',
+          'Effective Date: June 10, 2026',
           style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
         ),
         const SizedBox(height: 12),
@@ -298,7 +273,7 @@ class _EffectiveDateFooter extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     return Text(
-      'Last updated: May 27, 2026 · Feloosy v1.4.1',
+      'Last updated: June 10, 2026 · Feloosy v1.4.1',
       style: tt.labelSmall?.copyWith(
         color: cs.onSurfaceVariant.withValues(alpha: 0.6),
       ),

@@ -905,32 +905,54 @@ class AppLocalizationsEn extends AppLocalizations {
       'Start by adding your first transaction. FELOOSY will track the rest.';
 
   @override
-  String get privacyTitle => 'Before you start';
+  String get consentTitle => 'Before you begin';
 
   @override
-  String get privacySmsTitle => 'SMS auto-detection';
+  String get consentDataTitle => 'Your data stays on your device';
 
   @override
-  String get privacySmsMessage =>
-      'If you grant SMS permission, incoming bank messages are matched against your rules in memory. The message text is never saved or shared.';
+  String get consentDataBody =>
+      'Transactions and budgets are stored locally in SQLite. We have no servers and cannot access your financial data.';
 
   @override
-  String get privacyDataTitle => 'Your data stays on your device';
+  String get consentBackupTitle => 'Optional cloud backup';
 
   @override
-  String get privacyDataMessage =>
-      'Transactions and budgets are stored locally. We have no servers and cannot see your financial data.';
+  String get consentBackupBody =>
+      'You can connect Google Drive to back up your data. It goes to your own Drive folder — we never see it.';
 
   @override
-  String get privacyAiTitle => 'AI analysis (optional)';
+  String get consentReadPolicy => 'Read full policy';
 
   @override
-  String get privacyAiMessage =>
-      'If you use the AI feature, anonymised spending summaries (category totals, no raw SMS) are sent to Google Gemini.';
+  String get consentAccept => 'Accept & Continue';
 
   @override
-  String get privacyReadPolicy => 'Read full policy';
+  String get smsOptInTitle => 'SMS Auto-Import';
 
   @override
-  String get privacyAccept => 'Accept & Continue';
+  String get smsOptInBody =>
+      'FELOOSY can read bank SMS messages and create transactions automatically. Messages are matched locally — never stored as text or shared.';
+
+  @override
+  String get smsOptInEnable => 'Enable SMS';
+
+  @override
+  String get smsOptInSkip => 'Skip for now';
+
+  @override
+  String get smsToggleLabel => 'SMS Auto-Import';
+
+  @override
+  String get smsToggleSubtitle => 'Auto-create transactions from bank messages';
+
+  @override
+  String get smsTermsTitle => 'Enable SMS Auto-Import?';
+
+  @override
+  String get smsTermsBody =>
+      'FELOOSY will read incoming bank SMS messages and match them against your rules to create transactions automatically. Message text is never stored or shared. You can disable this anytime.';
+
+  @override
+  String get smsTermsEnable => 'Enable';
 }

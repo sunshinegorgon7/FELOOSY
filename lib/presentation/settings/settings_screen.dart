@@ -140,7 +140,8 @@ class _SettingsBody extends ConsumerWidget {
 
         if (Platform.isAndroid) ...[
           _SectionHeader(l10n.settingsAutomations),
-          _SmsRulesTile(isModal: isModal),
+          _SmsToggleTile(isModal: isModal),
+          if (settings.smsOptIn) _SmsRulesTile(isModal: isModal),
         ],
 
         _SectionHeader(l10n.settingsData),
@@ -152,6 +153,14 @@ class _SettingsBody extends ConsumerWidget {
         _SettingsRow(
           title: l10n.settingsPrivacyPolicy,
           onTap: () => context.push('/settings/privacy'),
+        ),
+        _SettingsRow(
+          title: 'Replay tutorial',
+          subtitle: 'Walk through the onboarding tour again',
+          onTap: () {
+            ref.read(settingsProvider.notifier).resetTutorial();
+            if (isModal) Navigator.of(context).pop();
+          },
         ),
 
         if (AppFlavor.isDev) ...[
@@ -1013,6 +1022,63 @@ class _LocalBackupTileState extends ConsumerState<_LocalBackupTile> {
           subtitle: context.l10n.settingsRestoreFromFileDesc,
           busy: _importing,
           onTap: busy ? null : _pickAndImport,
+        ),
+      ],
+    );
+  }
+}
+
+// ── SMS Toggle tile ───────────────────────────────────────────────────────────
+
+class _SmsToggleTile extends ConsumerWidget {
+  final bool isModal;
+  const _SmsToggleTile({this.isModal = false});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final smsOptIn =
+        ref.watch(settingsProvider).whenOrNull(data: (s) => s.smsOptIn) ??
+            false;
+
+    return SwitchListTile(
+      title: Text(l10n.smsToggleLabel),
+      subtitle: Text(l10n.smsToggleSubtitle),
+      value: smsOptIn,
+      onChanged: (enabled) async {
+        if (enabled) {
+          final accepted = await showDialog<bool>(
+            context: context,
+            builder: (_) => const _SmsTermsDialog(),
+          );
+          if (accepted == true) {
+            await ref.read(settingsProvider.notifier).setSmsOptIn(true);
+          }
+        } else {
+          await ref.read(settingsProvider.notifier).setSmsOptIn(false);
+        }
+      },
+    );
+  }
+}
+
+class _SmsTermsDialog extends StatelessWidget {
+  const _SmsTermsDialog();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return AlertDialog(
+      title: Text(l10n.smsTermsTitle),
+      content: Text(l10n.smsTermsBody),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: Text(l10n.cancel),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(true),
+          child: Text(l10n.smsTermsEnable),
         ),
       ],
     );
