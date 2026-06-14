@@ -302,6 +302,18 @@ abstract class AppLocalizations {
   /// **'Search transactions…'**
   String get homeSearchHint;
 
+  /// No description provided for @discreetModeShow.
+  ///
+  /// In en, this message translates to:
+  /// **'Show amounts'**
+  String get discreetModeShow;
+
+  /// No description provided for @discreetModeHide.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide amounts'**
+  String get discreetModeHide;
+
   /// No description provided for @homeAllWallets.
   ///
   /// In en, this message translates to:
@@ -1172,6 +1184,12 @@ abstract class AppLocalizations {
   /// **'{budget} · Carry-over on'**
   String manageWalletsBudgetCarryOver(String budget);
 
+  /// No description provided for @manageWalletsCarryOverSuffix.
+  ///
+  /// In en, this message translates to:
+  /// **'· Carry-over on'**
+  String get manageWalletsCarryOverSuffix;
+
   /// No description provided for @smsRulesTitle.
   ///
   /// In en, this message translates to:
@@ -1727,7 +1745,7 @@ abstract class AppLocalizations {
   /// No description provided for @smsOptInTitle.
   ///
   /// In en, this message translates to:
-  /// **'SMS Auto-Import'**
+  /// **'SMS Auto Import'**
   String get smsOptInTitle;
 
   /// No description provided for @smsOptInBody.
@@ -1745,7 +1763,7 @@ abstract class AppLocalizations {
   /// No description provided for @smsOptInSkip.
   ///
   /// In en, this message translates to:
-  /// **'Skip for now'**
+  /// **'Skip'**
   String get smsOptInSkip;
 
   /// No description provided for @smsToggleLabel.

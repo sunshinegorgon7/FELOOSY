@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../app/app_theme.dart';
+import '../../../core/widgets/discreet_amount.dart';
 import '../../../core/extensions/localizations_extension.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../data/models/category.dart';
@@ -103,13 +104,15 @@ class TransactionTile extends ConsumerWidget {
                 : transaction.isRecurring
                     ? _RecurringBadge(rule: recurringRule)
                     : null,
-        trailing: Text(
-          amountText,
-          style: TextStyle(
-            fontFamily: 'DM Mono',
-            fontWeight: FontWeight.w500,
-            color: amountColor,
-            fontSize: 13,
+        trailing: DiscreetAmount(
+          child: Text(
+            amountText,
+            style: TextStyle(
+              fontFamily: 'DM Mono',
+              fontWeight: FontWeight.w500,
+              color: amountColor,
+              fontSize: 13,
+            ),
           ),
         ),
       );
@@ -151,13 +154,15 @@ class TransactionTile extends ConsumerWidget {
           ],
         ],
       ),
-      trailing: Text(
-        amountText,
-        style: TextStyle(
-          fontFamily: 'DM Mono',
-          fontWeight: FontWeight.w500,
-          color: amountColor,
-          fontSize: 14,
+      trailing: DiscreetAmount(
+        child: Text(
+          amountText,
+          style: TextStyle(
+            fontFamily: 'DM Mono',
+            fontWeight: FontWeight.w500,
+            color: amountColor,
+            fontSize: 14,
+          ),
         ),
       ),
     );

@@ -37,6 +37,8 @@
   "setBudget": "تعيين الميزانية",
 
   "homeSearchHint": "ابحث في المعاملات…",
+  "discreetModeShow": "إظهار المبالغ",
+  "discreetModeHide": "إخفاء المبالغ",
   "homeAllWallets": "جميع المحافظ",
   "homeSwitchWallet": "تبديل المحفظة",
   "homeWallet": "المحفظة",
@@ -189,6 +191,7 @@
   "manageWalletsNoBudget": "لا توجد ميزانية افتراضية",
   "manageWalletsAlreadyExists": "توجد محفظة بهذا الاسم بالفعل",
   "manageWalletsBudgetCarryOver": "{budget} · الترحيل مفعّل",
+  "manageWalletsCarryOverSuffix": "· الترحيل مفعّل",
 
   "smsRulesTitle": "قواعد الرسائل القصيرة",
   "smsRulesScanPast": "مسح الرسائل السابقة",
@@ -291,7 +294,7 @@
   "smsOptInTitle": "استيراد الرسائل القصيرة تلقائياً",
   "smsOptInBody": "يستطيع FELOOSY قراءة رسائل البنك القصيرة وإنشاء معاملات تلقائياً. تتم المطابقة محلياً — لا يتم تخزين نص الرسائل أو مشاركته.",
   "smsOptInEnable": "تفعيل SMS",
-  "smsOptInSkip": "تخطي الآن",
+  "smsOptInSkip": "تخطي",
 
   "smsToggleLabel": "استيراد الرسائل القصيرة تلقائياً",
   "smsToggleSubtitle": "إنشاء معاملات تلقائياً من رسائل البنك",

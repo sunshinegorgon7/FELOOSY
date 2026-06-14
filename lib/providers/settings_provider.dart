@@ -46,6 +46,12 @@ class SettingsNotifier extends AsyncNotifier<AppSettings> {
     if (current == null) return;
     await saveSettings(current.copyWith(smsOptIn: value));
   }
+
+  Future<void> setDiscreetMode(bool value) async {
+    final current = state.value;
+    if (current == null) return;
+    await saveSettings(current.copyWith(discreetMode: value));
+  }
 }
 
 final settingsProvider =

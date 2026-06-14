@@ -9,6 +9,7 @@ import '../../app/app_theme.dart';
 import '../../core/extensions/localizations_extension.dart';
 import '../../l10n/app_localizations.dart';
 import '../../core/widgets/category_icon.dart';
+import '../../core/widgets/discreet_amount.dart';
 import '../../data/models/category.dart';
 import '../../data/models/account.dart';
 import '../../data/models/transaction.dart';
@@ -455,6 +456,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final showConsent = settingsAsync.value != null &&
         settingsAsync.value!.privacyAcceptedAt == null;
     final smsOptIn = settingsAsync.value?.smsOptIn ?? false;
+    final discreetMode = settingsAsync.value?.discreetMode ?? false;
 
     final scaffold = Scaffold(
       backgroundColor: cs.surface,
@@ -604,6 +606,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               ]
             : [
+                IconButton(
+                  icon: Icon(
+                    discreetMode ? LucideIcons.eyeOff : LucideIcons.eye,
+                    size: 22,
+                  ),
+                  tooltip: discreetMode
+                      ? context.l10n.discreetModeShow
+                      : context.l10n.discreetModeHide,
+                  onPressed: () => ref
+                      .read(settingsProvider.notifier)
+                      .setDiscreetMode(!discreetMode),
+                ),
                 IconButton(
                   icon: const Icon(LucideIcons.search, size: 22),
                   tooltip: 'Search',
@@ -1074,15 +1088,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             const SizedBox(width: 10),
                             SizedBox(
                               width: 88,
-                              child: Text(
-                                summary.formatAmount(catGroup.net.abs()),
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  fontFamily: 'DM Mono',
-                                  color: accentColor,
+                              child: DiscreetAmount(
+                                child: Text(
+                                  summary.formatAmount(catGroup.net.abs()),
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    fontFamily: 'DM Mono',
+                                    color: accentColor,
+                                  ),
+                                  textAlign: TextAlign.right,
                                 ),
-                                textAlign: TextAlign.right,
                               ),
                             ),
                           ],
@@ -1168,15 +1184,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           const SizedBox(width: 10),
                           SizedBox(
                             width: 88,
-                            child: Text(
-                              summary.formatAmount(group.dayNet.abs()),
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                fontFamily: 'DM Mono',
-                                color: accentColor,
+                            child: DiscreetAmount(
+                              child: Text(
+                                summary.formatAmount(group.dayNet.abs()),
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  fontFamily: 'DM Mono',
+                                  color: accentColor,
+                                ),
+                                textAlign: TextAlign.right,
                               ),
-                              textAlign: TextAlign.right,
                             ),
                           ),
                         ],
@@ -1887,50 +1905,52 @@ class _BudgetHero extends StatelessWidget {
     final numberStr =
         (isOver ? '−' : '') + NumberFormat('#,##0.00').format(summary.remaining.abs());
 
-    final amountWidget = RichText(
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      text: TextSpan(
-        style: TextStyle(
-          fontFamily: 'DM Mono',
-          color: heroColor,
-          height: 1.0,
+    final amountWidget = DiscreetAmount(
+      child: RichText(
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        text: TextSpan(
+          style: TextStyle(
+            fontFamily: 'DM Mono',
+            color: heroColor,
+            height: 1.0,
+          ),
+          children: summary.currencySymbolLeading
+              ? [
+                  TextSpan(
+                    text: '${summary.currencySymbol} ',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  TextSpan(
+                    text: numberStr,
+                    style: const TextStyle(
+                      fontSize: 44,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 44 * -0.02,
+                    ),
+                  ),
+                ]
+              : [
+                  TextSpan(
+                    text: numberStr,
+                    style: const TextStyle(
+                      fontSize: 44,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 44 * -0.02,
+                    ),
+                  ),
+                  TextSpan(
+                    text: ' ${summary.currencySymbol}',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
         ),
-        children: summary.currencySymbolLeading
-            ? [
-                TextSpan(
-                  text: '${summary.currencySymbol} ',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                TextSpan(
-                  text: numberStr,
-                  style: const TextStyle(
-                    fontSize: 44,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 44 * -0.02,
-                  ),
-                ),
-              ]
-            : [
-                TextSpan(
-                  text: numberStr,
-                  style: const TextStyle(
-                    fontSize: 44,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 44 * -0.02,
-                  ),
-                ),
-                TextSpan(
-                  text: ' ${summary.currencySymbol}',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
       ),
     );
 
@@ -1948,11 +1968,13 @@ class _BudgetHero extends StatelessWidget {
         ),
         if (summary.carryOverAmount != 0) ...[
           const SizedBox(height: 2),
-          Text(
-            summary.carryOverAmount > 0
-                ? '+ ${summary.formatAmount(summary.carryOverAmount)} carried from last month'
-                : '- ${summary.formatAmount(summary.carryOverAmount.abs())} deficit from last month',
-            style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+          DiscreetAmount(
+            child: Text(
+              summary.carryOverAmount > 0
+                  ? '+ ${summary.formatAmount(summary.carryOverAmount)} carried from last month'
+                  : '- ${summary.formatAmount(summary.carryOverAmount.abs())} deficit from last month',
+              style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+            ),
           ),
         ],
       ],
@@ -2118,15 +2140,17 @@ class _TopCategoriesChartState extends State<_TopCategoriesChart> {
                       bottom: barH + 4,
                       left: 0,
                       right: 0,
-                      child: Text(
-                        widget.summary.formatAmount(stat.amount),
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w500,
-                          fontFamily: 'DM Mono',
-                          color: cs.onSurfaceVariant,
+                      child: DiscreetAmount(
+                        child: Text(
+                          widget.summary.formatAmount(stat.amount),
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                            fontFamily: 'DM Mono',
+                            color: cs.onSurfaceVariant,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
-                        textAlign: TextAlign.center,
                       ),
                     ),
                     AnimatedPositioned(
@@ -2422,13 +2446,15 @@ class _ExpandableDayGroupState extends State<_ExpandableDayGroup> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                Text(
-                  widget.summary.formatAmount(group.dayNet.abs()),
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    fontFamily: 'DM Mono',
-                    color: accentColor,
+                DiscreetAmount(
+                  child: Text(
+                    widget.summary.formatAmount(group.dayNet.abs()),
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      fontFamily: 'DM Mono',
+                      color: accentColor,
+                    ),
                   ),
                 ),
               ],
@@ -2574,15 +2600,17 @@ class _ExpandableCatGroupState extends State<_ExpandableCatGroup> {
                 const SizedBox(width: 10),
                 SizedBox(
                   width: 88,
-                  child: Text(
-                    widget.summary.formatAmount(group.net.abs()),
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      fontFamily: 'DM Mono',
-                      color: accentColor,
+                  child: DiscreetAmount(
+                    child: Text(
+                      widget.summary.formatAmount(group.net.abs()),
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        fontFamily: 'DM Mono',
+                        color: accentColor,
+                      ),
+                      textAlign: TextAlign.right,
                     ),
-                    textAlign: TextAlign.right,
                   ),
                 ),
               ],
@@ -2704,13 +2732,15 @@ class _InlineTransactionRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            Text(
-              '$amountPrefix${summary.formatAmount(tx.amount)}',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                fontFamily: 'DM Mono',
-                color: amountColor,
+            DiscreetAmount(
+              child: Text(
+                '$amountPrefix${summary.formatAmount(tx.amount)}',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'DM Mono',
+                  color: amountColor,
+                ),
               ),
             ),
           ],

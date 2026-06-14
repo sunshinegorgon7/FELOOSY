@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../app/app_theme.dart';
+import '../../core/widgets/discreet_amount.dart';
 import '../../core/extensions/localizations_extension.dart';
 import '../../data/models/category.dart';
 import '../../data/models/transaction.dart';
@@ -63,8 +64,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                   child: Center(
                     child: Text(
                       'No transactions yet.',
-                      style: tt.bodyMedium
-                          ?.copyWith(color: cs.onSurfaceVariant),
+                      style: tt.bodyMedium?.copyWith(
+                        color: cs.onSurfaceVariant,
+                      ),
                     ),
                   ),
                 )
@@ -100,7 +102,7 @@ class _MonthGroup {
 List<_MonthGroup> _group(List<Transaction> txs, _LedgerGrouping g) =>
     switch (g) {
       _LedgerGrouping.month => _groupByMonth(txs),
-      _LedgerGrouping.year  => _groupByYear(txs),
+      _LedgerGrouping.year => _groupByYear(txs),
     };
 
 List<_MonthGroup> _groupByMonth(List<Transaction> txs) {
@@ -113,8 +115,7 @@ List<_MonthGroup> _groupByMonth(List<Transaction> txs) {
     map.putIfAbsent(key, () => []).add(tx);
   }
   return [
-    for (final k in keys)
-      _MonthGroup(k, map[k]!, _isMonthComplete(k, now)),
+    for (final k in keys) _MonthGroup(k, map[k]!, _isMonthComplete(k, now)),
   ];
 }
 
@@ -167,7 +168,7 @@ class _GroupingPicker extends StatelessWidget {
           final selected = g == value;
           final label = switch (g) {
             _LedgerGrouping.month => context.l10n.historyMonth,
-            _LedgerGrouping.year  => context.l10n.historyYear,
+            _LedgerGrouping.year => context.l10n.historyYear,
           };
           return Expanded(
             child: GestureDetector(
@@ -193,8 +194,7 @@ class _GroupingPicker extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 12,
-                    fontWeight:
-                        selected ? FontWeight.w700 : FontWeight.w400,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
                     color: selected
                         ? AppTheme.primaryText(cs)
                         : cs.onSurfaceVariant,
@@ -257,26 +257,26 @@ class _MonthCardState extends ConsumerState<_MonthCard> {
         .fold<double>(0, (a, t) => a + t.amount);
 
     final totals = <String, double>{};
-    for (final tx in widget.transactions
-        .where((t) => t.type == TransactionType.expense)) {
+    for (final tx in widget.transactions.where(
+      (t) => t.type == TransactionType.expense,
+    )) {
       totals[tx.categoryUuid] = (totals[tx.categoryUuid] ?? 0) + tx.amount;
     }
-    final topStats = (totals.entries.toList()
-          ..sort((a, b) => b.value.compareTo(a.value)))
-        .take(5)
-        .map((e) {
-          final cat =
-              widget.cats.where((c) => c.uuid == e.key).firstOrNull;
-          return cat != null ? _CatStat(cat, e.value) : null;
-        })
-        .whereType<_CatStat>()
-        .toList();
+    final topStats =
+        (totals.entries.toList()..sort((a, b) => b.value.compareTo(a.value)))
+            .take(5)
+            .map((e) {
+              final cat = widget.cats.where((c) => c.uuid == e.key).firstOrNull;
+              return cat != null ? _CatStat(cat, e.value) : null;
+            })
+            .whereType<_CatStat>()
+            .toList();
 
     final displayedTxs = _selectedCategoryUuid == null
         ? widget.transactions
         : widget.transactions
-            .where((t) => t.categoryUuid == _selectedCategoryUuid)
-            .toList();
+              .where((t) => t.categoryUuid == _selectedCategoryUuid)
+              .toList();
 
     return Card(
       margin: const EdgeInsets.only(bottom: 14),
@@ -291,8 +291,7 @@ class _MonthCardState extends ConsumerState<_MonthCard> {
               if (!_expanded) _selectedCategoryUuid = null;
             }),
             child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
               child: Row(
                 children: [
                   Text(
@@ -306,31 +305,38 @@ class _MonthCardState extends ConsumerState<_MonthCard> {
                   ),
                   const Spacer(),
                   if (incomeTotal > 0)
-                    Text(
-                      '+${_fmt(incomeTotal)}',
-                      style: GoogleFonts.dmMono(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: AppTheme.incomeText(cs),
+                    DiscreetAmount(
+                      child: Text(
+                        '+${_fmt(incomeTotal)}',
+                        style: GoogleFonts.dmMono(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: AppTheme.incomeText(cs),
+                        ),
                       ),
                     ),
                   if (expenseTotal > 0 && incomeTotal > 0)
                     const SizedBox(width: 8),
                   if (expenseTotal > 0)
-                    Text(
-                      '−${_fmt(expenseTotal)}',
-                      style: GoogleFonts.dmMono(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: accentColor,
+                    DiscreetAmount(
+                      child: Text(
+                        '−${_fmt(expenseTotal)}',
+                        style: GoogleFonts.dmMono(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: accentColor,
+                        ),
                       ),
                     ),
                   const SizedBox(width: 6),
                   AnimatedRotation(
                     turns: _expanded ? 0.5 : 0,
                     duration: const Duration(milliseconds: 200),
-                    child: Icon(Icons.expand_more,
-                        color: cs.onSurfaceVariant, size: 18),
+                    child: Icon(
+                      Icons.expand_more,
+                      color: cs.onSurfaceVariant,
+                      size: 18,
+                    ),
                   ),
                 ],
               ),
@@ -338,113 +344,131 @@ class _MonthCardState extends ConsumerState<_MonthCard> {
           ),
 
           // Expandable content
-          AnimatedCrossFade(
-            firstChild: const SizedBox.shrink(),
-            secondChild: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Bar chart
-                if (topStats.isNotEmpty) ...[
-                  const Divider(height: 1),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 4),
-                    child: _MonthBarChart(
-                      stats: topStats,
-                      selectedCategoryUuid: _selectedCategoryUuid,
-                      onTap: (uuid) => setState(() {
-                        _selectedCategoryUuid =
-                            _selectedCategoryUuid == uuid ? null : uuid;
-                      }),
-                    ),
-                  ),
-                  if (_selectedCategoryUuid != null)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(14, 4, 14, 0),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Builder(builder: (ctx) {
-                          final selStat = topStats
-                              .where((s) =>
-                                  s.category.uuid == _selectedCategoryUuid)
-                              .firstOrNull;
-                          final catColor = selStat != null
-                              ? AppTheme.categoryBarColor(
-                                  uuid: selStat.category.uuid,
-                                  colorValue: selStat.category.colorValue,
-                                  colorScheme: cs,
-                                )
-                              : accentColor;
-                          return GestureDetector(
-                            onTap: () => setState(
-                                () => _selectedCategoryUuid = null),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 9, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: catColor.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(999),
-                                border: Border.all(
-                                    color: catColor.withValues(alpha: 0.4)),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    selStat?.category.name ?? '',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      color: catColor,
+          AnimatedSize(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeInOut,
+            alignment: Alignment.topCenter,
+            child: !_expanded
+                ? const SizedBox.shrink()
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Bar chart
+                      if (topStats.isNotEmpty) ...[
+                        const Divider(height: 1),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(14, 12, 14, 4),
+                          child: _MonthBarChart(
+                            stats: topStats,
+                            selectedCategoryUuid: _selectedCategoryUuid,
+                            onTap: (uuid) => setState(() {
+                              _selectedCategoryUuid =
+                                  _selectedCategoryUuid == uuid ? null : uuid;
+                            }),
+                          ),
+                        ),
+                        if (_selectedCategoryUuid != null)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(14, 4, 14, 0),
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: Builder(
+                                builder: (ctx) {
+                                  final selStat = topStats
+                                      .where(
+                                        (s) =>
+                                            s.category.uuid ==
+                                            _selectedCategoryUuid,
+                                      )
+                                      .firstOrNull;
+                                  final catColor = selStat != null
+                                      ? AppTheme.categoryBarColor(
+                                          uuid: selStat.category.uuid,
+                                          colorValue:
+                                              selStat.category.colorValue,
+                                          colorScheme: cs,
+                                        )
+                                      : accentColor;
+                                  return GestureDetector(
+                                    onTap: () => setState(
+                                      () => _selectedCategoryUuid = null,
                                     ),
-                                  ),
-                                  const SizedBox(width: 5),
-                                  Icon(Icons.close,
-                                      size: 12, color: catColor),
-                                ],
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 9,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: catColor.withValues(alpha: 0.12),
+                                        borderRadius: BorderRadius.circular(
+                                          999,
+                                        ),
+                                        border: Border.all(
+                                          color: catColor.withValues(
+                                            alpha: 0.4,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            selStat?.category.name ?? '',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w600,
+                                              color: catColor,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 5),
+                                          Icon(
+                                            Icons.close,
+                                            size: 12,
+                                            color: catColor,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
                               ),
                             ),
-                          );
-                        }),
-                      ),
-                    ),
-                  const SizedBox(height: 8),
-                ],
+                          ),
+                        const SizedBox(height: 8),
+                      ],
 
-                // Transaction list
-                const Divider(height: 1),
-                if (displayedTxs.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    child: Text(
-                      'No transactions in this category.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          fontSize: 12, color: cs.onSurfaceVariant),
-                    ),
-                  )
-                else
-                  for (final tx in displayedTxs)
-                    TransactionTile(
-                      transaction: tx,
-                      category: widget.cats
-                          .where((c) => c.uuid == tx.categoryUuid)
-                          .firstOrNull,
-                      onTap: () =>
-                          context.push('/transactions/edit', extra: tx),
-                    ),
-                const SizedBox(height: 4),
-              ],
-            ),
-            crossFadeState: _expanded
-                ? CrossFadeState.showSecond
-                : CrossFadeState.showFirst,
-            duration: const Duration(milliseconds: 220),
+                      // Transaction list
+                      const Divider(height: 1),
+                      if (displayedTxs.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          child: Text(
+                            'No transactions in this category.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: cs.onSurfaceVariant,
+                            ),
+                          ),
+                        )
+                      else
+                        for (final tx in displayedTxs)
+                          TransactionTile(
+                            transaction: tx,
+                            category: widget.cats
+                                .where((c) => c.uuid == tx.categoryUuid)
+                                .firstOrNull,
+                            onTap: () =>
+                                context.push('/transactions/edit', extra: tx),
+                          ),
+                      const SizedBox(height: 4),
+                    ],
+                  ),
           ),
         ],
       ),
     );
   }
-
 }
 
 // ---------------------------------------------------------------------------
@@ -492,8 +516,10 @@ class _MonthBarChartState extends State<_MonthBarChart> {
           colorValue: stat.category.colorValue,
           colorScheme: cs,
         );
-        final targetH =
-            (barAreaH * (stat.amount / maxAmount)).clamp(4.0, barAreaH);
+        final targetH = (barAreaH * (stat.amount / maxAmount)).clamp(
+          4.0,
+          barAreaH,
+        );
         final barH = _entered ? targetH : 0.0;
         final isSelected = stat.category.uuid == widget.selectedCategoryUuid;
         final isDeselected = hasSelection && !isSelected;
@@ -518,15 +544,17 @@ class _MonthBarChartState extends State<_MonthBarChart> {
                           bottom: barH + 4,
                           left: 0,
                           right: 0,
-                          child: Text(
-                            _fmt(stat.amount),
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w500,
-                              fontFamily: 'DM Mono',
-                              color: cs.onSurfaceVariant,
+                          child: DiscreetAmount(
+                            child: Text(
+                              _fmt(stat.amount),
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'DM Mono',
+                                color: cs.onSurfaceVariant,
+                              ),
+                              textAlign: TextAlign.center,
                             ),
-                            textAlign: TextAlign.center,
                           ),
                         ),
                         AnimatedPositioned(
@@ -539,7 +567,8 @@ class _MonthBarChartState extends State<_MonthBarChart> {
                             decoration: BoxDecoration(
                               color: color,
                               borderRadius: const BorderRadius.vertical(
-                                  top: Radius.circular(5)),
+                                top: Radius.circular(5),
+                              ),
                               border: isSelected
                                   ? Border.all(
                                       color: color.withValues(alpha: 0.55),
@@ -556,8 +585,9 @@ class _MonthBarChartState extends State<_MonthBarChart> {
                     stat.category.name,
                     style: TextStyle(
                       fontSize: 10,
-                      fontWeight:
-                          isSelected ? FontWeight.w700 : FontWeight.w500,
+                      fontWeight: isSelected
+                          ? FontWeight.w700
+                          : FontWeight.w500,
                       color: isSelected ? color : cs.onSurfaceVariant,
                     ),
                     textAlign: TextAlign.center,

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../app/app_theme.dart';
+import '../../core/widgets/discreet_amount.dart';
 import '../../core/constants/currencies.dart';
 import '../../core/extensions/localizations_extension.dart';
 import '../../data/models/account.dart';
@@ -267,12 +268,9 @@ class _WalletRow extends StatelessWidget {
     final sliverColor = account.isFavorite ? accentColor : cs.outlineVariant;
 
     final l10n = context.l10n;
-    final budgetText = account.defaultMonthlyBudget != null
-        ? '${_fmtAmount(account.defaultMonthlyBudget!)} / mo'
-        : l10n.manageWalletsNoBudget;
-    final subtitle = account.carryOverEnabled
-        ? l10n.manageWalletsBudgetCarryOver(budgetText)
-        : budgetText;
+    final budgetAmountText = account.defaultMonthlyBudget != null
+        ? _fmtAmount(account.defaultMonthlyBudget!)
+        : null;
 
     return InkWell(
       onTap: onEdit,
@@ -310,11 +308,31 @@ class _WalletRow extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 3),
-                    Text(
-                      subtitle,
-                      style: tt.bodySmall
-                          ?.copyWith(color: cs.onSurfaceVariant),
-                    ),
+                    budgetAmountText != null
+                        ? Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              DiscreetAmount(
+                                child: Text(
+                                  budgetAmountText,
+                                  style: tt.bodySmall?.copyWith(
+                                      color: cs.onSurfaceVariant),
+                                ),
+                              ),
+                              Text(
+                                account.carryOverEnabled
+                                    ? ' ${l10n.manageWalletsCarryOverSuffix}'
+                                    : ' / mo',
+                                style: tt.bodySmall
+                                    ?.copyWith(color: cs.onSurfaceVariant),
+                              ),
+                            ],
+                          )
+                        : Text(
+                            l10n.manageWalletsNoBudget,
+                            style: tt.bodySmall
+                                ?.copyWith(color: cs.onSurfaceVariant),
+                          ),
                   ],
                 ),
               ),

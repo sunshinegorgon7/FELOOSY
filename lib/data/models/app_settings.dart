@@ -15,6 +15,7 @@ class AppSettings {
   // BCP-47 language tag (e.g. 'en', 'ar'). Empty string = follow system locale.
   final String languageCode;
   final bool smsOptIn;
+  final bool discreetMode;
 
   const AppSettings({
     this.id = 1,
@@ -32,6 +33,7 @@ class AppSettings {
     this.privacyAcceptedAt,
     this.languageCode = '',
     this.smsOptIn = false,
+    this.discreetMode = false,
   });
 
   static AppSettings get defaults => AppSettings(updatedAt: DateTime.now());
@@ -50,6 +52,7 @@ class AppSettings {
     DateTime? privacyAcceptedAt,
     String? languageCode,
     bool? smsOptIn,
+    bool? discreetMode,
   }) {
     return AppSettings(
       id: id,
@@ -68,6 +71,7 @@ class AppSettings {
       privacyAcceptedAt: privacyAcceptedAt ?? this.privacyAcceptedAt,
       languageCode: languageCode ?? this.languageCode,
       smsOptIn: smsOptIn ?? this.smsOptIn,
+      discreetMode: discreetMode ?? this.discreetMode,
     );
   }
 
@@ -95,6 +99,7 @@ class AppSettings {
           : null,
       languageCode: map['language_code'] as String? ?? '',
       smsOptIn: (map['sms_opt_in'] as int? ?? 0) == 1,
+      discreetMode: (map['discreet_mode'] as int? ?? 0) == 1,
     );
   }
 
@@ -115,6 +120,7 @@ class AppSettings {
       'privacy_accepted_at': privacyAcceptedAt?.millisecondsSinceEpoch,
       'language_code': languageCode,
       'sms_opt_in': smsOptIn ? 1 : 0,
+      'discreet_mode': discreetMode ? 1 : 0,
     };
   }
 }

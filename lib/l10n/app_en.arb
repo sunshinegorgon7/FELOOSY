@@ -37,6 +37,8 @@
   "setBudget": "Set Budget",
 
   "homeSearchHint": "Search transactions…",
+  "discreetModeShow": "Show amounts",
+  "discreetModeHide": "Hide amounts",
   "homeAllWallets": "All wallets",
   "homeSwitchWallet": "Switch wallet",
   "homeWallet": "Wallet",
@@ -328,6 +330,7 @@
       "budget": { "type": "String" }
     }
   },
+  "manageWalletsCarryOverSuffix": "· Carry-over on",
 
   "smsRulesTitle": "SMS Rules",
   "smsRulesScanPast": "Scan past SMS",
@@ -474,10 +477,10 @@
   "consentReadPolicy": "Read full policy",
   "consentAccept": "Accept & Continue",
 
-  "smsOptInTitle": "SMS Auto-Import",
+  "smsOptInTitle": "SMS Auto Import",
   "smsOptInBody": "FELOOSY can read bank SMS messages and create transactions automatically. Messages are matched locally — never stored as text or shared.",
   "smsOptInEnable": "Enable SMS",
-  "smsOptInSkip": "Skip for now",
+  "smsOptInSkip": "Skip",
 
   "smsToggleLabel": "SMS Auto-Import",
   "smsToggleSubtitle": "Auto-create transactions from bank messages",

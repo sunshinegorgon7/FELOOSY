@@ -111,6 +111,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get homeSearchHint => 'ابحث في المعاملات…';
 
   @override
+  String get discreetModeShow => 'إظهار المبالغ';
+
+  @override
+  String get discreetModeHide => 'إخفاء المبالغ';
+
+  @override
   String get homeAllWallets => 'جميع المحافظ';
 
   @override
@@ -616,6 +622,9 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String get manageWalletsCarryOverSuffix => '· الترحيل مفعّل';
+
+  @override
   String get smsRulesTitle => 'قواعد الرسائل القصيرة';
 
   @override
@@ -940,7 +949,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get smsOptInEnable => 'تفعيل SMS';
 
   @override
-  String get smsOptInSkip => 'تخطي الآن';
+  String get smsOptInSkip => 'تخطي';
 
   @override
   String get smsToggleLabel => 'استيراد الرسائل القصيرة تلقائياً';

@@ -1,7 +1,7 @@
 name: feloosy
 description: Personal budget tracker — pocket money only.
 publish_to: 'none'
-version: 1.4.1+70
+version: 1.4.2+270
 
 environment:
   sdk: ^3.11.5

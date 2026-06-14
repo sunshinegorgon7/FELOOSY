@@ -28,7 +28,7 @@ class DatabaseHelper {
     final dbPath = p.join(docDir.path, AppFlavor.databaseName);
     return openDatabase(
       dbPath,
-      version: 27,
+      version: 28,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -124,7 +124,8 @@ class DatabaseHelper {
         tutorial_completed INTEGER NOT NULL DEFAULT 0,
         privacy_accepted_at INTEGER,
         language_code TEXT NOT NULL DEFAULT '',
-        sms_opt_in INTEGER NOT NULL DEFAULT 0
+        sms_opt_in INTEGER NOT NULL DEFAULT 0,
+        discreet_mode INTEGER NOT NULL DEFAULT 0
       )
     ''');
 
@@ -597,6 +598,12 @@ class DatabaseHelper {
         'ALTER TABLE app_settings ADD COLUMN sms_opt_in INTEGER NOT NULL DEFAULT 0',
       );
       debugPrint('[DB] v27 done: added sms_opt_in column');
+    }
+    if (oldVersion < 28) {
+      await db.execute(
+        'ALTER TABLE app_settings ADD COLUMN discreet_mode INTEGER NOT NULL DEFAULT 0',
+      );
+      debugPrint('[DB] v28 done: added discreet_mode column');
     }
   }
 

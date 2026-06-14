@@ -111,6 +111,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeSearchHint => 'Search transactions…';
 
   @override
+  String get discreetModeShow => 'Show amounts';
+
+  @override
+  String get discreetModeHide => 'Hide amounts';
+
+  @override
   String get homeAllWallets => 'All wallets';
 
   @override
@@ -614,6 +620,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get manageWalletsCarryOverSuffix => '· Carry-over on';
+
+  @override
   String get smsRulesTitle => 'SMS Rules';
 
   @override
@@ -928,7 +937,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get consentAccept => 'Accept & Continue';
 
   @override
-  String get smsOptInTitle => 'SMS Auto-Import';
+  String get smsOptInTitle => 'SMS Auto Import';
 
   @override
   String get smsOptInBody =>
@@ -938,7 +947,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get smsOptInEnable => 'Enable SMS';
 
   @override
-  String get smsOptInSkip => 'Skip for now';
+  String get smsOptInSkip => 'Skip';
 
   @override
   String get smsToggleLabel => 'SMS Auto-Import';
