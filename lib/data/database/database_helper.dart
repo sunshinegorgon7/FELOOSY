@@ -28,7 +28,7 @@ class DatabaseHelper {
     final dbPath = p.join(docDir.path, AppFlavor.databaseName);
     return openDatabase(
       dbPath,
-      version: 28,
+      version: 29,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -151,10 +151,19 @@ class DatabaseHelper {
         description TEXT,
         category_uuid TEXT NOT NULL,
         transaction_type TEXT NOT NULL,
-        account_id INTEGER NOT NULL DEFAULT 1,
         amount_regex TEXT,
         is_active INTEGER NOT NULL DEFAULT 1,
         created_at INTEGER NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE sms_rule_accounts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        sms_rule_id INTEGER NOT NULL,
+        account_id INTEGER NOT NULL,
+        FOREIGN KEY (sms_rule_id) REFERENCES sms_rules(id) ON DELETE CASCADE,
+        UNIQUE(sms_rule_id, account_id)
       )
     ''');
 
@@ -604,6 +613,25 @@ class DatabaseHelper {
         'ALTER TABLE app_settings ADD COLUMN discreet_mode INTEGER NOT NULL DEFAULT 0',
       );
       debugPrint('[DB] v28 done: added discreet_mode column');
+    }
+    if (oldVersion < 29) {
+      await db.execute('''
+        CREATE TABLE sms_rule_accounts (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          sms_rule_id INTEGER NOT NULL,
+          account_id INTEGER NOT NULL,
+          FOREIGN KEY (sms_rule_id) REFERENCES sms_rules(id) ON DELETE CASCADE,
+          UNIQUE(sms_rule_id, account_id)
+        )
+      ''');
+      final existingRules = await db.query('sms_rules', columns: ['id', 'account_id']);
+      for (final row in existingRules) {
+        await db.insert('sms_rule_accounts', {
+          'sms_rule_id': row['id'] as int,
+          'account_id': row['account_id'] as int,
+        });
+      }
+      debugPrint('[DB] v29 done: migrated ${existingRules.length} sms_rules to sms_rule_accounts');
     }
   }
 

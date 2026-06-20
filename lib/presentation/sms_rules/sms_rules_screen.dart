@@ -66,14 +66,20 @@ class _SmsRulesScreenState extends ConsumerState<SmsRulesScreen> {
               data: (rules) {
                 if (rules.isEmpty) return _EmptyState(onAdd: _navigateToAdd);
                 final cats = catsAsync.asData?.value ?? [];
+                final accounts = ref.watch(accountsProvider).asData?.value ?? [];
                 return ListView.builder(
                   itemCount: rules.length,
                   itemBuilder: (ctx, i) {
                     final rule = rules[i];
                     final cat = cats.where((c) => c.uuid == rule.categoryUuid).firstOrNull;
+                    final names = rule.accountIds
+                        .map((id) => accounts.where((a) => a.id == id).firstOrNull?.name)
+                        .where((n) => n != null)
+                        .join(', ');
                     return _RuleTile(
                       rule: rule,
                       category: cat,
+                      walletNames: names,
                       onTap: () => _navigateToEdit(rule),
                       onDelete: () => _confirmDelete(rule),
                       onToggle: () => ref.read(smsRulesProvider.notifier).toggleActive(rule),
@@ -236,6 +242,7 @@ class _EmptyState extends StatelessWidget {
 class _RuleTile extends StatelessWidget {
   final SmsRule rule;
   final Category? category;
+  final String walletNames;
   final VoidCallback onTap;
   final VoidCallback onDelete;
   final VoidCallback onToggle;
@@ -243,6 +250,7 @@ class _RuleTile extends StatelessWidget {
   const _RuleTile({
     required this.rule,
     required this.category,
+    required this.walletNames,
     required this.onTap,
     required this.onDelete,
     required this.onToggle,
@@ -305,9 +313,12 @@ class _RuleTile extends StatelessWidget {
               ),
             Row(
               children: [
-                Text(
-                  category?.name ?? 'Unknown category',
-                  style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                Flexible(
+                  child: Text(
+                    category?.name ?? 'Unknown category',
+                    style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
                 const SizedBox(width: 6),
                 Text('·', style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
@@ -322,6 +333,13 @@ class _RuleTile extends StatelessWidget {
                 ),
               ],
             ),
+            if (walletNames.isNotEmpty)
+              Text(
+                walletNames,
+                style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
           ],
         ),
         trailing: Row(

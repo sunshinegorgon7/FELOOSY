@@ -1322,6 +1322,24 @@ abstract class AppLocalizations {
   /// **'Wallet'**
   String get smsRuleFormWallet;
 
+  /// No description provided for @smsRuleFormWallets.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallets'**
+  String get smsRuleFormWallets;
+
+  /// No description provided for @smsRuleFormWalletsHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Transactions will be created in all selected wallets.'**
+  String get smsRuleFormWalletsHelper;
+
+  /// No description provided for @smsRuleFormSelectWalletError.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select at least one wallet.'**
+  String get smsRuleFormSelectWalletError;
+
   /// No description provided for @smsRuleFormAdvanced.
   ///
   /// In en, this message translates to:

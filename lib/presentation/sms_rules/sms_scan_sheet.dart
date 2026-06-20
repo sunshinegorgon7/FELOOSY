@@ -207,33 +207,39 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
             tx.transactionDate.difference(msg.date).inDays.abs() <= 3);
 
         final now = DateTime.now();
-        final resolvedAccountId = accounts.any((a) => a.id == rule.accountId)
-            ? rule.accountId
-            : fallbackAccountId;
-        final tx = Transaction(
-          uuid: _uuid.v4(),
-          accountId: resolvedAccountId,
-          amount: amount,
-          type: rule.transactionType == 'income'
-              ? TransactionType.income
-              : TransactionType.expense,
-          description: rule.transactionDescription,
-          categoryUuid: rule.categoryUuid,
-          transactionDate: msg.date,
-          createdAt: now,
-          updatedAt: now,
-          source: 'sms_rule:${rule.id}',
-        );
+        final resolvedAccountIds = rule.accountIds
+            .where((id) => accounts.any((a) => a.id == id))
+            .toList();
+        if (resolvedAccountIds.isEmpty) {
+          resolvedAccountIds.add(fallbackAccountId);
+        }
 
-        candidates.add(_Candidate(
-          transaction: tx,
-          smsBody: msg.body,
-          rule: rule,
-          category: cat,
-          likelyDuplicate: isDuplicate,
-          selected: !isDuplicate,
-          description: rule.transactionDescription,
-        ));
+        for (final resolvedAccountId in resolvedAccountIds) {
+          final tx = Transaction(
+            uuid: _uuid.v4(),
+            accountId: resolvedAccountId,
+            amount: amount,
+            type: rule.transactionType == 'income'
+                ? TransactionType.income
+                : TransactionType.expense,
+            description: rule.transactionDescription,
+            categoryUuid: rule.categoryUuid,
+            transactionDate: msg.date,
+            createdAt: now,
+            updatedAt: now,
+            source: 'sms_rule:${rule.id}',
+          );
+
+          candidates.add(_Candidate(
+            transaction: tx,
+            smsBody: msg.body,
+            rule: rule,
+            category: cat,
+            likelyDuplicate: isDuplicate,
+            selected: !isDuplicate,
+            description: rule.transactionDescription,
+          ));
+        }
       }
 
       if (mounted) {
