@@ -701,6 +701,15 @@ class AppLocalizationsAr extends AppLocalizations {
   String get smsRuleFormWallet => 'المحفظة';
 
   @override
+  String get smsRuleFormWallets => 'المحافظ';
+
+  @override
+  String get smsRuleFormWalletsHelper => 'سيتم إنشاء المعاملات في جميع المحافظ المحددة.';
+
+  @override
+  String get smsRuleFormSelectWalletError => 'الرجاء اختيار محفظة واحدة على الأقل.';
+
+  @override
   String get smsRuleFormAdvanced => 'متقدم';
 
   @override

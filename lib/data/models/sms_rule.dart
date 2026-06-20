@@ -4,7 +4,7 @@ class SmsRule {
   final String? description;
   final String categoryUuid;
   final String transactionType;
-  final int accountId;
+  final List<int> accountIds;
   final String? amountRegex;
   final bool isActive;
   final DateTime createdAt;
@@ -15,14 +15,12 @@ class SmsRule {
     this.description,
     required this.categoryUuid,
     required this.transactionType,
-    required this.accountId,
+    required this.accountIds,
     this.amountRegex,
     this.isActive = true,
     required this.createdAt,
   });
 
-  /// The label used as the transaction description when this rule fires.
-  /// Falls back to the keyword when no custom description is set.
   String get transactionDescription => description?.isNotEmpty == true ? description! : keyword;
 
   SmsRule copyWith({
@@ -31,7 +29,7 @@ class SmsRule {
     bool clearDescription = false,
     String? categoryUuid,
     String? transactionType,
-    int? accountId,
+    List<int>? accountIds,
     String? amountRegex,
     bool? isActive,
     bool clearAmountRegex = false,
@@ -42,21 +40,21 @@ class SmsRule {
       description: clearDescription ? null : (description ?? this.description),
       categoryUuid: categoryUuid ?? this.categoryUuid,
       transactionType: transactionType ?? this.transactionType,
-      accountId: accountId ?? this.accountId,
+      accountIds: accountIds ?? this.accountIds,
       amountRegex: clearAmountRegex ? null : (amountRegex ?? this.amountRegex),
       isActive: isActive ?? this.isActive,
       createdAt: createdAt,
     );
   }
 
-  factory SmsRule.fromMap(Map<String, dynamic> map) {
+  factory SmsRule.fromMap(Map<String, dynamic> map, {List<int>? accountIds}) {
     return SmsRule(
       id: map['id'] as int?,
       keyword: map['keyword'] as String,
       description: map['description'] as String?,
       categoryUuid: map['category_uuid'] as String,
       transactionType: map['transaction_type'] as String,
-      accountId: map['account_id'] as int? ?? 1,
+      accountIds: accountIds ?? [map['account_id'] as int? ?? 1],
       amountRegex: map['amount_regex'] as String?,
       isActive: (map['is_active'] as int? ?? 1) == 1,
       createdAt: DateTime.fromMillisecondsSinceEpoch(map['created_at'] as int),
@@ -69,7 +67,6 @@ class SmsRule {
       'description': description,
       'category_uuid': categoryUuid,
       'transaction_type': transactionType,
-      'account_id': accountId,
       'amount_regex': amountRegex,
       'is_active': isActive ? 1 : 0,
       'created_at': createdAt.millisecondsSinceEpoch,

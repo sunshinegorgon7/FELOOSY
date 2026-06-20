@@ -699,6 +699,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get smsRuleFormWallet => 'Wallet';
 
   @override
+  String get smsRuleFormWallets => 'Wallets';
+
+  @override
+  String get smsRuleFormWalletsHelper => 'Transactions will be created in all selected wallets.';
+
+  @override
+  String get smsRuleFormSelectWalletError => 'Please select at least one wallet.';
+
+  @override
   String get smsRuleFormAdvanced => 'Advanced';
 
   @override

@@ -53,29 +53,35 @@ class SmsTransactionService {
 
     final accounts = ref.read(accountsProvider).asData?.value ?? [];
     final fallbackAccountId = accounts.isNotEmpty
-        ? (accounts.firstWhere((a) => a.isFavorite, orElse: () => accounts.first).id ?? matched.accountId)
-        : matched.accountId;
-    final resolvedAccountId = accounts.any((a) => a.id == matched.accountId)
-        ? matched.accountId
-        : fallbackAccountId;
+        ? (accounts.firstWhere((a) => a.isFavorite, orElse: () => accounts.first).id ?? 1)
+        : 1;
+
+    final resolvedAccountIds = matched.accountIds
+        .where((id) => accounts.any((a) => a.id == id))
+        .toList();
+    if (resolvedAccountIds.isEmpty) {
+      resolvedAccountIds.add(fallbackAccountId);
+    }
 
     final now = DateTime.now();
-    final tx = Transaction(
-      uuid: _uuid.v4(),
-      accountId: resolvedAccountId,
-      amount: amount,
-      type: matched.transactionType == 'income'
-          ? TransactionType.income
-          : TransactionType.expense,
-      description: matched.transactionDescription,
-      categoryUuid: matched.categoryUuid,
-      transactionDate: now,
-      createdAt: now,
-      updatedAt: now,
-      source: 'sms_rule:${matched.id}',
-    );
+    for (final accountId in resolvedAccountIds) {
+      final tx = Transaction(
+        uuid: _uuid.v4(),
+        accountId: accountId,
+        amount: amount,
+        type: matched.transactionType == 'income'
+            ? TransactionType.income
+            : TransactionType.expense,
+        description: matched.transactionDescription,
+        categoryUuid: matched.categoryUuid,
+        transactionDate: now,
+        createdAt: now,
+        updatedAt: now,
+        source: 'sms_rule:${matched.id}',
+      );
 
-    await ref.read(transactionsProvider.notifier).add(tx);
-    onCreated?.call(tx);
+      await ref.read(transactionsProvider.notifier).add(tx);
+      onCreated?.call(tx);
+    }
   }
 }

@@ -27,7 +27,7 @@ class _SmsRuleFormScreenState extends ConsumerState<SmsRuleFormScreen> {
 
   String _type = 'expense';
   String? _categoryUuid;
-  int? _accountId;
+  Set<int> _selectedAccountIds = {};
   bool _saving = false;
 
   bool get _isEditing => widget.rule != null;
@@ -40,7 +40,9 @@ class _SmsRuleFormScreenState extends ConsumerState<SmsRuleFormScreen> {
     _regexCtrl = TextEditingController(text: rule?.amountRegex ?? '');
     _type = rule?.transactionType ?? 'expense';
     _categoryUuid = rule?.categoryUuid;
-    _accountId = rule?.accountId;
+    if (rule != null) {
+      _selectedAccountIds = rule.accountIds.toSet();
+    }
   }
 
   @override
@@ -70,15 +72,23 @@ class _SmsRuleFormScreenState extends ConsumerState<SmsRuleFormScreen> {
       return;
     }
 
+    final allAccounts = ref.read(accountsProvider).asData?.value ?? [];
+
+    if (_selectedAccountIds.isEmpty && allAccounts.isNotEmpty) {
+      _showError(l10n.smsRuleFormSelectWalletError);
+      return;
+    }
+
     setState(() => _saving = true);
     try {
       final notifier = ref.read(smsRulesProvider.notifier);
       final now = DateTime.now();
-      final allAccounts = ref.read(accountsProvider).asData?.value ?? [];
       final fallbackAccount = allAccounts.isNotEmpty
           ? allAccounts.firstWhere((a) => a.isFavorite, orElse: () => allAccounts.first)
           : null;
-      final accountId = _accountId ?? fallbackAccount?.id ?? 1;
+      final accountIds = _selectedAccountIds.isNotEmpty
+          ? _selectedAccountIds.toList()
+          : [fallbackAccount?.id ?? 1];
       final regex = _regexCtrl.text.trim();
 
       final desc = _descFieldCtrl?.text.trim() ?? '';
@@ -89,7 +99,7 @@ class _SmsRuleFormScreenState extends ConsumerState<SmsRuleFormScreen> {
           clearDescription: desc.isEmpty,
           categoryUuid: _categoryUuid,
           transactionType: _type,
-          accountId: accountId,
+          accountIds: accountIds,
           amountRegex: regex.isEmpty ? null : regex,
           clearAmountRegex: regex.isEmpty,
         );
@@ -100,7 +110,7 @@ class _SmsRuleFormScreenState extends ConsumerState<SmsRuleFormScreen> {
           description: desc.isEmpty ? null : desc,
           categoryUuid: _categoryUuid!,
           transactionType: _type,
-          accountId: accountId,
+          accountIds: accountIds,
           amountRegex: regex.isEmpty ? null : regex,
           createdAt: now,
         );
@@ -222,6 +232,11 @@ class _SmsRuleFormScreenState extends ConsumerState<SmsRuleFormScreen> {
     final selectedCat = categories.where((c) => c.uuid == _categoryUuid).firstOrNull;
     final showAccountPicker = accounts.length > 1;
 
+    if (!_isEditing && _selectedAccountIds.isEmpty && accounts.isNotEmpty) {
+      final fav = accounts.firstWhere((a) => a.isFavorite, orElse: () => accounts.first);
+      _selectedAccountIds = {fav.id!};
+    }
+
     return Scaffold(
       backgroundColor: cs.surface,
       appBar: AppBar(
@@ -274,7 +289,6 @@ class _SmsRuleFormScreenState extends ConsumerState<SmsRuleFormScreen> {
             onChanged: (t) {
               setState(() {
                 _type = t;
-                // Reset category if it no longer matches the new type
                 final stillValid = categories.any((c) =>
                     c.uuid == _categoryUuid &&
                     (c.transactionType == null || c.transactionType == t));
@@ -329,15 +343,39 @@ class _SmsRuleFormScreenState extends ConsumerState<SmsRuleFormScreen> {
 
           if (showAccountPicker) ...[
             const SizedBox(height: 24),
-            _SectionLabel(context.l10n.smsRuleFormWallet),
+            _SectionLabel(context.l10n.smsRuleFormWallets),
             const SizedBox(height: 6),
-            DropdownButtonFormField<int>(
-              initialValue: _accountId ?? (accounts.isNotEmpty ? accounts.first.id : null),
-              decoration: const InputDecoration(border: OutlineInputBorder()),
-              items: accounts
-                  .map((a) => DropdownMenuItem(value: a.id, child: Text(a.name)))
-                  .toList(),
-              onChanged: (id) => setState(() => _accountId = id),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: accounts.map((a) {
+                final isSelected = _selectedAccountIds.contains(a.id);
+                return FilterChip(
+                  label: Text(a.name),
+                  selected: isSelected,
+                  onSelected: (selected) {
+                    setState(() {
+                      if (selected) {
+                        _selectedAccountIds.add(a.id!);
+                      } else {
+                        if (_selectedAccountIds.length > 1) {
+                          _selectedAccountIds.remove(a.id);
+                        }
+                      }
+                    });
+                  },
+                  showCheckmark: true,
+                  selectedColor: cs.primaryContainer,
+                  checkmarkColor: cs.onPrimaryContainer,
+                );
+              }).toList(),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(
+                context.l10n.smsRuleFormWalletsHelper,
+                style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+              ),
             ),
           ],
 
