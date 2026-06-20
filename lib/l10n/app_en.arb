@@ -168,7 +168,7 @@
   "editCategoryChartNote": "Chart bar colour is theme-managed for built-in categories.",
 
   "settingsAppearance": "Appearance",
-  "settingsMonthStartsOn": "Month starts on",
+  "settingsMonthStartsOn": "Month Starts On",
   "settingsMonthStartDay": "Day {day}{ordinal}",
   "@settingsMonthStartDay": {
     "placeholders": {
@@ -177,21 +177,20 @@
     }
   },
   "settingsDaysFebNote": "Days 29–31 unavailable to ensure February compatibility.",
-  "settingsDefaultMonthlyBudget": "Default monthly budget",
-  "settingsNotSet": "Not set",
-  "settingsManageCategories": "Manage categories",
+  "settingsNotSet": "Not Set",
+  "settingsManageCategories": "Manage Categories",
   "settingsWallets": "Wallets",
-  "settingsManageWallets": "Manage wallets",
+  "settingsManageWallets": "Manage Wallets",
   "settingsAutomations": "Automations",
   "settingsData": "Data",
   "settingsAbout": "About",
   "settingsPrivacyPolicy": "Privacy Policy",
   "settingsDeveloperTools": "Developer Tools",
   "settingsDangerZone": "Danger Zone",
-  "settingsResetApp": "Reset app",
+  "settingsResetApp": "Reset App",
   "settingsResetAppDesc": "Erase all transactions and budgets, restore defaults",
   "settingsSelectCurrency": "Select Currency",
-  "settingsMonthStartOnDay": "Month starts on day…",
+  "settingsMonthStartOnDay": "Month Starts On Day…",
   "settingsResetTitle": "Reset app?",
   "settingsResetMessage": "This will permanently delete:\n  • All transactions\n  • All budgets\n  • All custom categories\n\nSettings will be restored to defaults and you will be signed out of Google. Sign in again afterwards to restore from a backup.\n\nThis cannot be undone.",
   "settingsResetConfirm": "Reset Everything",
@@ -203,19 +202,19 @@
       "to": { "type": "int" }
     }
   },
-  "settingsBackupToDrive": "Back up to Google Drive",
-  "settingsSignInForBackup": "Sign in to enable backup",
+  "settingsGoogleSignIn": "Google Sign-In",
+  "settingsBackupToDrive": "Backup to Google Drive",
+  "settingsSignInForBackup": "Sign in to back up to the cloud",
   "settingsLastBackup": "Last backup: {time}",
   "@settingsLastBackup": {
     "placeholders": {
       "time": { "type": "String" }
     }
   },
-  "settingsNoBackupYet": "No backup yet",
-  "settingsBackupNow": "Back up now",
-  "settingsRestoreFromDrive": "Restore from Drive",
+  "settingsNoBackupYet": "No Backup Yet",
+  "settingsRestoreFromDrive": "Restore From Drive",
   "settingsRestoreFromDriveDesc": "Replace local data with Drive backup",
-  "settingsSignOut": "Sign out",
+  "settingsSignOut": "Sign Out",
   "settingsBackupSaved": "Backup saved to Google Drive.",
   "settingsBackupNoChanges": "No changes since last backup — skipped.",
   "settingsBackupFailed": "Backup failed: {error}",
@@ -241,11 +240,17 @@
       "error": { "type": "String" }
     }
   },
-  "settingsSelectBackup": "Select backup to restore",
-  "settingsExportBackup": "Export backup",
+  "settingsSelectBackup": "Select Backup to Restore",
+  "settingsExportBackup": "Export Backup",
   "settingsExportBackupDesc": "Save all data as a JSON file",
-  "settingsRestoreFromFile": "Restore from file",
+  "settingsRestoreFromFile": "Restore From File",
   "settingsRestoreFromFileDesc": "Replace local data with an exported backup",
+  "settingsExportSuccess": "Saved {fileName}",
+  "@settingsExportSuccess": {
+    "placeholders": {
+      "fileName": { "type": "String" }
+    }
+  },
   "settingsExportFailed": "Export failed: {error}",
   "@settingsExportFailed": {
     "placeholders": {
@@ -285,9 +290,8 @@
   "settingsThemeLight": "Light",
   "settingsThemeDark": "Dark",
   "settingsThemeAuto": "Auto",
-  "settingsCarryOver": "Carry over unused budget",
+  "settingsCarryOver": "Carry Over Unused Budget",
   "settingsCarryOverDesc": "Surplus rolls into the next month",
-  "settingsDefaultBudgetApplied": "Applied automatically when no budget has been set for the current month.",
   "settingsJustNow": "Just now",
   "settingsMinutesAgo": "{minutes}m ago",
   "@settingsMinutesAgo": {
@@ -474,8 +478,8 @@
   "consentDataBody": "Transactions and budgets are stored locally in SQLite. We have no servers and cannot access your financial data.",
   "consentBackupTitle": "Optional cloud backup",
   "consentBackupBody": "You can connect Google Drive to back up your data. It goes to your own Drive folder — we never see it.",
-  "consentReadPolicy": "Read full policy",
-  "consentAccept": "Accept & Continue",
+  "consentReadPolicy": "Read Policy",
+  "consentAccept": "Accept",
 
   "smsOptInTitle": "SMS Auto Import",
   "smsOptInBody": "FELOOSY can read bank SMS messages and create transactions automatically. Messages are matched locally — never stored as text or shared.",

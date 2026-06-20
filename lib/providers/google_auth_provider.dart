@@ -4,7 +4,10 @@ import 'package:google_sign_in/google_sign_in.dart';
 const kDriveAppDataScope = 'https://www.googleapis.com/auth/drive.appdata';
 
 class GoogleAccountNotifier extends Notifier<GoogleSignInAccount?> {
-  static final _init = GoogleSignIn.instance.initialize();
+  static final _init = GoogleSignIn.instance.initialize(
+    serverClientId:
+        '623272973124-mnu6801i3rlbls311al4490cntfn80q1.apps.googleusercontent.com',
+  );
 
   @override
   GoogleSignInAccount? build() {
@@ -13,10 +16,14 @@ class GoogleAccountNotifier extends Notifier<GoogleSignInAccount?> {
   }
 
   Future<void> _restoreSession() async {
-    await _init;
-    final account =
-        await GoogleSignIn.instance.attemptLightweightAuthentication();
-    if (account != null) state = account;
+    try {
+      await _init;
+      final account =
+          await GoogleSignIn.instance.attemptLightweightAuthentication();
+      if (account != null) state = account;
+    } catch (_) {
+      // Sign-in unavailable (e.g. missing Play Services on emulator).
+    }
   }
 
   Future<void> signIn() async {

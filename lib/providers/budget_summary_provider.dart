@@ -30,7 +30,7 @@ final budgetSummaryProvider = FutureProvider<BudgetSummary>((ref) async {
   final budget = await ref.watch(currentBudgetProvider.future);
   final account = ref.watch(activeAccountProvider);
   final budgetAmount =
-      budget?.amount ?? account?.defaultMonthlyBudget ?? settings.defaultMonthlyBudget;
+      budget?.amount ?? account?.defaultMonthlyBudget ?? 0;
 
   final txRepo = ref.read(transactionRepositoryProvider);
   final budgetRepo = ref.read(budgetRepositoryProvider);

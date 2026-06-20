@@ -345,9 +345,6 @@ class AppLocalizationsAr extends AppLocalizations {
       'الأيام 29-31 غير متاحة لضمان التوافق مع فبراير.';
 
   @override
-  String get settingsDefaultMonthlyBudget => 'الميزانية الشهرية الافتراضية';
-
-  @override
   String get settingsNotSet => 'غير محددة';
 
   @override
@@ -409,10 +406,13 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String get settingsGoogleSignIn => 'تسجيل الدخول بجوجل';
+
+  @override
   String get settingsBackupToDrive => 'نسخ احتياطي إلى Google Drive';
 
   @override
-  String get settingsSignInForBackup => 'سجّل الدخول لتفعيل النسخ الاحتياطي';
+  String get settingsSignInForBackup => 'سجّل الدخول للنسخ الاحتياطي السحابي';
 
   @override
   String settingsLastBackup(String time) {
@@ -421,9 +421,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get settingsNoBackupYet => 'لا توجد نسخة احتياطية بعد';
-
-  @override
-  String get settingsBackupNow => 'نسخ احتياطي الآن';
 
   @override
   String get settingsRestoreFromDrive => 'استعادة من Drive';
@@ -492,6 +489,11 @@ class AppLocalizationsAr extends AppLocalizations {
       'استبدال البيانات المحلية بنسخة احتياطية مُصدَّرة';
 
   @override
+  String settingsExportSuccess(String fileName) {
+    return 'تم حفظ $fileName';
+  }
+
+  @override
   String settingsExportFailed(String error) {
     return 'فشل التصدير: $error';
   }
@@ -543,10 +545,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get settingsCarryOverDesc => 'يُضاف الفائض إلى الشهر التالي';
-
-  @override
-  String get settingsDefaultBudgetApplied =>
-      'يُطبَّق تلقائياً عندما لا تُحدَّد ميزانية للشهر الحالي.';
 
   @override
   String get settingsJustNow => 'الآن';

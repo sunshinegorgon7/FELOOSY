@@ -118,14 +118,6 @@ class _SettingsBody extends ConsumerWidget {
             style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
           ),
         ),
-        _SettingsRow(
-          title: l10n.settingsDefaultMonthlyBudget,
-          value: settings.defaultMonthlyBudget > 0
-              ? '${settings.currencySymbol} ${settings.defaultMonthlyBudget.toStringAsFixed(2)}'
-              : l10n.settingsNotSet,
-          onTap: () => _showDefaultBudgetDialog(context, ref, settings),
-        ),
-
         _SectionHeader(l10n.categories),
         _SettingsRow(
           title: l10n.settingsManageCategories,
@@ -253,71 +245,6 @@ class _SettingsBody extends ConsumerWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  void _showDefaultBudgetDialog(
-      BuildContext context, WidgetRef ref, AppSettings settings) {
-    final ctrl = TextEditingController(
-      text: settings.defaultMonthlyBudget > 0
-          ? settings.defaultMonthlyBudget.toStringAsFixed(2)
-          : '',
-    );
-    final l10n = context.l10n;
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.settingsDefaultMonthlyBudget),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.settingsDefaultBudgetApplied,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: ctrl,
-              autofocus: true,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[\d.]')),
-              ],
-              decoration: InputDecoration(
-                hintText: '0.00',
-                prefixText: '${settings.currencySymbol}  ',
-                border: const OutlineInputBorder(),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(l10n.cancel),
-          ),
-          if (settings.defaultMonthlyBudget > 0)
-            TextButton(
-              onPressed: () {
-                _save(ref, settings.copyWith(defaultMonthlyBudget: 0));
-                Navigator.pop(ctx);
-              },
-              child: Text(l10n.clear),
-            ),
-          FilledButton(
-            onPressed: () {
-              final amount =
-                  double.tryParse(ctrl.text.replaceAll(',', '')) ?? 0;
-              _save(ref, settings.copyWith(defaultMonthlyBudget: amount));
-              Navigator.pop(ctx);
-            },
-            child: Text(l10n.save),
-          ),
-        ],
       ),
     );
   }
@@ -590,11 +517,8 @@ class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
       final result = await ref.read(googleDriveBackupProvider).backup();
       if (mounted) {
         switch (result) {
-          case BackupCreated():
-            final t =
-                await ref.read(googleDriveBackupProvider).lastBackupTime();
-            if (!mounted) break;
-            setState(() => _lastBackupTime = t);
+          case BackupCreated(:final createdAt):
+            setState(() => _lastBackupTime = createdAt);
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text(context.l10n.settingsBackupSaved)),
@@ -740,7 +664,7 @@ class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
           ...backups.map(
             (b) => SimpleDialogOption(
               onPressed: () => Navigator.pop(ctx, b.id),
-              child: Text(_formatBackupTime(b.modifiedTime)),
+              child: Text(_formatBackupTimestamp(b.modifiedTime)),
             ),
           ),
           SimpleDialogOption(
@@ -753,6 +677,17 @@ class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
         ],
       ),
     );
+  }
+
+  String _formatBackupTimestamp(DateTime dt) {
+    final local = dt.toLocal();
+    final day = local.day.toString().padLeft(2, '0');
+    final month = local.month.toString().padLeft(2, '0');
+    final year = local.year;
+    final hour = local.hour % 12 == 0 ? 12 : local.hour % 12;
+    final min = local.minute.toString().padLeft(2, '0');
+    final amPm = local.hour < 12 ? 'AM' : 'PM';
+    return '$day/$month/$year, $hour:$min $amPm';
   }
 
   String _formatBackupTime(DateTime dt) {
@@ -773,8 +708,7 @@ class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
 
     if (account == null) {
       return _SettingsRow(
-        title: context.l10n.settingsBackupToDrive,
-        subtitle: context.l10n.settingsSignInForBackup,
+        title: context.l10n.settingsGoogleSignIn,
         busy: _signingIn,
         onTap: anyBusy
             ? null
@@ -859,14 +793,13 @@ class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
           ),
         ),
         _SettingsRow(
-          title: context.l10n.settingsBackupNow,
+          title: context.l10n.settingsBackupToDrive,
           value: lastBackupLabel,
           busy: _backingUp,
           onTap: anyBusy ? null : _backup,
         ),
         _SettingsRow(
           title: context.l10n.settingsRestoreFromDrive,
-          subtitle: context.l10n.settingsRestoreFromDriveDesc,
           busy: _restoring || _loadingBackups,
           onTap: anyBusy ? null : _restore,
         ),
@@ -906,7 +839,12 @@ class _LocalBackupTileState extends ConsumerState<_LocalBackupTile> {
   Future<void> _export() async {
     setState(() => _exporting = true);
     try {
-      await _svc.export();
+      final savedName = await _svc.export();
+      if (mounted && savedName != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.settingsExportSuccess(savedName))),
+        );
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -924,7 +862,7 @@ class _LocalBackupTileState extends ConsumerState<_LocalBackupTile> {
   Future<void> _pickAndImport() async {
     final result = await FilePicker.pickFiles(
       type: FileType.custom,
-      allowedExtensions: ['json'],
+      allowedExtensions: ['feloosybkp', 'json'],
       allowMultiple: false,
     );
     if (result == null || result.files.single.path == null) return;
@@ -1000,12 +938,14 @@ class _LocalBackupTileState extends ConsumerState<_LocalBackupTile> {
 
   @override
   Widget build(BuildContext context) {
+    final signedIn = ref.watch(googleAccountProvider) != null;
+    if (signedIn) return const SizedBox.shrink();
+
     final busy = _exporting || _importing;
     return Column(
       children: [
         _SettingsRow(
           title: context.l10n.settingsExportBackup,
-          subtitle: context.l10n.settingsExportBackupDesc,
           busy: _exporting,
           onTap: busy
               ? null
@@ -1019,7 +959,6 @@ class _LocalBackupTileState extends ConsumerState<_LocalBackupTile> {
         ),
         _SettingsRow(
           title: context.l10n.settingsRestoreFromFile,
-          subtitle: context.l10n.settingsRestoreFromFileDesc,
           busy: _importing,
           onTap: busy ? null : _pickAndImport,
         ),

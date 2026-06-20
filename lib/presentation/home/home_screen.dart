@@ -132,7 +132,6 @@ class _ConsentFlowState extends State<_ConsentFlow> {
             ),
             const SizedBox(width: 12),
             Expanded(
-              flex: 2,
               child: FilledButton(
                 onPressed: () {
                   if (Platform.isAndroid) {
@@ -640,9 +639,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ref.invalidate(transactionPeriodOffsetsProvider);
               },
               child: summaryAsync.when(
+                skipLoadingOnReload: true,
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (e, _) => Center(child: Text('Error: $e')),
                 data: (summary) => txAsync.when(
+                  skipLoadingOnReload: true,
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
                   error: (e, _) =>
@@ -711,10 +712,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           result,
           _ConsentFlow(
             onComplete: (smsEnabled) {
-              ref.read(settingsProvider.notifier).acceptPrivacy();
-              if (smsEnabled) {
-                ref.read(settingsProvider.notifier).setSmsOptIn(true);
-              }
+              ref.read(settingsProvider.notifier).acceptPrivacy(smsOptIn: smsEnabled);
             },
             onViewPolicy: () => context.push('/settings/privacy'),
           ),
@@ -1391,6 +1389,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               'Change currency, manage accounts, customise categories, set up SMS auto-creation rules, and back up your data from here.',
           spotlightKey: _settingsIconKey,
           padding: 18,
+          onAdvance: () => _openSettings(context),
         ),
         const TutorialStep(
           title: 'You\'re all set!',

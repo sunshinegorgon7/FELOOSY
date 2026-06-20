@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:home_widget/home_widget.dart';
 
 import '../app/app_theme.dart';
+import '../core/constants/default_categories.dart';
 import '../data/models/transaction.dart';
 import '../providers/accounts_provider.dart';
 import '../providers/budget_period_provider.dart';
@@ -66,9 +67,12 @@ Future<void> _sync(WidgetRef ref) async {
   final available = monthlyBudget + incomeThisMonth - spentThisMonth;
 
   // --- Bar/legend: this month's expenses by category ---
+  // Exclude carry-over from the visual breakdown — its effect is already
+  // baked into the available-to-spend number above.
   final Map<String, double> byCategory = {};
   for (final tx in monthTxs) {
-    if (tx.type == TransactionType.expense) {
+    if (tx.type == TransactionType.expense &&
+        tx.categoryUuid != kCarryOverCategoryUuid) {
       byCategory[tx.categoryUuid] =
           (byCategory[tx.categoryUuid] ?? 0) + tx.amount;
     }

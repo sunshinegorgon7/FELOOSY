@@ -695,7 +695,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsMonthStartsOn.
   ///
   /// In en, this message translates to:
-  /// **'Month starts on'**
+  /// **'Month Starts On'**
   String get settingsMonthStartsOn;
 
   /// No description provided for @settingsMonthStartDay.
@@ -710,22 +710,16 @@ abstract class AppLocalizations {
   /// **'Days 29–31 unavailable to ensure February compatibility.'**
   String get settingsDaysFebNote;
 
-  /// No description provided for @settingsDefaultMonthlyBudget.
-  ///
-  /// In en, this message translates to:
-  /// **'Default monthly budget'**
-  String get settingsDefaultMonthlyBudget;
-
   /// No description provided for @settingsNotSet.
   ///
   /// In en, this message translates to:
-  /// **'Not set'**
+  /// **'Not Set'**
   String get settingsNotSet;
 
   /// No description provided for @settingsManageCategories.
   ///
   /// In en, this message translates to:
-  /// **'Manage categories'**
+  /// **'Manage Categories'**
   String get settingsManageCategories;
 
   /// No description provided for @settingsWallets.
@@ -737,7 +731,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsManageWallets.
   ///
   /// In en, this message translates to:
-  /// **'Manage wallets'**
+  /// **'Manage Wallets'**
   String get settingsManageWallets;
 
   /// No description provided for @settingsAutomations.
@@ -779,7 +773,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsResetApp.
   ///
   /// In en, this message translates to:
-  /// **'Reset app'**
+  /// **'Reset App'**
   String get settingsResetApp;
 
   /// No description provided for @settingsResetAppDesc.
@@ -797,7 +791,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsMonthStartOnDay.
   ///
   /// In en, this message translates to:
-  /// **'Month starts on day…'**
+  /// **'Month Starts On Day…'**
   String get settingsMonthStartOnDay;
 
   /// No description provided for @settingsResetTitle.
@@ -830,16 +824,22 @@ abstract class AppLocalizations {
   /// **'Changing from day {from} to day {to} will shift the period boundaries for all months. Existing transactions stay as-is.'**
   String settingsChangeStartDayMessage(int from, int to);
 
+  /// No description provided for @settingsGoogleSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Sign-In'**
+  String get settingsGoogleSignIn;
+
   /// No description provided for @settingsBackupToDrive.
   ///
   /// In en, this message translates to:
-  /// **'Back up to Google Drive'**
+  /// **'Backup to Google Drive'**
   String get settingsBackupToDrive;
 
   /// No description provided for @settingsSignInForBackup.
   ///
   /// In en, this message translates to:
-  /// **'Sign in to enable backup'**
+  /// **'Sign in to back up to the cloud'**
   String get settingsSignInForBackup;
 
   /// No description provided for @settingsLastBackup.
@@ -851,19 +851,13 @@ abstract class AppLocalizations {
   /// No description provided for @settingsNoBackupYet.
   ///
   /// In en, this message translates to:
-  /// **'No backup yet'**
+  /// **'No Backup Yet'**
   String get settingsNoBackupYet;
-
-  /// No description provided for @settingsBackupNow.
-  ///
-  /// In en, this message translates to:
-  /// **'Back up now'**
-  String get settingsBackupNow;
 
   /// No description provided for @settingsRestoreFromDrive.
   ///
   /// In en, this message translates to:
-  /// **'Restore from Drive'**
+  /// **'Restore From Drive'**
   String get settingsRestoreFromDrive;
 
   /// No description provided for @settingsRestoreFromDriveDesc.
@@ -875,7 +869,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsSignOut.
   ///
   /// In en, this message translates to:
-  /// **'Sign out'**
+  /// **'Sign Out'**
   String get settingsSignOut;
 
   /// No description provided for @settingsBackupSaved.
@@ -941,13 +935,13 @@ abstract class AppLocalizations {
   /// No description provided for @settingsSelectBackup.
   ///
   /// In en, this message translates to:
-  /// **'Select backup to restore'**
+  /// **'Select Backup to Restore'**
   String get settingsSelectBackup;
 
   /// No description provided for @settingsExportBackup.
   ///
   /// In en, this message translates to:
-  /// **'Export backup'**
+  /// **'Export Backup'**
   String get settingsExportBackup;
 
   /// No description provided for @settingsExportBackupDesc.
@@ -959,7 +953,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsRestoreFromFile.
   ///
   /// In en, this message translates to:
-  /// **'Restore from file'**
+  /// **'Restore From File'**
   String get settingsRestoreFromFile;
 
   /// No description provided for @settingsRestoreFromFileDesc.
@@ -967,6 +961,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Replace local data with an exported backup'**
   String get settingsRestoreFromFileDesc;
+
+  /// No description provided for @settingsExportSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved {fileName}'**
+  String settingsExportSuccess(String fileName);
 
   /// No description provided for @settingsExportFailed.
   ///
@@ -1043,7 +1043,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsCarryOver.
   ///
   /// In en, this message translates to:
-  /// **'Carry over unused budget'**
+  /// **'Carry Over Unused Budget'**
   String get settingsCarryOver;
 
   /// No description provided for @settingsCarryOverDesc.
@@ -1051,12 +1051,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Surplus rolls into the next month'**
   String get settingsCarryOverDesc;
-
-  /// No description provided for @settingsDefaultBudgetApplied.
-  ///
-  /// In en, this message translates to:
-  /// **'Applied automatically when no budget has been set for the current month.'**
-  String get settingsDefaultBudgetApplied;
 
   /// No description provided for @settingsJustNow.
   ///
@@ -1733,13 +1727,13 @@ abstract class AppLocalizations {
   /// No description provided for @consentReadPolicy.
   ///
   /// In en, this message translates to:
-  /// **'Read full policy'**
+  /// **'Read Policy'**
   String get consentReadPolicy;
 
   /// No description provided for @consentAccept.
   ///
   /// In en, this message translates to:
-  /// **'Accept & Continue'**
+  /// **'Accept'**
   String get consentAccept;
 
   /// No description provided for @smsOptInTitle.

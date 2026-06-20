@@ -8,12 +8,14 @@ class TutorialStep {
   final String body;
   final GlobalKey? spotlightKey;
   final double padding;
+  final VoidCallback? onAdvance;
 
   const TutorialStep({
     required this.title,
     required this.body,
     this.spotlightKey,
     this.padding = 14,
+    this.onAdvance,
   });
 }
 
@@ -34,36 +36,42 @@ class TutorialOverlay extends StatefulWidget {
 class _TutorialOverlayState extends State<TutorialOverlay>
     with SingleTickerProviderStateMixin {
   int _step = 0;
-  late AnimationController _ctrl;
-  late Animation<double> _fade;
+  late AnimationController _entranceCtrl;
+  late Animation<double> _entranceFade;
+
+  Rect? _currentSpotlight;
+  Rect? _previousSpotlight;
 
   @override
   void initState() {
     super.initState();
-    _ctrl = AnimationController(
-      duration: const Duration(milliseconds: 300),
+    _entranceCtrl = AnimationController(
+      duration: const Duration(milliseconds: 400),
       vsync: this,
     );
-    _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut);
-    _ctrl.forward();
+    _entranceFade = CurvedAnimation(
+      parent: _entranceCtrl,
+      curve: Curves.easeInOutCubic,
+    );
+    _entranceCtrl.forward();
   }
 
   @override
   void dispose() {
-    _ctrl.dispose();
+    _entranceCtrl.dispose();
     super.dispose();
   }
 
   void _advance() {
+    final current = widget.steps[_step];
+    current.onAdvance?.call();
+
     if (_step >= widget.steps.length - 1) {
       widget.onComplete();
       return;
     }
-    _ctrl.reverse().then((_) {
-      if (!mounted) return;
-      setState(() => _step++);
-      _ctrl.forward();
-    });
+    _previousSpotlight = _currentSpotlight;
+    setState(() => _step++);
   }
 
   Rect? _spotlightRect(GlobalKey key, double padding) {
@@ -83,38 +91,30 @@ class _TutorialOverlayState extends State<TutorialOverlay>
   @override
   Widget build(BuildContext context) {
     final step = widget.steps[_step];
-    final rect = step.spotlightKey != null
+    final targetRect = step.spotlightKey != null
         ? _spotlightRect(step.spotlightKey!, step.padding)
         : null;
+    _currentSpotlight = targetRect;
     final isLast = _step == widget.steps.length - 1;
     final size = MediaQuery.sizeOf(context);
     final safePad = MediaQuery.paddingOf(context);
 
     return FadeTransition(
-      opacity: _fade,
+      opacity: _entranceFade,
       child: Stack(
         children: [
-          // Dark overlay with optional spotlight cutout
+          // Dark overlay with animated spotlight cutout
           Positioned.fill(
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: _advance,
-              child: CustomPaint(
-                painter: _SpotlightPainter(rect: rect),
-              ),
-            ),
-          ),
-
-          // Step counter (top-left)
-          Positioned(
-            top: safePad.top + 14,
-            left: 20,
-            child: Text(
-              context.l10n.tutorialStepOf(_step + 1, widget.steps.length),
-              style: TextStyle(
-                color: AppTheme.mintMist.withValues(alpha: 0.60),
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
+              child: TweenAnimationBuilder<Rect?>(
+                tween: _RectTween(begin: _previousSpotlight, end: targetRect),
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.easeInOutCubic,
+                builder: (context, rect, _) => CustomPaint(
+                  painter: _SpotlightPainter(rect: rect),
+                ),
               ),
             ),
           ),
@@ -135,22 +135,56 @@ class _TutorialOverlayState extends State<TutorialOverlay>
             ),
           ),
 
-          // Tooltip card
+          // Tooltip card with crossfade + slide
           _TooltipPositioned(
-            rect: rect,
+            rect: targetRect,
             screenSize: size,
             safePad: safePad,
-            child: _StepCard(
-              step: step,
-              isLast: isLast,
-              stepIndex: _step,
-              totalSteps: widget.steps.length,
-              onNext: _advance,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 400),
+              switchInCurve: Curves.easeInOutCubic,
+              switchOutCurve: Curves.easeInOutCubic,
+              transitionBuilder: (child, animation) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(0, 0.06),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: child,
+                  ),
+                );
+              },
+              child: _StepCard(
+                key: ValueKey(_step),
+                step: step,
+                isLast: isLast,
+                stepIndex: _step,
+                totalSteps: widget.steps.length,
+                onNext: _advance,
+              ),
             ),
           ),
         ],
       ),
     );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Nullable Rect tween for smooth spotlight interpolation
+// ---------------------------------------------------------------------------
+
+class _RectTween extends Tween<Rect?> {
+  _RectTween({super.begin, super.end});
+
+  @override
+  Rect? lerp(double t) {
+    if (begin == null && end == null) return null;
+    if (begin == null) return end;
+    if (end == null) return begin;
+    return Rect.lerp(begin, end, t);
   }
 }
 
@@ -219,6 +253,7 @@ class _StepCard extends StatelessWidget {
   final VoidCallback onNext;
 
   const _StepCard({
+    super.key,
     required this.step,
     required this.isLast,
     required this.stepIndex,

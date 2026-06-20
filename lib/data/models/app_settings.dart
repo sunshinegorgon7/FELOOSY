@@ -7,7 +7,6 @@ class AppSettings {
   final String themeMode;
   final int? favoriteAccountId;
   final bool googleBackupEnabled;
-  final double defaultMonthlyBudget;
   final DateTime? lastBackupAt;
   final DateTime updatedAt;
   final bool tutorialCompleted;
@@ -26,7 +25,6 @@ class AppSettings {
     this.themeMode = 'system',
     this.favoriteAccountId,
     this.googleBackupEnabled = false,
-    this.defaultMonthlyBudget = 0,
     this.lastBackupAt,
     required this.updatedAt,
     this.tutorialCompleted = false,
@@ -46,7 +44,6 @@ class AppSettings {
     String? themeMode,
     int? favoriteAccountId,
     bool? googleBackupEnabled,
-    double? defaultMonthlyBudget,
     DateTime? lastBackupAt,
     bool? tutorialCompleted,
     DateTime? privacyAcceptedAt,
@@ -64,7 +61,6 @@ class AppSettings {
       themeMode: themeMode ?? this.themeMode,
       favoriteAccountId: favoriteAccountId ?? this.favoriteAccountId,
       googleBackupEnabled: googleBackupEnabled ?? this.googleBackupEnabled,
-      defaultMonthlyBudget: defaultMonthlyBudget ?? this.defaultMonthlyBudget,
       lastBackupAt: lastBackupAt ?? this.lastBackupAt,
       updatedAt: DateTime.now(),
       tutorialCompleted: tutorialCompleted ?? this.tutorialCompleted,
@@ -85,8 +81,6 @@ class AppSettings {
       themeMode: map['theme_mode'] as String,
       favoriteAccountId: map['favorite_account_id'] as int?,
       googleBackupEnabled: (map['google_backup_enabled'] as int) == 1,
-      defaultMonthlyBudget:
-          (map['default_monthly_budget'] as num?)?.toDouble() ?? 0,
       lastBackupAt: map['last_backup_at'] != null
           ? DateTime.fromMillisecondsSinceEpoch(map['last_backup_at'] as int)
           : null,
@@ -113,7 +107,6 @@ class AppSettings {
       'theme_mode': themeMode,
       'favorite_account_id': favoriteAccountId,
       'google_backup_enabled': googleBackupEnabled ? 1 : 0,
-      'default_monthly_budget': defaultMonthlyBudget,
       'last_backup_at': lastBackupAt?.millisecondsSinceEpoch,
       'updated_at': updatedAt.millisecondsSinceEpoch,
       'tutorial_completed': tutorialCompleted ? 1 : 0,

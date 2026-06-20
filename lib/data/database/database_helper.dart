@@ -629,8 +629,7 @@ class DatabaseHelper {
       'currency_code': defaults.currencyCode,
       'currency_symbol': defaults.currencySymbol,
       'currency_symbol_leading': defaults.currencySymbolLeading ? 1 : 0,
-      'default_monthly_budget':
-          defaults.defaultMonthlyBudget > 0 ? defaults.defaultMonthlyBudget : null,
+      'default_monthly_budget': null,
       'is_favorite': 1,
       'created_at': now,
       'updated_at': now,
@@ -664,9 +663,7 @@ class DatabaseHelper {
         'currency_code': defaults.currencyCode,
         'currency_symbol': defaults.currencySymbol,
         'currency_symbol_leading': defaults.currencySymbolLeading ? 1 : 0,
-        'default_monthly_budget': defaults.defaultMonthlyBudget > 0
-            ? defaults.defaultMonthlyBudget
-            : null,
+        'default_monthly_budget': null,
         'is_favorite': 1,
         'created_at': now,
         'updated_at': now,

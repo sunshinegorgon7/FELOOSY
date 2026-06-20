@@ -58,7 +58,7 @@ class CarryOverService {
     final prevBudgetAmount =
         prevBudget?.amount ??
         account.defaultMonthlyBudget ??
-        settings.defaultMonthlyBudget;
+        0;
 
     if (prevBudgetAmount <= 0) return false;
 

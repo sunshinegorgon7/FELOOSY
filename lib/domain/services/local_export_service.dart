@@ -1,10 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart' show ShareParams, SharePlus, XFile;
 import 'package:sqflite/sqflite.dart' hide Transaction;
 
 import '../../core/utils/backup_encryption.dart';
@@ -27,7 +26,7 @@ class LocalExportService {
 
   // ── Export ───────────────────────────────────────────────────────────────
 
-  Future<void> export() async {
+  Future<String?> export() async {
     final db = await _db.database;
     final payload = <String, dynamic>{
       'feloosy_backup': true,
@@ -40,17 +39,20 @@ class LocalExportService {
     };
 
     final encrypted = await BackupEncryption.encrypt(utf8.encode(jsonEncode(payload)));
-    final dir = await getTemporaryDirectory();
     final ts = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
-    final file = File(p.join(dir.path, 'feloosy_$ts.feloosybkp'));
-    await file.writeAsBytes(encrypted, flush: true);
+    final fileName = 'feloosy_$ts.feloosybkp';
 
-    await SharePlus.instance.share(
-      ShareParams(
-        files: [XFile(file.path, mimeType: 'application/octet-stream')],
-        subject: 'FELOOSY backup',
-      ),
+    final savedPath = await FilePicker.saveFile(
+      dialogTitle: 'Save FELOOSY Backup',
+      fileName: fileName,
+      type: FileType.custom,
+      allowedExtensions: ['feloosybkp'],
+      bytes: Uint8List.fromList(encrypted),
     );
+
+    if (savedPath == null) return null;
+
+    return fileName;
   }
 
   // ── Import ───────────────────────────────────────────────────────────────

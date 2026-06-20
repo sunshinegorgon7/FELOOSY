@@ -1,18 +1,87 @@
 [
   {
     "eventType": "VIEW_CLICKED",
-    "elementDescriptors": [
-      {
-        "text": "Accept & Continue"
-      }
-    ]
+    "elementDescriptors": [{ "text": "Accept" }],
+    "delayTime": 5000
   },
   {
     "eventType": "VIEW_CLICKED",
-    "elementDescriptors": [
-      {
-        "text": "Skip"
-      }
-    ]
+    "elementDescriptors": [{ "text": "Skip" }],
+    "delayTime": 2500
+  },
+  {
+    "eventType": "TAKE_SCREENSHOT",
+    "screenshotName": "tutorial_01_welcome",
+    "delayTime": 2000
+  },
+  {
+    "eventType": "VIEW_CLICKED",
+    "elementDescriptors": [{ "text": "Next" }],
+    "delayTime": 800
+  },
+  {
+    "eventType": "TAKE_SCREENSHOT",
+    "screenshotName": "tutorial_02_budget",
+    "delayTime": 800
+  },
+  {
+    "eventType": "VIEW_CLICKED",
+    "elementDescriptors": [{ "text": "Next" }],
+    "delayTime": 800
+  },
+  {
+    "eventType": "TAKE_SCREENSHOT",
+    "screenshotName": "tutorial_03_carryover",
+    "delayTime": 800
+  },
+  {
+    "eventType": "VIEW_CLICKED",
+    "elementDescriptors": [{ "text": "Next" }],
+    "delayTime": 800
+  },
+  {
+    "eventType": "TAKE_SCREENSHOT",
+    "screenshotName": "tutorial_04_add_transaction",
+    "delayTime": 800
+  },
+  {
+    "eventType": "VIEW_CLICKED",
+    "elementDescriptors": [{ "text": "Next" }],
+    "delayTime": 800
+  },
+  {
+    "eventType": "TAKE_SCREENSHOT",
+    "screenshotName": "tutorial_05_browse_months",
+    "delayTime": 800
+  },
+  {
+    "eventType": "VIEW_CLICKED",
+    "elementDescriptors": [{ "text": "Next" }],
+    "delayTime": 800
+  },
+  {
+    "eventType": "TAKE_SCREENSHOT",
+    "screenshotName": "tutorial_06_settings",
+    "delayTime": 800
+  },
+  {
+    "eventType": "VIEW_CLICKED",
+    "elementDescriptors": [{ "text": "Next" }],
+    "delayTime": 800
+  },
+  {
+    "eventType": "TAKE_SCREENSHOT",
+    "screenshotName": "tutorial_07_done",
+    "delayTime": 800
+  },
+  {
+    "eventType": "VIEW_CLICKED",
+    "elementDescriptors": [{ "text": "Get Started" }],
+    "delayTime": 500
+  },
+  {
+    "eventType": "TAKE_SCREENSHOT",
+    "screenshotName": "home_screen",
+    "delayTime": 2000
   }
 ]

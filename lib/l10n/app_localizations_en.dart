@@ -334,7 +334,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAppearance => 'Appearance';
 
   @override
-  String get settingsMonthStartsOn => 'Month starts on';
+  String get settingsMonthStartsOn => 'Month Starts On';
 
   @override
   String settingsMonthStartDay(int day, String ordinal) {
@@ -346,19 +346,16 @@ class AppLocalizationsEn extends AppLocalizations {
       'Days 29–31 unavailable to ensure February compatibility.';
 
   @override
-  String get settingsDefaultMonthlyBudget => 'Default monthly budget';
+  String get settingsNotSet => 'Not Set';
 
   @override
-  String get settingsNotSet => 'Not set';
-
-  @override
-  String get settingsManageCategories => 'Manage categories';
+  String get settingsManageCategories => 'Manage Categories';
 
   @override
   String get settingsWallets => 'Wallets';
 
   @override
-  String get settingsManageWallets => 'Manage wallets';
+  String get settingsManageWallets => 'Manage Wallets';
 
   @override
   String get settingsAutomations => 'Automations';
@@ -379,7 +376,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsDangerZone => 'Danger Zone';
 
   @override
-  String get settingsResetApp => 'Reset app';
+  String get settingsResetApp => 'Reset App';
 
   @override
   String get settingsResetAppDesc =>
@@ -389,7 +386,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsSelectCurrency => 'Select Currency';
 
   @override
-  String get settingsMonthStartOnDay => 'Month starts on day…';
+  String get settingsMonthStartOnDay => 'Month Starts On Day…';
 
   @override
   String get settingsResetTitle => 'Reset app?';
@@ -410,10 +407,13 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get settingsBackupToDrive => 'Back up to Google Drive';
+  String get settingsGoogleSignIn => 'Google Sign-In';
 
   @override
-  String get settingsSignInForBackup => 'Sign in to enable backup';
+  String get settingsBackupToDrive => 'Backup to Google Drive';
+
+  @override
+  String get settingsSignInForBackup => 'Sign in to back up to the cloud';
 
   @override
   String settingsLastBackup(String time) {
@@ -421,20 +421,17 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get settingsNoBackupYet => 'No backup yet';
+  String get settingsNoBackupYet => 'No Backup Yet';
 
   @override
-  String get settingsBackupNow => 'Back up now';
-
-  @override
-  String get settingsRestoreFromDrive => 'Restore from Drive';
+  String get settingsRestoreFromDrive => 'Restore From Drive';
 
   @override
   String get settingsRestoreFromDriveDesc =>
       'Replace local data with Drive backup';
 
   @override
-  String get settingsSignOut => 'Sign out';
+  String get settingsSignOut => 'Sign Out';
 
   @override
   String get settingsBackupSaved => 'Backup saved to Google Drive.';
@@ -475,20 +472,25 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get settingsSelectBackup => 'Select backup to restore';
+  String get settingsSelectBackup => 'Select Backup to Restore';
 
   @override
-  String get settingsExportBackup => 'Export backup';
+  String get settingsExportBackup => 'Export Backup';
 
   @override
   String get settingsExportBackupDesc => 'Save all data as a JSON file';
 
   @override
-  String get settingsRestoreFromFile => 'Restore from file';
+  String get settingsRestoreFromFile => 'Restore From File';
 
   @override
   String get settingsRestoreFromFileDesc =>
       'Replace local data with an exported backup';
+
+  @override
+  String settingsExportSuccess(String fileName) {
+    return 'Saved $fileName';
+  }
 
   @override
   String settingsExportFailed(String error) {
@@ -538,14 +540,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsThemeAuto => 'Auto';
 
   @override
-  String get settingsCarryOver => 'Carry over unused budget';
+  String get settingsCarryOver => 'Carry Over Unused Budget';
 
   @override
   String get settingsCarryOverDesc => 'Surplus rolls into the next month';
-
-  @override
-  String get settingsDefaultBudgetApplied =>
-      'Applied automatically when no budget has been set for the current month.';
 
   @override
   String get settingsJustNow => 'Just now';
@@ -931,10 +929,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'You can connect Google Drive to back up your data. It goes to your own Drive folder — we never see it.';
 
   @override
-  String get consentReadPolicy => 'Read full policy';
+  String get consentReadPolicy => 'Read Policy';
 
   @override
-  String get consentAccept => 'Accept & Continue';
+  String get consentAccept => 'Accept';
 
   @override
   String get smsOptInTitle => 'SMS Auto Import';
