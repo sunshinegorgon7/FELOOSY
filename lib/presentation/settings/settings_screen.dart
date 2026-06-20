@@ -146,14 +146,6 @@ class _SettingsBody extends ConsumerWidget {
           title: l10n.settingsPrivacyPolicy,
           onTap: () => context.push('/settings/privacy'),
         ),
-        _SettingsRow(
-          title: 'Replay tutorial',
-          subtitle: 'Walk through the onboarding tour again',
-          onTap: () {
-            ref.read(settingsProvider.notifier).resetTutorial();
-            if (isModal) Navigator.of(context).pop();
-          },
-        ),
 
         if (AppFlavor.isDev) ...[
           _SectionHeader(l10n.settingsDeveloperTools),
