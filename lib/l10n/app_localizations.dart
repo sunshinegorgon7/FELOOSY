@@ -701,7 +701,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsMonthStartDay.
   ///
   /// In en, this message translates to:
-  /// **'Day {day}{ordinal}'**
+  /// **'{day}{ordinal}'**
   String settingsMonthStartDay(int day, String ordinal);
 
   /// No description provided for @settingsDaysFebNote.
@@ -758,6 +758,30 @@ abstract class AppLocalizations {
   /// **'Privacy Policy'**
   String get settingsPrivacyPolicy;
 
+  /// No description provided for @settingsUpgradeToPro.
+  ///
+  /// In en, this message translates to:
+  /// **'Upgrade to Pro'**
+  String get settingsUpgradeToPro;
+
+  /// No description provided for @settingsUpgradeToProDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock all features'**
+  String get settingsUpgradeToProDesc;
+
+  /// No description provided for @settingsFeloosyPro.
+  ///
+  /// In en, this message translates to:
+  /// **'Feloosy Pro'**
+  String get settingsFeloosyPro;
+
+  /// No description provided for @settingsFeloosyProActive.
+  ///
+  /// In en, this message translates to:
+  /// **'All features unlocked'**
+  String get settingsFeloosyProActive;
+
   /// No description provided for @settingsDeveloperTools.
   ///
   /// In en, this message translates to:
@@ -791,7 +815,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsMonthStartOnDay.
   ///
   /// In en, this message translates to:
-  /// **'Month Starts On Day…'**
+  /// **'Month Starts On'**
   String get settingsMonthStartOnDay;
 
   /// No description provided for @settingsResetTitle.

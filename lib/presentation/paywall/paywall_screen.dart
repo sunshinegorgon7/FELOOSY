@@ -17,25 +17,27 @@ class PaywallScreen extends ConsumerStatefulWidget {
 }
 
 class _PaywallScreenState extends ConsumerState<PaywallScreen> {
-  String? _buyingProductId;
+  bool _buying = false;
   bool _restoring = false;
-  Map<String, String?> _prices = {};
+  String? _price;
+  late final bool _wasProOnOpen;
 
   @override
   void initState() {
     super.initState();
+    _wasProOnOpen = ref.read(accessTierProvider) == AccessTier.pro;
     _loadPrices();
   }
 
   Future<void> _loadPrices() async {
-    final p = await ref.read(purchaseProvider.notifier).fetchPrices();
-    if (mounted) setState(() => _prices = p);
+    final p = await ref.read(purchaseProvider.notifier).fetchPrice();
+    if (mounted) setState(() => _price = p);
   }
 
-  Future<void> _buy(String productId) async {
-    setState(() => _buyingProductId = productId);
+  Future<void> _buy() async {
+    setState(() => _buying = true);
     try {
-      await ref.read(purchaseProvider.notifier).buy(productId);
+      await ref.read(purchaseProvider.notifier).buy();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -44,7 +46,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
         ));
       }
     } finally {
-      if (mounted) setState(() => _buyingProductId = null);
+      if (mounted) setState(() => _buying = false);
     }
   }
 
@@ -139,9 +141,9 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
     final l10n = context.l10n;
     final isPro = ref.watch(accessTierProvider) == AccessTier.pro;
     final trial = ref.watch(trialProvider).asData?.value;
-    final busy  = _buyingProductId != null || _restoring;
+    final busy  = _buying || _restoring;
 
-    if (isPro) {
+    if (isPro && !_wasProOnOpen) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) Navigator.of(context).pop();
       });
@@ -151,8 +153,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
     final tt     = Theme.of(context).textTheme;
     final accent = AppTheme.primaryText(cs);
 
-    final monthlyPrice = _prices[kProductMonthly] ?? r'$12.99';
-    final annualPrice  = _prices[kProductAnnual]  ?? r'$100';
+    final lifetimePrice = _price ?? r'$9.99';
 
     return Scaffold(
       backgroundColor: cs.surface,
@@ -224,29 +225,30 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
               // Plans or unlocked state
               if (isPro)
                 const Center(child: _UnlockedChip())
-              else ...[
-                // Monthly plan
-                _PlanCard(
-                  label: monthlyPrice,
-                  period: '/ month',
-                  badge: null,
-                  buying: _buyingProductId == kProductMonthly,
-                  busy: busy,
-                  onTap: () => _buy(kProductMonthly),
-                  cs: cs,
+              else
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: FilledButton(
+                    onPressed: busy ? null : _buy,
+                    child: _buying
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Text(
+                            l10n.paywallUnlock(lifetimePrice),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                  ),
                 ),
-                const SizedBox(height: 10),
-                // Annual plan
-                _PlanCard(
-                  label: annualPrice,
-                  period: '/ year',
-                  badge: 'Save ~36%',
-                  buying: _buyingProductId == kProductAnnual,
-                  busy: busy,
-                  onTap: () => _buy(kProductAnnual),
-                  cs: cs,
-                ),
-              ],
 
               const SizedBox(height: 16),
 
@@ -287,120 +289,6 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                   ),
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ── Plan card ─────────────────────────────────────────────────────────────────
-
-class _PlanCard extends StatelessWidget {
-  final String label;
-  final String period;
-  final String? badge;
-  final bool buying;
-  final bool busy;
-  final VoidCallback onTap;
-  final ColorScheme cs;
-
-  const _PlanCard({
-    required this.label,
-    required this.period,
-    required this.badge,
-    required this.buying,
-    required this.busy,
-    required this.onTap,
-    required this.cs,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isBest = badge != null;
-    final borderColor = isBest ? cs.primary : cs.outlineVariant;
-    final bgColor = isBest
-        ? cs.primary.withValues(alpha: 0.07)
-        : cs.surfaceContainerHighest.withValues(alpha: 0.4);
-
-    return GestureDetector(
-      onTap: busy ? null : onTap,
-      child: AnimatedOpacity(
-        opacity: busy && !buying ? 0.5 : 1.0,
-        duration: const Duration(milliseconds: 150),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-          decoration: BoxDecoration(
-            color: bgColor,
-            border: Border.all(
-              color: borderColor,
-              width: isBest ? 1.5 : 1.0,
-            ),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          label,
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
-                            color: isBest ? cs.primary : cs.onSurface,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          period,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: cs.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (badge != null) ...[
-                      const SizedBox(height: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: cs.primary.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          badge!,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: cs.primary,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              if (buying)
-                SizedBox(
-                  width: 22, height: 22,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.5,
-                    color: isBest ? cs.primary : cs.onSurface,
-                  ),
-                )
-              else
-                Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 16,
-                  color: isBest ? cs.primary : cs.onSurfaceVariant,
-                ),
             ],
           ),
         ),

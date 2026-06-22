@@ -169,7 +169,7 @@
 
   "settingsAppearance": "Appearance",
   "settingsMonthStartsOn": "Month Starts On",
-  "settingsMonthStartDay": "Day {day}{ordinal}",
+  "settingsMonthStartDay": "{day}{ordinal}",
   "@settingsMonthStartDay": {
     "placeholders": {
       "day": { "type": "int" },
@@ -185,12 +185,16 @@
   "settingsData": "Data",
   "settingsAbout": "About",
   "settingsPrivacyPolicy": "Privacy Policy",
+  "settingsUpgradeToPro": "Upgrade to Pro",
+  "settingsUpgradeToProDesc": "Unlock all features",
+  "settingsFeloosyPro": "Feloosy Pro",
+  "settingsFeloosyProActive": "All features unlocked",
   "settingsDeveloperTools": "Developer Tools",
   "settingsDangerZone": "Danger Zone",
   "settingsResetApp": "Reset App",
   "settingsResetAppDesc": "Erase all transactions and budgets, restore defaults",
   "settingsSelectCurrency": "Select Currency",
-  "settingsMonthStartOnDay": "Month Starts On Day…",
+  "settingsMonthStartOnDay": "Month Starts On",
   "settingsResetTitle": "Reset app?",
   "settingsResetMessage": "This will permanently delete:\n  • All transactions\n  • All budgets\n  • All custom categories\n\nSettings will be restored to defaults and you will be signed out of Google. Sign in again afterwards to restore from a backup.\n\nThis cannot be undone.",
   "settingsResetConfirm": "Reset Everything",

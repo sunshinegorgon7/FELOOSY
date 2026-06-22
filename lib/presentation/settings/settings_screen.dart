@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../app/app_flavor.dart';
 import '../../app/app_theme.dart';
 import '../../core/constants/app_info.dart';
@@ -67,15 +68,7 @@ class _SettingsBody extends ConsumerWidget {
   }
 
   void _navigateCategories(BuildContext context) {
-    if (isModal) {
-      final router = GoRouter.of(context);
-      Navigator.of(context).pop();
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        router.push('/categories');
-      });
-    } else {
-      context.push('/categories');
-    }
+    context.push('/categories');
   }
 
   @override
@@ -132,8 +125,8 @@ class _SettingsBody extends ConsumerWidget {
 
         if (Platform.isAndroid) ...[
           _SectionHeader(l10n.settingsAutomations),
-          _SmsToggleTile(isModal: isModal),
-          if (settings.smsOptIn) _SmsRulesTile(isModal: isModal),
+          const _SmsToggleTile(),
+          if (settings.smsOptIn) const _SmsRulesTile(),
         ],
 
         _SectionHeader(l10n.settingsData),
@@ -146,6 +139,7 @@ class _SettingsBody extends ConsumerWidget {
           title: l10n.settingsPrivacyPolicy,
           onTap: () => context.push('/settings/privacy'),
         ),
+        if (AppFlavor.isProd) const _ProTile(),
 
         if (AppFlavor.isDev) ...[
           _SectionHeader(l10n.settingsDeveloperTools),
@@ -317,64 +311,88 @@ class _SettingsBody extends ConsumerWidget {
 
   void _showDayPicker(
       BuildContext context, WidgetRef ref, AppSettings settings) {
-    showDialog(
+    showModalBottomSheet<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(context.l10n.settingsMonthStartOnDay),
-        content: SizedBox(
-          width: 280,
-          child: GridView.builder(
-            shrinkWrap: true,
-            gridDelegate:
-                const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 7,
-              mainAxisSpacing: 4,
-              crossAxisSpacing: 4,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.45,
+        minChildSize: 0.35,
+        maxChildSize: 0.65,
+        expand: false,
+        builder: (ctx, scrollController) => Column(
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Theme.of(ctx).colorScheme.outlineVariant,
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
-            itemCount: 28,
-            itemBuilder: (context, i) {
-              final day = i + 1;
-              final isSelected = day == settings.monthStartDay;
-              return InkWell(
-                onTap: () {
-                  if (day != settings.monthStartDay) {
-                    _showDayChangeWarning(ctx, ref, settings, day);
-                  } else {
-                    Navigator.pop(ctx);
-                  }
-                },
-                borderRadius: BorderRadius.circular(20),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isSelected
-                        ? Theme.of(context).colorScheme.primary
-                        : null,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              child: Text(context.l10n.settingsMonthStartOnDay,
+                  style: Theme.of(context).textTheme.titleMedium),
+            ),
+            const Divider(height: 1),
+            Expanded(
+              child: SingleChildScrollView(
+                controller: scrollController,
+                padding: const EdgeInsets.all(16),
+                child: GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate:
+                      const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 7,
+                    mainAxisSpacing: 4,
+                    crossAxisSpacing: 4,
                   ),
-                  child: Center(
-                    child: Text(
-                      '$day',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: isSelected
-                            ? Theme.of(context).colorScheme.onPrimary
-                            : null,
-                        fontSize: 13,
+                  itemCount: 28,
+                  itemBuilder: (context, i) {
+                    final day = i + 1;
+                    final isSelected = day == settings.monthStartDay;
+                    return InkWell(
+                      onTap: () {
+                        if (day != settings.monthStartDay) {
+                          _showDayChangeWarning(ctx, ref, settings, day);
+                        } else {
+                          Navigator.pop(ctx);
+                        }
+                      },
+                      borderRadius: BorderRadius.circular(20),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isSelected
+                              ? Theme.of(context).colorScheme.primary
+                              : null,
+                        ),
+                        child: Center(
+                          child: Text(
+                            '$day',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: isSelected
+                                  ? Theme.of(context).colorScheme.onPrimary
+                                  : null,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
                 ),
-              );
-            },
-          ),
+              ),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(context.l10n.cancel),
-          ),
-        ],
       ),
     );
   }
@@ -636,15 +654,7 @@ class _DriveBackupTileState extends ConsumerState<_DriveBackupTile> {
   }
 
   void _navigateToPaywall(BuildContext context) {
-    if (widget.isModal) {
-      final router = GoRouter.of(context);
-      Navigator.of(context).pop();
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        router.push('/paywall');
-      });
-    } else {
-      context.push('/paywall');
-    }
+    context.push('/paywall');
   }
 
   Future<String?> _pickBackup(List<BackupEntry> backups) {
@@ -817,15 +827,7 @@ class _LocalBackupTileState extends ConsumerState<_LocalBackupTile> {
   final _svc = LocalExportService(DatabaseHelper.instance);
 
   void _navigateToPaywall(BuildContext context) {
-    if (widget.isModal) {
-      final router = GoRouter.of(context);
-      Navigator.of(context).pop();
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        router.push('/paywall');
-      });
-    } else {
-      context.push('/paywall');
-    }
+    context.push('/paywall');
   }
 
   Future<void> _export() async {
@@ -962,8 +964,7 @@ class _LocalBackupTileState extends ConsumerState<_LocalBackupTile> {
 // ── SMS Toggle tile ───────────────────────────────────────────────────────────
 
 class _SmsToggleTile extends ConsumerWidget {
-  final bool isModal;
-  const _SmsToggleTile({this.isModal = false});
+  const _SmsToggleTile();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -984,6 +985,10 @@ class _SmsToggleTile extends ConsumerWidget {
           );
           if (accepted == true) {
             await ref.read(settingsProvider.notifier).setSmsOptIn(true);
+            final status = await Permission.sms.request();
+            if (status.isPermanentlyDenied && context.mounted) {
+              openAppSettings();
+            }
           }
         } else {
           await ref.read(settingsProvider.notifier).setSmsOptIn(false);
@@ -1019,33 +1024,16 @@ class _SmsTermsDialog extends StatelessWidget {
 // ── SMS Rules tile ────────────────────────────────────────────────────────────
 
 class _SmsRulesTile extends ConsumerWidget {
-  final bool isModal;
-  const _SmsRulesTile({this.isModal = false});
+  const _SmsRulesTile();
 
   void _navigate(BuildContext context, WidgetRef ref) {
     final isPro =
         ref.read(purchaseProvider).asData?.value ?? AppFlavor.isDev;
     if (!isPro) {
-      if (isModal) {
-        final router = GoRouter.of(context);
-        Navigator.of(context).pop();
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          router.push('/paywall');
-        });
-      } else {
-        context.push('/paywall');
-      }
+      context.push('/paywall');
       return;
     }
-    if (isModal) {
-      final router = GoRouter.of(context);
-      Navigator.of(context).pop();
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        router.push('/sms-rules');
-      });
-    } else {
-      context.push('/sms-rules');
-    }
+    context.push('/sms-rules');
   }
 
   @override
@@ -1325,6 +1313,23 @@ class _SectionHeader extends StatelessWidget {
               letterSpacing: 0.10 * 11,
             ),
       ),
+    );
+  }
+}
+
+
+class _ProTile extends ConsumerWidget {
+  const _ProTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final isPro = ref.watch(accessTierProvider) == AccessTier.pro;
+
+    return _SettingsRow(
+      title: isPro ? l10n.settingsFeloosyPro : l10n.settingsUpgradeToPro,
+      subtitle: isPro ? l10n.settingsFeloosyProActive : l10n.settingsUpgradeToProDesc,
+      onTap: () => context.push('/paywall'),
     );
   }
 }

@@ -337,7 +337,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String settingsMonthStartDay(int day, String ordinal) {
-    return 'اليوم $day$ordinal';
+    return '$day$ordinal';
   }
 
   @override
@@ -369,6 +369,18 @@ class AppLocalizationsAr extends AppLocalizations {
   String get settingsPrivacyPolicy => 'سياسة الخصوصية';
 
   @override
+  String get settingsUpgradeToPro => 'ترقية إلى Pro';
+
+  @override
+  String get settingsUpgradeToProDesc => 'فتح جميع الميزات';
+
+  @override
+  String get settingsFeloosyPro => 'Feloosy Pro';
+
+  @override
+  String get settingsFeloosyProActive => 'جميع الميزات مفتوحة';
+
+  @override
   String get settingsDeveloperTools => 'أدوات المطور';
 
   @override
@@ -385,7 +397,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get settingsSelectCurrency => 'اختر العملة';
 
   @override
-  String get settingsMonthStartOnDay => 'يبدأ الشهر في اليوم…';
+  String get settingsMonthStartOnDay => 'يبدأ الشهر في';
 
   @override
   String get settingsResetTitle => 'إعادة ضبط التطبيق؟';
@@ -704,10 +716,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get smsRuleFormWallets => 'المحافظ';
 
   @override
-  String get smsRuleFormWalletsHelper => 'سيتم إنشاء المعاملات في جميع المحافظ المحددة.';
+  String get smsRuleFormWalletsHelper =>
+      'سيتم إنشاء المعاملات في جميع المحافظ المحددة.';
 
   @override
-  String get smsRuleFormSelectWalletError => 'الرجاء اختيار محفظة واحدة على الأقل.';
+  String get smsRuleFormSelectWalletError =>
+      'الرجاء اختيار محفظة واحدة على الأقل.';
 
   @override
   String get smsRuleFormAdvanced => 'متقدم';

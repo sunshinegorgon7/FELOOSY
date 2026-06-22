@@ -338,7 +338,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String settingsMonthStartDay(int day, String ordinal) {
-    return 'Day $day$ordinal';
+    return '$day$ordinal';
   }
 
   @override
@@ -370,6 +370,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsPrivacyPolicy => 'Privacy Policy';
 
   @override
+  String get settingsUpgradeToPro => 'Upgrade to Pro';
+
+  @override
+  String get settingsUpgradeToProDesc => 'Unlock all features';
+
+  @override
+  String get settingsFeloosyPro => 'Feloosy Pro';
+
+  @override
+  String get settingsFeloosyProActive => 'All features unlocked';
+
+  @override
   String get settingsDeveloperTools => 'Developer Tools';
 
   @override
@@ -386,7 +398,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsSelectCurrency => 'Select Currency';
 
   @override
-  String get settingsMonthStartOnDay => 'Month Starts On Day…';
+  String get settingsMonthStartOnDay => 'Month Starts On';
 
   @override
   String get settingsResetTitle => 'Reset app?';
@@ -702,10 +714,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get smsRuleFormWallets => 'Wallets';
 
   @override
-  String get smsRuleFormWalletsHelper => 'Transactions will be created in all selected wallets.';
+  String get smsRuleFormWalletsHelper =>
+      'Transactions will be created in all selected wallets.';
 
   @override
-  String get smsRuleFormSelectWalletError => 'Please select at least one wallet.';
+  String get smsRuleFormSelectWalletError =>
+      'Please select at least one wallet.';
 
   @override
   String get smsRuleFormAdvanced => 'Advanced';

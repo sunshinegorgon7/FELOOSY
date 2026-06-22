@@ -9,12 +9,9 @@ import 'trial_provider.dart';
 
 const _purchasedKey = 'feloosy_pro_purchased';
 
-/// All recognized subscription product IDs.
-/// Both are auto-renewing subscriptions in the same subscription group.
-const kProProductIds = {'feloosy_pro_monthly', 'feloosy_pro_annual'};
-
-const kProductMonthly = 'feloosy_pro_monthly';
-const kProductAnnual  = 'feloosy_pro_annual';
+/// Lifetime one-time purchase product ID.
+const kProductLifetime = 'feloosy_pro_lifetime';
+const kProProductIds = {kProductLifetime};
 
 final purchaseProvider =
     AsyncNotifierProvider<PurchaseNotifier, bool>(PurchaseNotifier.new);
@@ -60,29 +57,23 @@ class PurchaseNotifier extends AsyncNotifier<bool> {
     }
   }
 
-  /// Returns localized prices for both plans. Null value = unavailable.
-  Future<Map<String, String?>> fetchPrices() async {
+  /// Returns the localized price for the lifetime product, or null.
+  Future<String?> fetchPrice() async {
     try {
       final response =
           await InAppPurchase.instance.queryProductDetails(kProProductIds);
-      return {
-        for (final id in kProProductIds)
-          id: response.productDetails
-              .where((d) => d.id == id)
-              .firstOrNull
-              ?.price,
-      };
+      return response.productDetails.firstOrNull?.price;
     } catch (_) {
-      return {for (final id in kProProductIds) id: null};
+      return null;
     }
   }
 
-  Future<void> buy(String productId) async {
+  Future<void> buy() async {
     final available = await InAppPurchase.instance.isAvailable();
     if (!available) throw Exception('Store not available');
 
     final response =
-        await InAppPurchase.instance.queryProductDetails({productId});
+        await InAppPurchase.instance.queryProductDetails(kProProductIds);
     final product = response.productDetails.firstOrNull;
     if (product == null) throw Exception('Product not found in store');
 
