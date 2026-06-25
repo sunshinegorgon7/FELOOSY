@@ -61,25 +61,37 @@ const List<IconData> kPickableIcons = [
   Icons.more_horiz,
 ];
 
+// A broad, perceptually well-separated palette — at least one distinct colour
+// per category (more swatches than the 34 default categories) so every category
+// can own a unique colour. Organised as 14 hue families × 3 lightness levels;
+// neighbours differ clearly in hue or lightness.
 const List<Color> kPickableColors = [
-  Color(0xFFD32F2F),  // deep red
-  Color(0xFFE53935),  // vivid red
-  Color(0xFFE64A19),  // deep orange
-  Color(0xFFF57C00),  // orange
-  Color(0xFFFFB300),  // amber
-  Color(0xFFF9A825),  // golden amber
-  Color(0xFF7CB342),  // light green
-  Color(0xFF388E3C),  // medium green
-  Color(0xFF1B5E20),  // dark forest green
-  Color(0xFF00897B),  // teal
-  Color(0xFF0097A7),  // dark cyan
-  Color(0xFF039BE5),  // vivid sky blue
-  Color(0xFF1E88E5),  // blue
-  Color(0xFF1565C0),  // dark blue
-  Color(0xFF283593),  // deep navy
-  Color(0xFF6A1B9A),  // deep purple
-  Color(0xFF8E24AA),  // purple
-  Color(0xFFD81B60),  // deep pink
-  Color(0xFF6D4C41),  // warm brown
-  Color(0xFF37474F),  // dark slate
+  // Red
+  Color(0xFFE57373), Color(0xFFE53935), Color(0xFFB71C1C),
+  // Orange
+  Color(0xFFFFB74D), Color(0xFFFB8C00), Color(0xFFE64A19),
+  // Amber / gold
+  Color(0xFFFFD54F), Color(0xFFFFB300), Color(0xFFFF8F00),
+  // Lime / yellow-green
+  Color(0xFFDCE775), Color(0xFFC0CA33), Color(0xFF9E9D24),
+  // Green
+  Color(0xFF81C784), Color(0xFF43A047), Color(0xFF2E7D32),
+  // Teal
+  Color(0xFF4DB6AC), Color(0xFF00897B), Color(0xFF00695C),
+  // Cyan
+  Color(0xFF4DD0E1), Color(0xFF00ACC1), Color(0xFF00838F),
+  // Sky blue
+  Color(0xFF4FC3F7), Color(0xFF039BE5), Color(0xFF0277BD),
+  // Blue
+  Color(0xFF64B5F6), Color(0xFF1E88E5), Color(0xFF1565C0),
+  // Indigo
+  Color(0xFF7986CB), Color(0xFF3949AB), Color(0xFF283593),
+  // Purple / violet
+  Color(0xFFBA68C8), Color(0xFF8E24AA), Color(0xFF6A1B9A),
+  // Pink / magenta
+  Color(0xFFF06292), Color(0xFFD81B60), Color(0xFFAD1457),
+  // Brown
+  Color(0xFFA1887F), Color(0xFF6D4C41), Color(0xFF4E342E),
+  // Slate / neutral
+  Color(0xFF90A4AE), Color(0xFF607D8B), Color(0xFF37474F),
 ];

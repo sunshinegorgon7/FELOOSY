@@ -985,4 +985,29 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get smsTermsEnable => 'Enable';
+
+  @override
+  String get tourOfferTitle => 'Take a Quick Tour?';
+
+  @override
+  String get tourOfferBody =>
+      'We can walk you through FELOOSY\'s key features in under a minute.';
+
+  @override
+  String get tourOfferYes => 'Show Me Around';
+
+  @override
+  String get tourOfferSkip => 'Skip';
+
+  @override
+  String get cloudData => 'Cloud & Data';
+
+  @override
+  String get cloudGoogleDrive => 'Google Drive';
+
+  @override
+  String get cloudLocal => 'Local';
+
+  @override
+  String get cloudSignInWithGoogle => 'Sign in with Google';
 }

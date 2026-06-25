@@ -306,5 +306,10 @@
   "smsToggleSubtitle": "إنشاء معاملات تلقائياً من رسائل البنك",
   "smsTermsTitle": "تفعيل استيراد الرسائل القصيرة؟",
   "smsTermsBody": "سيقرأ FELOOSY رسائل البنك القصيرة الواردة ويطابقها مع قواعدك لإنشاء معاملات تلقائياً. لا يتم تخزين نص الرسائل أو مشاركته. يمكنك تعطيل هذا في أي وقت.",
-  "smsTermsEnable": "تفعيل"
+  "smsTermsEnable": "تفعيل",
+
+  "cloudData": "السحابة والبيانات",
+  "cloudGoogleDrive": "Google Drive",
+  "cloudLocal": "محلي",
+  "cloudSignInWithGoogle": "تسجيل الدخول بجوجل"
 }

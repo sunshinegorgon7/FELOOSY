@@ -987,4 +987,29 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get smsTermsEnable => 'تفعيل';
+
+  @override
+  String get tourOfferTitle => 'Take a Quick Tour?';
+
+  @override
+  String get tourOfferBody =>
+      'We can walk you through FELOOSY\'s key features in under a minute.';
+
+  @override
+  String get tourOfferYes => 'Show Me Around';
+
+  @override
+  String get tourOfferSkip => 'Skip';
+
+  @override
+  String get cloudData => 'السحابة والبيانات';
+
+  @override
+  String get cloudGoogleDrive => 'Google Drive';
+
+  @override
+  String get cloudLocal => 'محلي';
+
+  @override
+  String get cloudSignInWithGoogle => 'تسجيل الدخول بجوجل';
 }

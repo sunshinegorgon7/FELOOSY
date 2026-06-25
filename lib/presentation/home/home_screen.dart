@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -19,10 +20,12 @@ import '../../providers/accounts_provider.dart';
 import '../../providers/budget_period_provider.dart';
 import '../../providers/budget_summary_provider.dart';
 import '../../providers/categories_provider.dart';
+import '../../providers/google_auth_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/transactions_provider.dart';
 import '../settings/settings_screen.dart';
 import '../sms_rules/sms_scan_sheet.dart';
+import 'data_sheet.dart';
 import '../transactions/widgets/transaction_tile.dart';
 import '../tutorial/tutorial_overlay.dart';
 import '../../domain/services/insights_service.dart';
@@ -44,10 +47,10 @@ final smsImportCompletedProvider =
 // First-launch consent overlay (privacy → optional SMS opt-in)
 // ---------------------------------------------------------------------------
 
-enum _ConsentStep { privacy, smsOptIn }
+enum _ConsentStep { privacy, smsOptIn, tourOffer }
 
 class _ConsentFlow extends StatefulWidget {
-  final void Function(bool smsEnabled) onComplete;
+  final void Function(bool smsEnabled, bool wantsTour) onComplete;
   final VoidCallback onViewPolicy;
 
   const _ConsentFlow({
@@ -61,6 +64,7 @@ class _ConsentFlow extends StatefulWidget {
 
 class _ConsentFlowState extends State<_ConsentFlow> {
   _ConsentStep _step = _ConsentStep.privacy;
+  bool _smsEnabled = false;
 
   @override
   Widget build(BuildContext context) {
@@ -81,9 +85,14 @@ class _ConsentFlowState extends State<_ConsentFlow> {
                 borderRadius: BorderRadius.circular(24),
               ),
               padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
-              child: _step == _ConsentStep.privacy
-                  ? _buildPrivacyStep(context, cs, tt, accentColor, l10n)
-                  : _buildSmsStep(context, cs, tt, accentColor, l10n),
+              child: switch (_step) {
+                _ConsentStep.privacy =>
+                    _buildPrivacyStep(context, cs, tt, accentColor, l10n),
+                _ConsentStep.smsOptIn =>
+                    _buildSmsStep(context, cs, tt, accentColor, l10n),
+                _ConsentStep.tourOffer =>
+                    _buildTourStep(context, cs, tt, accentColor, l10n),
+              },
             ),
           ),
         ),
@@ -137,7 +146,7 @@ class _ConsentFlowState extends State<_ConsentFlow> {
                   if (Platform.isAndroid) {
                     setState(() => _step = _ConsentStep.smsOptIn);
                   } else {
-                    widget.onComplete(false);
+                    setState(() => _step = _ConsentStep.tourOffer);
                   }
                 },
                 child: Text(l10n.consentAccept),
@@ -180,7 +189,9 @@ class _ConsentFlowState extends State<_ConsentFlow> {
           children: [
             Expanded(
               child: OutlinedButton(
-                onPressed: () => widget.onComplete(false),
+                onPressed: () {
+                  setState(() => _step = _ConsentStep.tourOffer);
+                },
                 child: Text(l10n.smsOptInSkip),
               ),
             ),
@@ -188,8 +199,63 @@ class _ConsentFlowState extends State<_ConsentFlow> {
             Expanded(
               flex: 2,
               child: FilledButton(
-                onPressed: () => widget.onComplete(true),
+                onPressed: () async {
+                  await Permission.sms.request();
+                  _smsEnabled = true;
+                  if (mounted) {
+                    setState(() => _step = _ConsentStep.tourOffer);
+                  }
+                },
                 child: Text(l10n.smsOptInEnable),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTourStep(BuildContext context, ColorScheme cs,
+      TextTheme tt, Color accentColor, AppLocalizations l10n) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.explore_outlined, size: 22, color: accentColor),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                l10n.tourOfferTitle,
+                style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Text(
+          l10n.tourOfferBody,
+          style: tt.bodyMedium?.copyWith(
+            color: cs.onSurfaceVariant,
+            height: 1.5,
+          ),
+        ),
+        const SizedBox(height: 24),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => widget.onComplete(_smsEnabled, false),
+                child: Text(l10n.tourOfferSkip),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              flex: 2,
+              child: FilledButton(
+                onPressed: () => widget.onComplete(_smsEnabled, true),
+                child: Text(l10n.tourOfferYes),
               ),
             ),
           ],
@@ -324,6 +390,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   final _settingsIconKey = GlobalKey();
   final _budgetHeroKey = GlobalKey();
   final _periodNavKey = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+    Future<void>.microtask(() => ref.read(googleAccountProvider));
+  }
 
   @override
   void dispose() {
@@ -623,6 +695,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   onPressed: _startSearch,
                 ),
                 IconButton(
+                  icon: Icon(
+                    ref.watch(googleAccountProvider) != null
+                        ? LucideIcons.cloud
+                        : LucideIcons.cloudOff,
+                    size: 22,
+                  ),
+                  tooltip: context.l10n.cloudData,
+                  onPressed: () => showDataSheet(context),
+                ),
+                IconButton(
                   key: _settingsIconKey,
                   icon: const Icon(LucideIcons.slidersHorizontal, size: 22),
                   onPressed: () => _openSettings(context),
@@ -711,8 +793,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         children: [
           result,
           _ConsentFlow(
-            onComplete: (smsEnabled) {
-              ref.read(settingsProvider.notifier).acceptPrivacy(smsOptIn: smsEnabled);
+            onComplete: (smsEnabled, wantsTour) {
+              ref.read(settingsProvider.notifier).acceptPrivacy(
+                smsOptIn: smsEnabled,
+                skipTutorial: !wantsTour,
+              );
             },
             onViewPolicy: () => context.push('/settings/privacy'),
           ),
@@ -1032,8 +1117,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         initiallyExpanded: true,
                       );
                     }
-                    final catColor =
-                        Color(catGroup.category.colorValue);
+                    final catColor = AppTheme.categoryBarColor(
+                      uuid: catGroup.category.uuid,
+                      colorValue: catGroup.category.colorValue,
+                      colorScheme: cs,
+                    );
                     return InkWell(
                       onTap: () => _showCategoryTimeline(
                           context, catGroup, cats, summary),
@@ -1501,7 +1589,11 @@ class _CategoryTimelineState extends ConsumerState<_CategoryTimeline> {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     final cat = widget.category;
-    final catColor = Color(cat.colorValue);
+    final catColor = AppTheme.categoryBarColor(
+      uuid: cat.uuid,
+      colorValue: cat.colorValue,
+      colorScheme: cs,
+    );
 
     final allTxsAsync = ref.watch(transactionsProvider);
     final allTxs =
@@ -2396,7 +2488,11 @@ class _ExpandableDayGroupState extends State<_ExpandableDayGroup> {
             .firstOrNull
         : null;
     final lineColor = firstCat != null
-        ? Color(firstCat.colorValue).withValues(alpha: 0.45)
+        ? AppTheme.categoryBarColor(
+            uuid: firstCat.uuid,
+            colorValue: firstCat.colorValue,
+            colorScheme: cs,
+          ).withValues(alpha: 0.45)
         : cs.primary.withValues(alpha: 0.3);
 
     return Column(
@@ -2533,7 +2629,11 @@ class _ExpandableCatGroupState extends State<_ExpandableCatGroup> {
     final tt = Theme.of(context).textTheme;
     final accentColor = AppTheme.primaryText(cs);
     final group = widget.group;
-    final catColor = Color(group.category.colorValue);
+    final catColor = AppTheme.categoryBarColor(
+      uuid: group.category.uuid,
+      colorValue: group.category.colorValue,
+      colorScheme: cs,
+    );
     final lineColor = catColor.withValues(alpha: 0.45);
 
     return Column(
@@ -2671,7 +2771,13 @@ class _InlineTransactionRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final isExpense = tx.type == TransactionType.expense;
-    final catColor = cat != null ? Color(cat!.colorValue) : cs.onSurfaceVariant;
+    final catColor = cat != null
+        ? AppTheme.categoryBarColor(
+            uuid: cat!.uuid,
+            colorValue: cat!.colorValue,
+            colorScheme: cs,
+          )
+        : cs.onSurfaceVariant;
     final amountPrefix = isExpense ? '-' : '+';
     final amountColor = isExpense
         ? AppTheme.expenseText(cs)

@@ -1,6 +1,5 @@
 import 'dart:math' as math;
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -47,17 +46,6 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
     super.dispose();
   }
 
-  // Derive a logo URL from the first word of the name, same logic as CategoryIcon.
-  String? get _previewLogoUrl {
-    // For existing brand categories, use their stored URL.
-    final storedUrl = widget.category?.logoUrl;
-    if (storedUrl != null) return storedUrl;
-    // For new / custom categories, auto-derive from name being typed.
-    final firstWord = _nameCtrl.text.trim().split(' ').first.toLowerCase();
-    if (firstWord.isEmpty) return null;
-    return 'https://www.google.com/s2/favicons?sz=128&domain=$firstWord.com';
-  }
-
   Future<void> _save() async {
     final name = _nameCtrl.text.trim();
     if (name.isEmpty) {
@@ -83,7 +71,6 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
         sortOrder: existing.sortOrder,
         createdAt: existing.createdAt,
         transactionType: _transactionType,
-        logoUrl: existing.logoUrl, // preserve brand URLs
         currencyHint: existing.currencyHint,
       );
       await ref.read(categoriesProvider.notifier).saveCategory(updated);
@@ -121,8 +108,20 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
       colorValue: _color.toARGB32(),
       colorScheme: cs,
     );
-    final isBuiltIn = widget.category != null && !widget.category!.isCustom;
-    final logoUrl = _previewLogoUrl;
+    // Colours already taken by *other* categories — so every category can own a
+    // unique, well-separated colour. The category being edited is excluded.
+    final allCats = ref.watch(categoriesProvider).value ?? const <Category>[];
+    final usedColors = <int>{
+      for (final c in allCats)
+        if (c.uuid != widget.category?.uuid) c.colorValue,
+    };
+    // Show the full palette, plus the current colour up front if it isn't a
+    // palette swatch (e.g. a default category's original colour).
+    final selectedValue = _color.toARGB32();
+    final swatches = <Color>[
+      if (!kPickableColors.any((c) => c.toARGB32() == selectedValue)) _color,
+      ...kPickableColors,
+    ];
 
     return Scaffold(
       appBar: AppBar(
@@ -156,20 +155,7 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
                       color: chartColor.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
-                    child: ClipOval(
-                      child: logoUrl != null
-                          ? CachedNetworkImage(
-                              imageUrl: logoUrl,
-                              width: 72,
-                              height: 72,
-                              fit: BoxFit.contain,
-                              placeholder: (ctx, url) =>
-                                  Icon(_icon, color: chartColor, size: 36),
-                              errorWidget: (ctx, url, err) =>
-                                  Icon(_icon, color: chartColor, size: 36),
-                            )
-                          : Icon(_icon, color: chartColor, size: 36),
-                    ),
+                    child: Icon(_icon, color: chartColor, size: 36),
                   ),
                   const SizedBox(height: 8),
                   Text(previewName, style: tt.titleMedium),
@@ -228,48 +214,45 @@ class _EditCategoryScreenState extends ConsumerState<EditCategoryScreen> {
             Wrap(
               spacing: 10,
               runSpacing: 10,
-              children: kPickableColors.map((c) {
-                final isSel = c == _color;
+              children: swatches.map((c) {
+                final value = c.toARGB32();
+                final isSel = value == selectedValue;
+                final isTaken = !isSel && usedColors.contains(value);
                 return GestureDetector(
-                  onTap: () => setState(() => _color = c),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 150),
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: c,
-                      shape: BoxShape.circle,
-                      border: isSel
-                          ? Border.all(
-                              color: cs.onSurface, width: 2.5)
-                          : null,
-                      boxShadow: isSel
-                          ? [
-                              BoxShadow(
-                                  color: c.withValues(alpha: 0.5),
-                                  blurRadius: 6)
-                            ]
-                          : null,
+                  // Taken colours can't be re-picked, so each category stays unique.
+                  onTap: isTaken ? null : () => setState(() => _color = c),
+                  child: Opacity(
+                    opacity: isTaken ? 0.28 : 1.0,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: c,
+                        shape: BoxShape.circle,
+                        border: isSel
+                            ? Border.all(color: cs.onSurface, width: 2.5)
+                            : null,
+                        boxShadow: isSel
+                            ? [
+                                BoxShadow(
+                                    color: c.withValues(alpha: 0.5),
+                                    blurRadius: 6)
+                              ]
+                            : null,
+                      ),
+                      child: isSel
+                          ? Icon(Icons.check,
+                              color: AppTheme.readableOn(c), size: 18)
+                          : isTaken
+                              ? Icon(Icons.close,
+                                  color: AppTheme.readableOn(c), size: 16)
+                              : null,
                     ),
-                    child: isSel
-                        ? Icon(Icons.check,
-                            color: AppTheme.readableOn(c), size: 18)
-                        : null,
                   ),
                 );
               }).toList(),
             ),
-            if (isBuiltIn) ...[
-              const SizedBox(height: 8),
-              Text(
-                context.l10n.editCategoryChartNote,
-                style: tt.bodySmall?.copyWith(
-                  color: cs.onSurfaceVariant,
-                  fontSize: 11.5,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-            ],
             const SizedBox(height: 24),
 
             // Icon picker

@@ -1831,6 +1831,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enable'**
   String get smsTermsEnable;
+
+  /// No description provided for @tourOfferTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Take a Quick Tour?'**
+  String get tourOfferTitle;
+
+  /// No description provided for @tourOfferBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We can walk you through FELOOSY\'s key features in under a minute.'**
+  String get tourOfferBody;
+
+  /// No description provided for @tourOfferYes.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Me Around'**
+  String get tourOfferYes;
+
+  /// No description provided for @tourOfferSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get tourOfferSkip;
+
+  /// No description provided for @cloudData.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud & Data'**
+  String get cloudData;
+
+  /// No description provided for @cloudGoogleDrive.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Drive'**
+  String get cloudGoogleDrive;
+
+  /// No description provided for @cloudLocal.
+  ///
+  /// In en, this message translates to:
+  /// **'Local'**
+  String get cloudLocal;
+
+  /// No description provided for @cloudSignInWithGoogle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with Google'**
+  String get cloudSignInWithGoogle;
 }
 
 class _AppLocalizationsDelegate

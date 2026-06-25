@@ -28,7 +28,7 @@ class DatabaseHelper {
     final dbPath = p.join(docDir.path, AppFlavor.databaseName);
     return openDatabase(
       dbPath,
-      version: 29,
+      version: 30,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -632,6 +632,12 @@ class DatabaseHelper {
         });
       }
       debugPrint('[DB] v29 done: migrated ${existingRules.length} sms_rules to sms_rule_accounts');
+    }
+    if (oldVersion < 30) {
+      // Logo/brand-image feature removed — clear any stored logo URLs so
+      // categories render their plain icon everywhere.
+      await db.update('categories', {'logo_url': null});
+      debugPrint('[DB] v30 done: cleared category logo_url values');
     }
   }
 

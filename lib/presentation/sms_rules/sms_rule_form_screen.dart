@@ -194,7 +194,11 @@ class _SmsRuleFormScreenState extends ConsumerState<SmsRuleFormScreen> {
                 itemCount: filtered.length,
                 itemBuilder: (ctx, i) {
                   final cat = filtered[i];
-                  final color = Color(cat.colorValue);
+                  final color = AppTheme.categoryBarColor(
+                    uuid: cat.uuid,
+                    colorValue: cat.colorValue,
+                    colorScheme: Theme.of(ctx).colorScheme,
+                  );
                   final icon = IconData(cat.iconCodePoint,
                       fontFamily: cat.iconFontFamily);
                   final isSelected = cat.uuid == _categoryUuid;
@@ -314,12 +318,19 @@ class _SmsRuleFormScreenState extends ConsumerState<SmsRuleFormScreen> {
                       children: [
                         CircleAvatar(
                           radius: 14,
-                          backgroundColor:
-                              Color(selectedCat.colorValue).withValues(alpha: 0.15),
+                          backgroundColor: AppTheme.categoryBarColor(
+                            uuid: selectedCat.uuid,
+                            colorValue: selectedCat.colorValue,
+                            colorScheme: cs,
+                          ).withValues(alpha: 0.15),
                           child: Icon(
                             IconData(selectedCat.iconCodePoint,
                                 fontFamily: selectedCat.iconFontFamily),
-                            color: Color(selectedCat.colorValue),
+                            color: AppTheme.categoryBarColor(
+                              uuid: selectedCat.uuid,
+                              colorValue: selectedCat.colorValue,
+                              colorScheme: cs,
+                            ),
                             size: 15,
                           ),
                         ),
@@ -635,8 +646,13 @@ class _SuggestionTile extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final cat =
         categories.where((c) => c.uuid == suggestion.categoryUuid).firstOrNull;
-    final iconColor =
-        cat != null ? Color(cat.colorValue) : cs.onSurfaceVariant;
+    final iconColor = cat != null
+        ? AppTheme.categoryBarColor(
+            uuid: cat.uuid,
+            colorValue: cat.colorValue,
+            colorScheme: cs,
+          )
+        : cs.onSurfaceVariant;
     final iconData = cat != null
         ? IconData(cat.iconCodePoint, fontFamily: cat.iconFontFamily)
         : Icons.receipt_outlined;

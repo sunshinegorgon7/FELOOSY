@@ -84,6 +84,7 @@ class GoogleDriveBackupService {
     final settings = rawSettings.map((row) {
       final copy = Map<String, Object?>.from(row);
       copy.remove('last_backup_at');
+      copy.remove('updated_at');
       return copy;
     }).toList();
 

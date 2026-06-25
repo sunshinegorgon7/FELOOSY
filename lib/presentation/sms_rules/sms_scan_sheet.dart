@@ -710,7 +710,13 @@ class _CandidateTile extends StatelessWidget {
     final cat = candidate.category;
     final isDup = candidate.likelyDuplicate;
 
-    final catColor = cat != null ? Color(cat.colorValue) : cs.onSurfaceVariant;
+    final catColor = cat != null
+        ? AppTheme.categoryBarColor(
+            uuid: cat.uuid,
+            colorValue: cat.colorValue,
+            colorScheme: cs,
+          )
+        : cs.onSurfaceVariant;
     final catIcon = cat != null
         ? IconData(cat.iconCodePoint, fontFamily: cat.iconFontFamily)
         : Icons.receipt_outlined;

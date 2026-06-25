@@ -22,12 +22,15 @@ class SettingsNotifier extends AsyncNotifier<AppSettings> {
     await saveSettings(updated);
   }
 
-  Future<void> acceptPrivacy({bool smsOptIn = false}) async {
+  Future<void> acceptPrivacy({bool smsOptIn = false, bool skipTutorial = false}) async {
     final current = state.value;
     if (current == null) return;
     var updated = current.copyWith(privacyAcceptedAt: DateTime.now());
     if (smsOptIn) {
       updated = updated.copyWith(smsOptIn: true);
+    }
+    if (skipTutorial) {
+      updated = updated.copyWith(tutorialCompleted: true);
     }
     await saveSettings(updated);
   }

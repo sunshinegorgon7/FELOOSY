@@ -134,7 +134,7 @@ const kBrandCategoryData = [
 List<Category> buildBrandCategories() {
   final now = DateTime.now();
   return kBrandCategoryData.indexed.map((entry) {
-    final (index, (name, icon, color, currencyHint, domain)) = entry;
+    final (index, (name, icon, color, currencyHint, _)) = entry;
     return Category(
       uuid: kBrandCategoryUuids[index],
       name: name,
@@ -146,7 +146,6 @@ List<Category> buildBrandCategories() {
       sortOrder: 1000 + index,
       transactionType: 'expense',
       createdAt: now,
-      logoUrl: 'https://www.google.com/s2/favicons?sz=128&domain=$domain',
       currencyHint: currencyHint,
     );
   }).toList();

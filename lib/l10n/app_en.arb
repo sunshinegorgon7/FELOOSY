@@ -497,5 +497,15 @@
   "smsToggleSubtitle": "Auto-create transactions from bank messages",
   "smsTermsTitle": "Enable SMS Auto-Import?",
   "smsTermsBody": "FELOOSY will read incoming bank SMS messages and match them against your rules to create transactions automatically. Message text is never stored or shared. You can disable this anytime.",
-  "smsTermsEnable": "Enable"
+  "smsTermsEnable": "Enable",
+
+  "tourOfferTitle": "Take a Quick Tour?",
+  "tourOfferBody": "We can walk you through FELOOSY's key features in under a minute.",
+  "tourOfferYes": "Show Me Around",
+  "tourOfferSkip": "Skip",
+
+  "cloudData": "Cloud & Data",
+  "cloudGoogleDrive": "Google Drive",
+  "cloudLocal": "Local",
+  "cloudSignInWithGoogle": "Sign in with Google"
 }

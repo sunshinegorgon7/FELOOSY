@@ -45,7 +45,11 @@ class TransactionTile extends ConsumerWidget {
         : AppTheme.incomeColor.withValues(alpha: 0.06);
 
     final iconColor = category != null
-        ? Color(category!.colorValue)
+        ? AppTheme.categoryBarColor(
+            uuid: category!.uuid,
+            colorValue: category!.colorValue,
+            colorScheme: cs,
+          )
         : Theme.of(context).colorScheme.onSurfaceVariant;
     final iconData = category != null
         ? IconData(category!.iconCodePoint,

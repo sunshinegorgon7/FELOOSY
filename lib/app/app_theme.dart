@@ -87,73 +87,6 @@ class AppTheme {
   static const Color ledgerGreenTextDark = Color(0xFF72D4A0);
   static const Color amberText           = Color(0xFF7D5012);
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // Category bar palettes
-  // ══════════════════════════════════════════════════════════════════════════
-
-  static const List<Color> categoryBarsLight = [
-    nPerformanceBlue,    // 0  — N performance blue (primary)
-    Color(0xFF1E6EB8),   // 1  — deep ocean blue
-    Color(0xFF8B5A38),   // 2  — warm caramel
-    Color(0xFF1F8CA0),   // 3  — teal blue
-    Color(0xFF8B6A10),   // 4  — amber brown
-    mossGreen,           // 5  — forest green (income)
-    Color(0xFF3D5AAA),   // 6  — steel blue
-    ghazelBlood,         // 7  — expense red
-    Color(0xFF7A4E9C),   // 8  — plum purple
-    Color(0xFF9E5040),   // 9  — terracotta
-    Color(0xFF4848A8),   // 10 — indigo
-    Color(0xFF287878),   // 11 — deep teal
-    Color(0xFF2A6090),   // 12 — slate blue
-    nPerformanceBlue,    // 13
-    mossGreen,           // 14
-    Color(0xFF287878),   // 15
-    Color(0xFF1E6EB8),   // 16
-    Color(0xFF7A4E9C),   // 17
-  ];
-
-  static const List<Color> categoryBarsDark = [
-    emeraldHighlight,    // 0  — emerald (primary)
-    Color(0xFF78B8EC),   // 1  — clear blue
-    Color(0xFFD4A87C),   // 2  — warm caramel
-    Color(0xFF5CC8D4),   // 3  — teal cyan
-    Color(0xFFD4B852),   // 4  — golden amber
-    Color(0xFFA8DC84),   // 5  — lime green
-    Color(0xFF8EB0F0),   // 6  — periwinkle blue
-    Color(0xFFFF8090),   // 7  — rose red
-    Color(0xFFBC9AD8),   // 8  — soft purple
-    Color(0xFFE08C78),   // 9  — terracotta
-    Color(0xFF90A8F5),   // 10 — blue-lavender
-    Color(0xFF6ECEC0),   // 11 — seafoam teal
-    Color(0xFF80C0E0),   // 12 — sky blue
-    emeraldHighlight,    // 13
-    Color(0xFFA8DC84),   // 14
-    Color(0xFF6ECEC0),   // 15
-    Color(0xFF78B8EC),   // 16
-    Color(0xFFBC9AD8),   // 17
-  ];
-
-  static const Map<String, int> _defaultCategoryBarIndex = {
-    '00000000-0000-0000-0000-000000000001': 0,
-    '00000000-0000-0000-0000-000000000002': 1,
-    '00000000-0000-0000-0000-000000000003': 2,
-    '00000000-0000-0000-0000-000000000004': 3,
-    '00000000-0000-0000-0000-000000000005': 4,
-    '00000000-0000-0000-0000-000000000006': 5,
-    '00000000-0000-0000-0000-000000000007': 6,
-    '00000000-0000-0000-0000-000000000008': 7,
-    '00000000-0000-0000-0000-000000000009': 8,
-    '00000000-0000-0000-0000-000000000010': 9,
-    '00000000-0000-0000-0000-000000000011': 10,
-    '00000000-0000-0000-0000-000000000012': 11,
-    '00000000-0000-0000-0000-000000000013': 12,
-    '00000000-0000-0000-0000-000000000014': 13,
-    '00000000-0000-0000-0000-000000000015': 14,
-    '00000000-0000-0000-0000-000000000016': 15,
-    '00000000-0000-0000-0000-000000000017': 16,
-    '00000000-0000-0000-0000-000000000018': 17,
-  };
-
   static final ThemeData dark  = _buildDark();
   static final ThemeData light = _buildLight();
 
@@ -178,27 +111,21 @@ class AppTheme {
   static Color readableOn(Color background) =>
       background.computeLuminance() > 0.45 ? lightText : lightBackground;
 
+  // Single source of truth for how a category's colour is rendered across the
+  // app — home screen (group headers + expanded transactions), Manage Categories,
+  // add-transaction, SMS screens, and the home widget all go through this so the
+  // result is identical everywhere. The category's own colour is authoritative;
+  // a subtle nudge only lightens very dark picks in dark mode (and darkens very
+  // light picks in light mode) so the icon stays legible. For typical mid-tone
+  // colours this is a no-op, so the colour shown matches the colour picked.
+  // `uuid` is retained for call-site compatibility but does not affect output.
   static Color categoryBarColor({
     required String uuid,
     required int colorValue,
     required ColorScheme colorScheme,
   }) {
-    final index = _defaultCategoryBarIndex[uuid];
-    if (index != null) {
-      final palette = colorScheme.brightness == Brightness.dark
-          ? categoryBarsDark
-          : categoryBarsLight;
-      return palette[index % palette.length];
-    }
-    return _customCategoryBarColor(Color(colorValue), colorScheme);
-  }
-
-  static Color _customCategoryBarColor(
-    Color base,
-    ColorScheme colorScheme,
-  ) {
+    final base = Color(colorValue);
     final luminance = base.computeLuminance();
-    // Blend toward neutral (not theme-tinted) to avoid color cast
     if (colorScheme.brightness == Brightness.dark && luminance < 0.30) {
       return Color.lerp(base, const Color(0xFFDDDDDD), 0.36)!;
     }

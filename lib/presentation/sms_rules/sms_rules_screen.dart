@@ -260,7 +260,11 @@ class _RuleTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final iconColor = category != null
-        ? Color(category!.colorValue)
+        ? AppTheme.categoryBarColor(
+            uuid: category!.uuid,
+            colorValue: category!.colorValue,
+            colorScheme: cs,
+          )
         : cs.onSurfaceVariant;
     final iconData = category != null
         ? IconData(category!.iconCodePoint, fontFamily: category!.iconFontFamily)

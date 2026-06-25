@@ -1027,8 +1027,13 @@ class _DescriptionAutocomplete extends ConsumerWidget {
                   final cat = cats
                       .where((c) => c.uuid == opt.categoryUuid)
                       .firstOrNull;
-                  final iconColor =
-                      cat != null ? Color(cat.colorValue) : cs.onSurfaceVariant;
+                  final iconColor = cat != null
+                      ? AppTheme.categoryBarColor(
+                          uuid: cat.uuid,
+                          colorValue: cat.colorValue,
+                          colorScheme: cs,
+                        )
+                      : cs.onSurfaceVariant;
 
                   return InkWell(
                     onTap: () => onSelected(opt),
@@ -1225,7 +1230,11 @@ class _CategoryCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final color = Color(cat.colorValue);
+    final color = AppTheme.categoryBarColor(
+      uuid: cat.uuid,
+      colorValue: cat.colorValue,
+      colorScheme: cs,
+    );
     return GestureDetector(
       onTap: () => onSelect(cat.uuid),
       child: AnimatedContainer(
@@ -1256,7 +1265,7 @@ class _CategoryCell extends StatelessWidget {
           children: [
             CategoryIcon(
               category: cat,
-              size: cat.logoUrl != null ? 28 : 20,
+              size: 20,
               color: color,
             ),
             const SizedBox(height: 4),
