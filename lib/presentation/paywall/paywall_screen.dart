@@ -8,6 +8,7 @@ import '../../providers/license_provider.dart';
 import '../../providers/purchase_provider.dart';
 import '../../providers/trial_provider.dart';
 import '../../services/license_service.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 class PaywallScreen extends ConsumerStatefulWidget {
   const PaywallScreen({super.key});
@@ -136,14 +137,25 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
     ).then((_) => ctrl.dispose());
   }
 
+  Future<void> _disableTrial() async {
+    await ref.read(trialProvider.notifier).endTrialEarly();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(context.l10n.paywallTrialDisabledSnack),
+      ));
+      Navigator.of(context).pop();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final isPro = ref.watch(accessTierProvider) == AccessTier.pro;
+    final source = ref.watch(proSourceProvider);
+    final isPurchased = source == ProSource.purchase || source == ProSource.license;
     final trial = ref.watch(trialProvider).asData?.value;
     final busy  = _buying || _restoring;
 
-    if (isPro && !_wasProOnOpen) {
+    if (isPurchased && !_wasProOnOpen) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) Navigator.of(context).pop();
       });
@@ -171,7 +183,14 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (trial?.hasExpired == true) ...[
+              if (source == ProSource.trial) ...[
+                const SizedBox(height: 8),
+                _TrialActiveBanner(
+                  cs: cs, tt: tt,
+                  daysRemaining: trial?.daysRemaining ?? 0,
+                ),
+                const SizedBox(height: 20),
+              ] else if (trial?.hasExpired == true) ...[
                 const SizedBox(height: 8),
                 _TrialExpiredBanner(cs: cs, tt: tt),
                 const SizedBox(height: 20),
@@ -222,10 +241,9 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
 
               const SizedBox(height: 28),
 
-              // Plans or unlocked state
-              if (isPro)
+              if (isPurchased)
                 const Center(child: _UnlockedChip())
-              else
+              else ...[
                 SizedBox(
                   width: double.infinity,
                   height: 52,
@@ -250,45 +268,61 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                   ),
                 ),
 
-              const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-              Center(
-                child: TextButton(
-                  onPressed: busy ? null : _restore,
-                  child: _restoring
-                      ? const SizedBox(
-                          width: 16, height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text(
-                          l10n.paywallRestore,
-                          style: TextStyle(color: cs.onSurfaceVariant),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    TextButton(
+                      onPressed: busy ? null : _restore,
+                      child: _restoring
+                          ? const SizedBox(
+                              width: 16, height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Text(
+                              l10n.paywallRestore,
+                              style: TextStyle(color: cs.onSurfaceVariant),
+                            ),
+                    ),
+                    const SizedBox(width: 4),
+                    IconButton(
+                      onPressed: busy ? null : _showLicenseDialog,
+                      icon: Icon(
+                        LucideIcons.keyRound,
+                        size: 18,
+                        color: cs.onSurfaceVariant.withValues(alpha: 0.7),
+                      ),
+                      tooltip: l10n.paywallRestore,
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 4),
+                Text(
+                  l10n.paywallRestoreNote,
+                  style: tt.bodySmall?.copyWith(
+                    color: cs.onSurfaceVariant.withValues(alpha: 0.5),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+
+                if (source == ProSource.trial) ...[
+                  const SizedBox(height: 20),
+                  Center(
+                    child: TextButton(
+                      onPressed: busy ? null : _disableTrial,
+                      child: Text(
+                        l10n.paywallDisableTrial,
+                        style: TextStyle(
+                          color: cs.onSurfaceVariant.withValues(alpha: 0.7),
+                          fontSize: 13,
                         ),
-                ),
-              ),
-
-              const SizedBox(height: 4),
-              Text(
-                l10n.paywallRestoreNote,
-                style: tt.bodySmall?.copyWith(
-                  color: cs.onSurfaceVariant.withValues(alpha: 0.5),
-                ),
-                textAlign: TextAlign.center,
-              ),
-
-              const SizedBox(height: 12),
-              Center(
-                child: TextButton(
-                  onPressed: busy ? null : _showLicenseDialog,
-                  child: Text(
-                    'Have a license key?',
-                    style: TextStyle(
-                      color: cs.onSurfaceVariant.withValues(alpha: 0.7),
-                      fontSize: 13,
+                      ),
                     ),
                   ),
-                ),
-              ),
+                ],
+              ],
             ],
           ),
         ),
@@ -298,6 +332,43 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
 }
 
 // ── Shared widgets ─────────────────────────────────────────────────────────────
+
+class _TrialActiveBanner extends StatelessWidget {
+  final ColorScheme cs;
+  final TextTheme tt;
+  final int daysRemaining;
+  const _TrialActiveBanner({
+    required this.cs, required this.tt, required this.daysRemaining,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final warningColor = AppTheme.warningText(cs);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: warningColor.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.hourglass_top_rounded, color: warningColor, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              context.l10n.paywallTrialBanner(daysRemaining),
+              style: tt.bodyMedium?.copyWith(
+                color: warningColor,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class _TrialExpiredBanner extends StatelessWidget {
   final ColorScheme cs;

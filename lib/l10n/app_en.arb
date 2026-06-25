@@ -189,6 +189,13 @@
   "settingsUpgradeToProDesc": "Unlock all features",
   "settingsFeloosyPro": "Feloosy Pro",
   "settingsFeloosyProActive": "All features unlocked",
+  "settingsTrialActive": "Feloosy Pro Trial",
+  "settingsTrialDaysRemaining": "{days} days remaining",
+  "@settingsTrialDaysRemaining": {
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  },
   "settingsDeveloperTools": "Developer Tools",
   "settingsDangerZone": "Danger Zone",
   "settingsResetApp": "Reset App",
@@ -442,6 +449,14 @@
   "paywallRestoreNote": "One-time purchase · No recurring fees",
   "paywallTrialEnded": "Your 14-day free trial has ended",
   "paywallProUnlocked": "Pro Unlocked",
+  "paywallTrialBanner": "Trial Mode · {days} days remaining",
+  "@paywallTrialBanner": {
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  },
+  "paywallDisableTrial": "Disable Trial",
+  "paywallTrialDisabledSnack": "Trial disabled. You're now on the free plan.",
   "paywallFeatureWallets": "Unlimited wallets",
   "paywallFeatureTransactions": "Unlimited transactions",
   "paywallFeatureHistory": "Full transaction history",

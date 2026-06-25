@@ -21,6 +21,7 @@ import '../../providers/transactions_provider.dart';
 import '../../providers/accounts_provider.dart';
 import '../../providers/access_tier_provider.dart';
 import '../../providers/purchase_provider.dart';
+import '../../providers/trial_provider.dart';
 
 const _languages = [
   ('', 'System default'),
@@ -821,11 +822,27 @@ class _ProTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final isPro = ref.watch(accessTierProvider) == AccessTier.pro;
+    final source = ref.watch(proSourceProvider);
+    final trial = ref.watch(trialProvider).asData?.value;
+
+    final String title;
+    final String subtitle;
+
+    switch (source) {
+      case ProSource.trial:
+        title = l10n.settingsTrialActive;
+        subtitle = l10n.settingsTrialDaysRemaining(trial?.daysRemaining ?? 0);
+      case ProSource.purchase || ProSource.license:
+        title = l10n.settingsFeloosyPro;
+        subtitle = l10n.settingsFeloosyProActive;
+      case ProSource.none:
+        title = l10n.settingsUpgradeToPro;
+        subtitle = l10n.settingsUpgradeToProDesc;
+    }
 
     return _SettingsRow(
-      title: isPro ? l10n.settingsFeloosyPro : l10n.settingsUpgradeToPro,
-      subtitle: isPro ? l10n.settingsFeloosyProActive : l10n.settingsUpgradeToProDesc,
+      title: title,
+      subtitle: subtitle,
       onTap: () => context.push('/paywall'),
     );
   }

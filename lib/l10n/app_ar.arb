@@ -123,6 +123,13 @@
   "settingsUpgradeToProDesc": "فتح جميع الميزات",
   "settingsFeloosyPro": "Feloosy Pro",
   "settingsFeloosyProActive": "جميع الميزات مفتوحة",
+  "settingsTrialActive": "Feloosy Pro تجريبي",
+  "settingsTrialDaysRemaining": "{days} أيام متبقية",
+  "@settingsTrialDaysRemaining": {
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  },
   "settingsDeveloperTools": "أدوات المطور",
   "settingsDangerZone": "منطقة الخطر",
   "settingsResetApp": "إعادة ضبط التطبيق",
@@ -262,6 +269,14 @@
   "paywallRestoreNote": "شراء لمرة واحدة · بلا رسوم متكررة",
   "paywallTrialEnded": "انتهت فترة التجربة المجانية لمدة 14 يوماً",
   "paywallProUnlocked": "Pro مفتوح",
+  "paywallTrialBanner": "وضع التجربة · {days} أيام متبقية",
+  "@paywallTrialBanner": {
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  },
+  "paywallDisableTrial": "تعطيل التجربة",
+  "paywallTrialDisabledSnack": "تم تعطيل التجربة. أنت الآن على الخطة المجانية.",
   "paywallFeatureWallets": "محافظ غير محدودة",
   "paywallFeatureTransactions": "معاملات غير محدودة",
   "paywallFeatureHistory": "سجل كامل للمعاملات",

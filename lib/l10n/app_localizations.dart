@@ -782,6 +782,18 @@ abstract class AppLocalizations {
   /// **'All features unlocked'**
   String get settingsFeloosyProActive;
 
+  /// No description provided for @settingsTrialActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Feloosy Pro Trial'**
+  String get settingsTrialActive;
+
+  /// No description provided for @settingsTrialDaysRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'{days} days remaining'**
+  String settingsTrialDaysRemaining(int days);
+
   /// No description provided for @settingsDeveloperTools.
   ///
   /// In en, this message translates to:
@@ -1585,6 +1597,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Pro Unlocked'**
   String get paywallProUnlocked;
+
+  /// No description provided for @paywallTrialBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'Trial Mode · {days} days remaining'**
+  String paywallTrialBanner(int days);
+
+  /// No description provided for @paywallDisableTrial.
+  ///
+  /// In en, this message translates to:
+  /// **'Disable Trial'**
+  String get paywallDisableTrial;
+
+  /// No description provided for @paywallTrialDisabledSnack.
+  ///
+  /// In en, this message translates to:
+  /// **'Trial disabled. You\'re now on the free plan.'**
+  String get paywallTrialDisabledSnack;
 
   /// No description provided for @paywallFeatureWallets.
   ///

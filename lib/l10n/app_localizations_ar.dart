@@ -381,6 +381,14 @@ class AppLocalizationsAr extends AppLocalizations {
   String get settingsFeloosyProActive => 'جميع الميزات مفتوحة';
 
   @override
+  String get settingsTrialActive => 'Feloosy Pro تجريبي';
+
+  @override
+  String settingsTrialDaysRemaining(int days) {
+    return '$days أيام متبقية';
+  }
+
+  @override
   String get settingsDeveloperTools => 'أدوات المطور';
 
   @override
@@ -848,6 +856,18 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get paywallProUnlocked => 'Pro مفتوح';
+
+  @override
+  String paywallTrialBanner(int days) {
+    return 'وضع التجربة · $days أيام متبقية';
+  }
+
+  @override
+  String get paywallDisableTrial => 'تعطيل التجربة';
+
+  @override
+  String get paywallTrialDisabledSnack =>
+      'تم تعطيل التجربة. أنت الآن على الخطة المجانية.';
 
   @override
   String get paywallFeatureWallets => 'محافظ غير محدودة';

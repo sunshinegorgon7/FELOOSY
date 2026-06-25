@@ -5,7 +5,6 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 
 import '../app/app_flavor.dart';
-import 'trial_provider.dart';
 
 const _purchasedKey = 'feloosy_pro_purchased';
 
@@ -31,11 +30,9 @@ class PurchaseNotifier extends AsyncNotifier<bool> {
     if (await _readStorage()) return true;
 
     // Background restore so subscription status is refreshed on every launch.
-    // Fired-and-forgotten — the stream listener picks up any restored events.
     InAppPurchase.instance.restorePurchases();
 
-    final trial = await ref.watch(trialProvider.future);
-    return trial.isActive;
+    return false;
   }
 
   Future<bool> _readStorage() async {
