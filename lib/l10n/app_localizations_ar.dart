@@ -835,6 +835,21 @@ class AppLocalizationsAr extends AppLocalizations {
       'توجد معاملة بهذا المبلغ والفئة في هذا اليوم بالفعل';
 
   @override
+  String get smsScanSuggestedRules => 'قواعد مقترحة';
+
+  @override
+  String smsScanSuggestionCount(int count) {
+    return 'من $count رسائل';
+  }
+
+  @override
+  String get smsScanCreateRule => 'إنشاء قاعدة';
+
+  @override
+  String get smsScanNoMatchesSuggestion =>
+      'لا توجد رسائل تطابق قواعدك، لكن وجدنا مرسلين يستحق إعداد قواعد لهم:';
+
+  @override
   String get paywallTitle => 'FELOOSY PRO';
 
   @override

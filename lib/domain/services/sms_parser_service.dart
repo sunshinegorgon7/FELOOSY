@@ -99,4 +99,21 @@ class SmsParserService {
     }
     return null;
   }
+
+  // Compiled once. Matches the "at VENDOR" construct found in bank transaction
+  // SMS across UAE/GCC/EGY/IND banks. Vendor terminates at: comma, the words
+  // "on"/"using"/"is" (word-boundary), or a period followed by whitespace/EOL.
+  static final _vendorAtPattern = RegExp(
+    r"(?:^|\s)at\s+([A-Za-z0-9][A-Za-z0-9 &\-'.]{1,49}?)(?:\s*,|\s+on\b|\s+using\b|\s+is\b|\s*\.(?:\s|$)|\s*$)",
+    caseSensitive: false,
+  );
+
+  /// Extracts the merchant/vendor name from a bank transaction SMS body.
+  ///
+  /// Returns null when no "at VENDOR" pattern is found — caller should fall
+  /// back to the SMS sender name in that case.
+  static String? extractVendor(String body) {
+    final match = _vendorAtPattern.firstMatch(body);
+    return match?.group(1)?.trim();
+  }
 }

@@ -764,7 +764,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         tooltip: 'Scan SMS inbox',
                         elevation: 0,
                         highlightElevation: 0,
-                        onPressed: () => showSmsScanSheet(context),
+                        onPressed: () => showSmsScanSheet(
+                          context,
+                          onCreateRule: (rule) =>
+                              context.push('/sms-rules/edit', extra: rule),
+                        ),
                         child: const Icon(Icons.manage_search_outlined),
                       ),
                       const SizedBox(width: 12),

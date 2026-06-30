@@ -833,6 +833,21 @@ class AppLocalizationsEn extends AppLocalizations {
       'Transaction for this amount and category already exists on this day';
 
   @override
+  String get smsScanSuggestedRules => 'Suggested Rules';
+
+  @override
+  String smsScanSuggestionCount(int count) {
+    return 'from $count messages';
+  }
+
+  @override
+  String get smsScanCreateRule => 'Create Rule';
+
+  @override
+  String get smsScanNoMatchesSuggestion =>
+      'No messages matched your rules, but we found senders that might be worth setting up:';
+
+  @override
   String get paywallTitle => 'FELOOSY PRO';
 
   @override

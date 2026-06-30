@@ -261,6 +261,10 @@
   "smsScanTransactionDesc": "وصف المعاملة",
   "smsScanExists": "موجودة",
   "smsScanDupWarning": "توجد معاملة بهذا المبلغ والفئة في هذا اليوم بالفعل",
+  "smsScanSuggestedRules": "قواعد مقترحة",
+  "smsScanSuggestionCount": "من {count} رسائل",
+  "smsScanCreateRule": "إنشاء قاعدة",
+  "smsScanNoMatchesSuggestion": "لا توجد رسائل تطابق قواعدك، لكن وجدنا مرسلين يستحق إعداد قواعد لهم:",
 
   "paywallTitle": "FELOOSY PRO",
   "paywallSubtitle": "كل شيء مفتوح، مرة واحدة. لا اشتراكات.",

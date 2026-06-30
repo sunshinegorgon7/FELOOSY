@@ -1556,6 +1556,30 @@ abstract class AppLocalizations {
   /// **'Transaction for this amount and category already exists on this day'**
   String get smsScanDupWarning;
 
+  /// No description provided for @smsScanSuggestedRules.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested Rules'**
+  String get smsScanSuggestedRules;
+
+  /// No description provided for @smsScanSuggestionCount.
+  ///
+  /// In en, this message translates to:
+  /// **'from {count} messages'**
+  String smsScanSuggestionCount(int count);
+
+  /// No description provided for @smsScanCreateRule.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Rule'**
+  String get smsScanCreateRule;
+
+  /// No description provided for @smsScanNoMatchesSuggestion.
+  ///
+  /// In en, this message translates to:
+  /// **'No messages matched your rules, but we found senders that might be worth setting up:'**
+  String get smsScanNoMatchesSuggestion;
+
   /// No description provided for @paywallTitle.
   ///
   /// In en, this message translates to:

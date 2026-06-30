@@ -12,7 +12,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 /// Private key lives only in flutter_secure_storage on the dev device.
 /// Only the public key is embedded here for verification in prod builds.
 ///
-/// To revoke a key: add its full string to [_blocklist] and publish an update.
+/// To revoke a specific key: add its identifier to the remote config Gist.
+/// To revoke by adding to source: add its full string to [_blocklist] and publish an update.
 class LicenseService {
   static const _storage = FlutterSecureStorage();
   static final _ed25519 = Ed25519();
@@ -22,6 +23,12 @@ class LicenseService {
   // Tap "Generate Keypair", copy the displayed bytes, paste them here,
   // then rebuild and redeploy both dev and prod.
   static const List<int> _publicKeyBytes = [];
+
+  // ── Legacy public keys (after keypair rotation) ───────────────────────────
+  // After rotating: copy the OLD public key literal here so keys signed by
+  // the old private key continue to verify. Each inner list is one old keypair.
+  // To kill an entire old generation: remove its entry here + publish an update.
+  static const List<List<int>> _legacyPublicKeyBytesList = [];
 
   // ── Blocklist: add a key string here + publish update to revoke it ────────
   static const Set<String> _blocklist = {};
@@ -37,24 +44,30 @@ class LicenseService {
 
   // ── Verification (used by prod + dev) ─────────────────────────────────────
 
-  /// Verifies "identifier:base64url_sig" against the embedded public key.
-  /// Returns false when the public key is not yet configured.
+  /// Verifies "identifier:base64url_sig" against the embedded public key(s).
+  /// Tries the current key first, then each legacy key from [_legacyPublicKeyBytesList].
+  /// Returns false when no public key is configured.
   static Future<bool> verify(String key) async {
     final k = key.trim();
-    if (_publicKeyBytes.isEmpty) return false;
+    if (_publicKeyBytes.isEmpty && _legacyPublicKeyBytesList.isEmpty) return false;
     if (_blocklist.contains(k)) return false;
     try {
       final colon = k.indexOf(':');
       if (colon < 1) return false;
       final identifier = k.substring(0, colon);
-      final sigB64     = k.substring(colon + 1);
-      final sigBytes   = base64Url.decode(_pad(sigB64));
+      final sigBytes   = base64Url.decode(_pad(k.substring(colon + 1)));
       final message    = utf8.encode('$_msgPrefix$identifier');
-      final pubKey     = SimplePublicKey(_publicKeyBytes, type: KeyPairType.ed25519);
-      return await _ed25519.verify(
-        message,
-        signature: Signature(sigBytes, publicKey: pubKey),
-      );
+      for (final kb in [_publicKeyBytes, ..._legacyPublicKeyBytesList]) {
+        if (kb.isEmpty) continue;
+        final pubKey = SimplePublicKey(kb, type: KeyPairType.ed25519);
+        if (await _ed25519.verify(
+          message,
+          signature: Signature(sigBytes, publicKey: pubKey),
+        )) {
+          return true;
+        }
+      }
+      return false;
     } catch (_) {
       return false;
     }
@@ -75,6 +88,14 @@ class LicenseService {
     return verify(stored);
   }
 
+  /// Returns the identifier portion of the activated key, or null if none.
+  static Future<String?> getActivatedIdentifier() async {
+    final stored = await _storage.read(key: _activatedKey);
+    if (stored == null) return null;
+    final colon = stored.indexOf(':');
+    return colon < 1 ? null : stored.substring(0, colon);
+  }
+
   // ── Admin — dev device only ───────────────────────────────────────────────
 
   static Future<bool> hasPrivateKey() async {
@@ -91,6 +112,27 @@ class LicenseService {
     await _storage.write(key: _privateKeyKey, value: base64Url.encode(priv));
     await _storage.write(key: _publicKeyKey,  value: base64Url.encode(pub.bytes));
     return '[${pub.bytes.join(', ')}]';
+  }
+
+  /// Generates a new keypair while preserving the current public key for display.
+  /// Returns both literals so the dev can update [_publicKeyBytes] and add the
+  /// old one to [_legacyPublicKeyBytesList] before rebuilding.
+  static Future<({String newPublicKeyLiteral, String oldPublicKeyLiteral})> rotateKeypair() async {
+    final oldB64 = await _storage.read(key: _publicKeyKey);
+    final oldLiteral = oldB64 != null
+        ? '[${base64Url.decode(_pad(oldB64)).join(', ')}]'
+        : '// no previous key stored';
+    final newLiteral = await setupKeypair();
+    return (newPublicKeyLiteral: newLiteral, oldPublicKeyLiteral: oldLiteral);
+  }
+
+  /// Returns the stored public key as a Dart list literal for pasting into [_publicKeyBytes].
+  /// Returns null if no keypair has been set up yet.
+  static Future<String?> getPublicKeyLiteral() async {
+    final pubB64 = await _storage.read(key: _publicKeyKey);
+    if (pubB64 == null) return null;
+    final bytes = base64Url.decode(_pad(pubB64));
+    return '[${bytes.join(', ')}]';
   }
 
   /// Signs a new license key for [identifier] using the stored private key.
@@ -115,6 +157,13 @@ class LicenseService {
     final log = raw != null ? (jsonDecode(raw) as List<dynamic>) : <dynamic>[];
     log.removeWhere((e) => (e as Map)['id'] == identifier);
     log.add({'id': identifier, 'key': key});
+    await _storage.write(key: _keyLogKey, value: jsonEncode(log));
+  }
+
+  /// Removes an entry from the dev log by identifier.
+  static Future<void> deleteKey(String identifier) async {
+    final log = await loadKeyLog();
+    log.removeWhere((e) => e['id'] == identifier);
     await _storage.write(key: _keyLogKey, value: jsonEncode(log));
   }
 

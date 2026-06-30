@@ -12,6 +12,8 @@ import '../providers/drive_backup_provider.dart';
 import '../providers/google_auth_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/transactions_provider.dart';
+import '../presentation/update_required_screen.dart';
+import '../providers/remote_config_provider.dart';
 import '../services/home_widget_sync_service.dart';
 import '../services/recurring_transaction_service.dart';
 import '../services/sms_transaction_service.dart';
@@ -88,6 +90,7 @@ class _FeloosyAppState extends ConsumerState<FeloosyApp>
   @override
   Widget build(BuildContext context) {
     final settingsAsync = ref.watch(settingsProvider);
+    final remoteConfig = ref.watch(remoteConfigProvider);
     final themeMode = settingsAsync.maybeWhen(
       data: (s) => AppTheme.resolveMode(s.themeMode),
       orElse: () => ThemeMode.system,
@@ -111,14 +114,17 @@ class _FeloosyAppState extends ConsumerState<FeloosyApp>
       darkTheme: AppTheme.dark,
       themeMode: themeMode,
       routerConfig: appRouter,
-      builder: AppFlavor.isDev && snapshotActive
-          ? (context, child) => Column(
-                children: [
-                  const _SnapshotBanner(),
-                  Expanded(child: child!),
-                ],
-              )
-          : null,
+      builder: (context, child) {
+        if (remoteConfig.asData?.value.isVersionBlocked == true) {
+          return UpdateRequiredScreen(config: remoteConfig.asData!.value);
+        }
+        if (AppFlavor.isDev && snapshotActive) {
+          return Column(
+            children: [const _SnapshotBanner(), Expanded(child: child!)],
+          );
+        }
+        return child!;
+      },
     );
   }
 }

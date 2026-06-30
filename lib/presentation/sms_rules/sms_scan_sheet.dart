@@ -26,6 +26,7 @@ import '../../services/sms_scan_service.dart';
 void showSmsScanSheet(
   BuildContext context, {
   void Function(int created, List<DateTime> dates)? onImported,
+  void Function(SmsRule suggestion)? onCreateRule,
 }) {
   showDialog<void>(
     context: context,
@@ -39,14 +40,14 @@ void showSmsScanSheet(
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(20)),
         ),
-        child: _SmsScanSheet(onImported: onImported),
+        child: _SmsScanSheet(onImported: onImported, onCreateRule: onCreateRule),
       );
     },
   );
 }
 
 // ---------------------------------------------------------------------------
-// Internal data model
+// Internal data models
 // ---------------------------------------------------------------------------
 
 class _Candidate {
@@ -69,6 +70,20 @@ class _Candidate {
   });
 }
 
+class _RuleSuggestion {
+  final String keyword;
+  final int matchCount;
+  final String exampleBody;
+  final List<double> amounts;
+
+  const _RuleSuggestion({
+    required this.keyword,
+    required this.matchCount,
+    required this.exampleBody,
+    required this.amounts,
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Sheet widget
 // ---------------------------------------------------------------------------
@@ -77,7 +92,8 @@ enum _Step { range, scanning, results }
 
 class _SmsScanSheet extends ConsumerStatefulWidget {
   final void Function(int created, List<DateTime> dates)? onImported;
-  const _SmsScanSheet({this.onImported});
+  final void Function(SmsRule suggestion)? onCreateRule;
+  const _SmsScanSheet({this.onImported, this.onCreateRule});
 
   @override
   ConsumerState<_SmsScanSheet> createState() => _SmsScanSheetState();
@@ -90,6 +106,7 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
   int _preset = 0; // default: Today
   DateTimeRange? _customRange;
   List<_Candidate> _candidates = [];
+  List<_RuleSuggestion> _suggestions = [];
   bool _importing = false;
   String? _error;
   String? _importError;
@@ -174,20 +191,18 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
           : 1;
       final activeRules = rules.where((r) => r.isActive).toList();
 
-      if (activeRules.isEmpty) {
-        if (mounted) {
-          setState(() {
-            _candidates = [];
-            _step = _Step.results;
-          });
-        }
-        return;
-      }
-
+      // Build matched candidates, tracking which message indices were consumed.
       final candidates = <_Candidate>[];
-      for (final msg in messages) {
+      final matchedIndices = <int>{};
+
+      for (var i = 0; i < messages.length; i++) {
+        final msg = messages[i];
         final rule = SmsParserService.matchRule(msg.body, activeRules);
         if (rule == null) continue;
+
+        // Mark as matched even if amount extraction fails — the message belongs
+        // to an existing rule and shouldn't generate a suggestion.
+        matchedIndices.add(i);
 
         final amount = SmsParserService.extractAmount(
           msg.body,
@@ -242,9 +257,42 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
         }
       }
 
+      // Build rule suggestions from unmatched messages that have extractable amounts.
+      // Key by vendor name extracted from the body (e.g. "CAREEM QUIK"), falling
+      // back to the bank sender only when no "at VENDOR" pattern is found.
+      final unmatchedByKeyword = <String, List<SmsMessage>>{};
+      for (var i = 0; i < messages.length; i++) {
+        if (matchedIndices.contains(i)) continue;
+        final msg = messages[i];
+        final amount = SmsParserService.extractAmount(msg.body, requireCurrencyCode: true);
+        if (amount == null || amount <= 0) continue;
+        final keyword = SmsParserService.extractVendor(msg.body) ?? msg.sender;
+        (unmatchedByKeyword[keyword] ??= []).add(msg);
+      }
+
+      final suggestions = <_RuleSuggestion>[];
+      for (final entry in unmatchedByKeyword.entries) {
+        final keyword = entry.key;
+        final msgs = entry.value;
+        // Skip if an existing rule already uses this keyword.
+        if (activeRules.any((r) => r.keyword.toLowerCase() == keyword.toLowerCase())) continue;
+        final amounts = msgs
+            .map((m) => SmsParserService.extractAmount(m.body, requireCurrencyCode: true))
+            .whereType<double>()
+            .toList();
+        suggestions.add(_RuleSuggestion(
+          keyword: keyword,
+          matchCount: msgs.length,
+          exampleBody: msgs.first.body,
+          amounts: amounts,
+        ));
+      }
+      suggestions.sort((a, b) => b.matchCount.compareTo(a.matchCount));
+
       if (mounted) {
         setState(() {
           _candidates = candidates;
+          _suggestions = suggestions.take(5).toList();
           _step = _Step.results;
         });
       }
@@ -304,6 +352,22 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
 
     Navigator.pop(context);
     widget.onImported?.call(count, importedDates);
+  }
+
+  void _onCreateRule(_RuleSuggestion suggestion) {
+    final accounts = ref.read(accountsProvider).asData?.value ?? [];
+    final fallbackAccountId = accounts.isNotEmpty
+        ? (accounts.firstWhere((a) => a.isFavorite, orElse: () => accounts.first).id ?? 1)
+        : 1;
+    final prefilledRule = SmsRule(
+      keyword: suggestion.keyword,
+      categoryUuid: '',
+      transactionType: 'expense',
+      accountIds: [fallbackAccountId],
+      createdAt: DateTime.now(),
+    );
+    Navigator.of(context).pop();
+    widget.onCreateRule?.call(prefilledRule);
   }
 
   Future<void> _editDescription(int index) async {
@@ -372,6 +436,63 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
     if (n == 0) return false;
     if (n == _candidates.length) return true;
     return null;
+  }
+
+  Widget _buildSuggestionsSection(ColorScheme cs, TextTheme tt) {
+    final l10n = context.l10n;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+          child: Row(
+            children: [
+              Icon(Icons.auto_awesome_outlined, size: 14, color: cs.primary),
+              const SizedBox(width: 6),
+              Text(
+                l10n.smsScanSuggestedRules,
+                style: tt.labelSmall?.copyWith(
+                  color: AppTheme.primaryText(cs),
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.6,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: cs.primaryContainer,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '${_suggestions.length}',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: cs.onPrimaryContainer,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(context).height * 0.25,
+          ),
+          child: ListView.builder(
+            shrinkWrap: true,
+            padding: const EdgeInsets.only(bottom: 8),
+            itemCount: _suggestions.length,
+            itemBuilder: (_, i) => _SuggestionCard(
+              suggestion: _suggestions[i],
+              onCreateRule: () => _onCreateRule(_suggestions[i]),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildRangeStep(ColorScheme cs, TextTheme tt) {
@@ -484,8 +605,40 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
     final dupCount = _candidates.where((c) => c.likelyDuplicate).length;
 
     if (_candidates.isEmpty) {
+      if (_suggestions.isEmpty) {
+        // No matches, no suggestions — plain empty state.
+        return Column(
+          key: const ValueKey('results-empty'),
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildDialogHeader(
+              tt,
+              context.l10n.smsScanNoMatches,
+              onBack: () => setState(() => _step = _Step.range),
+            ),
+            Divider(height: 1, color: cs.outlineVariant),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+              child: Text(
+                context.l10n.smsScanNoMatchesMessage,
+                style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+              child: OutlinedButton(
+                onPressed: () => setState(() => _step = _Step.range),
+                child: Text(context.l10n.smsScanTryDifferent),
+              ),
+            ),
+          ],
+        );
+      }
+
+      // No matches, but has suggestions.
       return Column(
-        key: const ValueKey('results-empty'),
+        key: const ValueKey('results-empty-suggestions'),
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -496,14 +649,15 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
           ),
           Divider(height: 1, color: cs.outlineVariant),
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
             child: Text(
-              context.l10n.smsScanNoMatchesMessage,
+              context.l10n.smsScanNoMatchesSuggestion,
               style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
             ),
           ),
+          _buildSuggestionsSection(cs, tt),
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
             child: OutlinedButton(
               onPressed: () => setState(() => _step = _Step.range),
               child: Text(context.l10n.smsScanTryDifferent),
@@ -592,7 +746,7 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
             ),
           ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+          padding: EdgeInsets.fromLTRB(20, 12, 20, _suggestions.isEmpty ? 20 : 8),
           child: FilledButton(
             onPressed: selected == 0 || _importing ? null : _import,
             child: _importing
@@ -608,6 +762,10 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
                   ),
           ),
         ),
+        if (_suggestions.isNotEmpty) ...[
+          Divider(height: 1, color: cs.outlineVariant),
+          _buildSuggestionsSection(cs, tt),
+        ],
       ],
     );
   }
@@ -849,6 +1007,99 @@ class _CandidateTile extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Suggestion card
+// ---------------------------------------------------------------------------
+
+class _SuggestionCard extends StatelessWidget {
+  final _RuleSuggestion suggestion;
+  final VoidCallback onCreateRule;
+
+  const _SuggestionCard({
+    required this.suggestion,
+    required this.onCreateRule,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(12, 10, 4, 10),
+        decoration: BoxDecoration(
+          color: cs.surfaceContainerHigh,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: cs.outlineVariant, width: 0.5),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: cs.primaryContainer,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            suggestion.keyword,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: cs.onPrimaryContainer,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        context.l10n.smsScanSuggestionCount(suggestion.matchCount),
+                        style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    suggestion.exampleBody,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: tt.labelSmall?.copyWith(
+                      color: cs.onSurfaceVariant.withValues(alpha: 0.65),
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            TextButton(
+              onPressed: onCreateRule,
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Text(
+                context.l10n.smsScanCreateRule,
+                style: const TextStyle(fontSize: 12),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

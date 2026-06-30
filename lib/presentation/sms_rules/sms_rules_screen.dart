@@ -116,7 +116,10 @@ class _SmsRulesScreenState extends ConsumerState<SmsRulesScreen> {
   void _navigateToEdit(SmsRule rule) => context.push('/sms-rules/edit', extra: rule);
 
   void _openScanSheet() {
-    showSmsScanSheet(context, onImported: (count, dates) {
+    showSmsScanSheet(
+      context,
+      onCreateRule: (rule) => context.push('/sms-rules/edit', extra: rule),
+      onImported: (count, dates) {
       if (!mounted) return;
       if (count > 0) {
         // Reset the home screen: clear any account/period filter so the

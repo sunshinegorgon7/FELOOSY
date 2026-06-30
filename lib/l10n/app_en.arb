@@ -436,6 +436,15 @@
   "smsScanTransactionDesc": "Transaction description",
   "smsScanExists": "exists",
   "smsScanDupWarning": "Transaction for this amount and category already exists on this day",
+  "smsScanSuggestedRules": "Suggested Rules",
+  "smsScanSuggestionCount": "from {count} messages",
+  "@smsScanSuggestionCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "smsScanCreateRule": "Create Rule",
+  "smsScanNoMatchesSuggestion": "No messages matched your rules, but we found senders that might be worth setting up:",
 
   "paywallTitle": "FELOOSY PRO",
   "paywallSubtitle": "Everything unlocked, once. No subscriptions.",
