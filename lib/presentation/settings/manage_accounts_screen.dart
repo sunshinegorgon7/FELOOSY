@@ -9,6 +9,7 @@ import '../../core/extensions/localizations_extension.dart';
 import '../../data/models/account.dart';
 import '../../providers/accounts_provider.dart';
 import '../../providers/access_tier_provider.dart';
+import '../../providers/budget_summary_provider.dart';
 import '../../providers/transactions_provider.dart';
 
 class ManageAccountsScreen extends ConsumerWidget {
@@ -219,6 +220,8 @@ class ManageAccountsScreen extends ConsumerWidget {
                       );
                 } else {
                   final wasCarryOver = account.carryOverEnabled;
+                  final monthStartDayChanged =
+                      selectedMonthStartDay != account.monthStartDay;
                   await ref.read(accountsProvider.notifier).save(
                         account.copyWith(
                           name: name,
@@ -234,6 +237,14 @@ class ManageAccountsScreen extends ConsumerWidget {
                       );
                   if (wasCarryOver && !carryOverEnabled) {
                     ref.invalidate(transactionsProvider);
+                  }
+                  if (monthStartDayChanged) {
+                    // Wait for accountsProvider to finish reloading from the DB
+                    // so that effectiveMonthStartDayProvider and the period
+                    // providers cascade with the updated value before the
+                    // budget summary re-evaluates.
+                    await ref.read(accountsProvider.future);
+                    ref.invalidate(budgetSummaryProvider);
                   }
                 }
                 if (ctx.mounted) Navigator.pop(ctx);

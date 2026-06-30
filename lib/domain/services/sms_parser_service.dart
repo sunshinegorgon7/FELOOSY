@@ -91,11 +91,14 @@ class SmsParserService {
   }
 
   /// Returns the first active rule whose keyword appears in [body]
-  /// (case-insensitive). Returns null if no rule matches.
+  /// (case-insensitive). Normalises whitespace before matching so that
+  /// multi-word keywords like "HAWA ELSHAM" are not broken by double spaces,
+  /// non-breaking spaces, or other Unicode whitespace variants in SMS bodies.
   static SmsRule? matchRule(String body, List<SmsRule> rules) {
-    final lower = body.toLowerCase();
+    final lower = body.toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
     for (final rule in rules) {
-      if (lower.contains(rule.keyword.toLowerCase())) return rule;
+      final keyword = rule.keyword.toLowerCase().replaceAll(RegExp(r'\s+'), ' ').trim();
+      if (lower.contains(keyword)) return rule;
     }
     return null;
   }
@@ -115,5 +118,48 @@ class SmsParserService {
   static String? extractVendor(String body) {
     final match = _vendorAtPattern.firstMatch(body);
     return match?.group(1)?.trim();
+  }
+
+  // ── looksLikeTransaction filter ───────────────────────────────────────────
+  //
+  // Used only in the suggestion algorithm to reduce false positives from
+  // transfers, balance alerts, salary credits, and OTP messages.
+  //
+  // Positive gate: must contain at least one debit/credit/purchase verb.
+  static final _transactionVerbPattern = RegExp(
+    r'\b(debited?|credited?|spent|paid|payment\s+of|charged|deducted|withdrawn|purchase[d]?)\b',
+    caseSensitive: false,
+  );
+
+  // Negative gate: bank-to-bank transfer signals.
+  // "sent to" is included because peer-to-peer UPI/mobile transfers say
+  // "Rs X sent to 9876@ybl" — not a merchant purchase worth a rule.
+  static final _transferExclusionPattern = RegExp(
+    r'\b(NEFT|IMPS|RTGS|SWIFT|transfer(?:red)?\s+to|to\s+(?:a\/c|account|card|mobile)|sent\s+to)\b',
+    caseSensitive: false,
+  );
+
+  // Negative gate: salary/income — user prefers not to create rules for these.
+  static final _salaryExclusionPattern = RegExp(
+    r'\b(salary|income|payroll|stipend|pay\s*slip)\b',
+    caseSensitive: false,
+  );
+
+  // Negative gate: OTP and security messages (usually already filtered by
+  // the AD- sender prefix, but some banks send OTPs from their normal sender).
+  static final _otpExclusionPattern = RegExp(
+    r'\b(OTP|one.time\s+pass(?:word|code)?|passcode|verification\s+code|authentication\s+code)\b',
+    caseSensitive: false,
+  );
+
+  /// Returns true only if [body] looks like a merchant debit/credit event
+  /// worth suggesting a rule for. Filters out transfers, salary credits,
+  /// balance alerts, and OTP messages.
+  static bool looksLikeTransaction(String body) {
+    if (!_transactionVerbPattern.hasMatch(body)) return false;
+    if (_transferExclusionPattern.hasMatch(body)) return false;
+    if (_salaryExclusionPattern.hasMatch(body)) return false;
+    if (_otpExclusionPattern.hasMatch(body)) return false;
+    return true;
   }
 }

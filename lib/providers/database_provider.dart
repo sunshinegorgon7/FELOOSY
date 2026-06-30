@@ -6,7 +6,10 @@ import '../data/repositories/account_repository.dart';
 import '../data/repositories/recurring_rule_repository.dart';
 import '../data/repositories/settings_repository.dart';
 import '../data/repositories/sms_rule_repository.dart';
+import '../data/repositories/sms_suggestion_feedback_repository.dart';
 import '../data/repositories/transaction_repository.dart';
+
+export '../data/repositories/sms_suggestion_feedback_repository.dart' show SmsRejectedEntry;
 
 final databaseHelperProvider = Provider<DatabaseHelper>((ref) {
   return DatabaseHelper.instance;
@@ -38,4 +41,12 @@ final smsRuleRepositoryProvider = Provider<SmsRuleRepository>((ref) {
 
 final recurringRuleRepositoryProvider = Provider<RecurringRuleRepository>((ref) {
   return RecurringRuleRepository(ref.watch(databaseHelperProvider));
+});
+
+final smsSuggestionFeedbackRepositoryProvider = Provider<SmsSuggestionFeedbackRepository>((ref) {
+  return SmsSuggestionFeedbackRepository(ref.watch(databaseHelperProvider));
+});
+
+final dismissedSuggestionsProvider = FutureProvider<List<SmsRejectedEntry>>((ref) {
+  return ref.watch(smsSuggestionFeedbackRepositoryProvider).getAllRejected();
 });

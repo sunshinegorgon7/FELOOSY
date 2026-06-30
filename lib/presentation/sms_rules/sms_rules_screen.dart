@@ -12,6 +12,7 @@ import '../../data/models/sms_rule.dart';
 import '../../providers/accounts_provider.dart';
 import '../../providers/budget_period_provider.dart';
 import '../../providers/categories_provider.dart';
+import '../../providers/database_provider.dart';
 import '../../providers/sms_rules_provider.dart';
 import '../home/home_screen.dart' show smsImportCompletedProvider;
 import 'sms_scan_sheet.dart';
@@ -64,27 +65,54 @@ class _SmsRulesScreenState extends ConsumerState<SmsRulesScreen> {
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => Center(child: Text('Error: $e')),
               data: (rules) {
-                if (rules.isEmpty) return _EmptyState(onAdd: _navigateToAdd);
                 final cats = catsAsync.asData?.value ?? [];
                 final accounts = ref.watch(accountsProvider).asData?.value ?? [];
-                return ListView.builder(
-                  itemCount: rules.length,
-                  itemBuilder: (ctx, i) {
-                    final rule = rules[i];
-                    final cat = cats.where((c) => c.uuid == rule.categoryUuid).firstOrNull;
-                    final names = rule.accountIds
-                        .map((id) => accounts.where((a) => a.id == id).firstOrNull?.name)
-                        .where((n) => n != null)
-                        .join(', ');
-                    return _RuleTile(
-                      rule: rule,
-                      category: cat,
-                      walletNames: names,
-                      onTap: () => _navigateToEdit(rule),
-                      onDelete: () => _confirmDelete(rule),
-                      onToggle: () => ref.read(smsRulesProvider.notifier).toggleActive(rule),
-                    );
-                  },
+                final dismissed = ref.watch(dismissedSuggestionsProvider).asData?.value ?? [];
+
+                if (rules.isEmpty && dismissed.isEmpty) {
+                  return _EmptyState(onAdd: _navigateToAdd);
+                }
+
+                return CustomScrollView(
+                  slivers: [
+                    SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (ctx, i) {
+                          final rule = rules[i];
+                          final cat = cats.where((c) => c.uuid == rule.categoryUuid).firstOrNull;
+                          final names = rule.accountIds
+                              .map((id) => accounts.where((a) => a.id == id).firstOrNull?.name)
+                              .where((n) => n != null)
+                              .join(', ');
+                          return _RuleTile(
+                            rule: rule,
+                            category: cat,
+                            walletNames: names,
+                            onTap: () => _navigateToEdit(rule),
+                            onDelete: () => _confirmDelete(rule),
+                            onToggle: () => ref.read(smsRulesProvider.notifier).toggleActive(rule),
+                          );
+                        },
+                        childCount: rules.length,
+                      ),
+                    ),
+                    if (dismissed.isNotEmpty) ...[
+                      const SliverToBoxAdapter(
+                        child: _SectionHeader(label: 'Dismissed Suggestions'),
+                      ),
+                      SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (ctx, i) => _DismissedTile(
+                            entry: dismissed[i],
+                            onRestore: () => _restoreSuggestion(dismissed[i].keyword),
+                          ),
+                          childCount: dismissed.length,
+                        ),
+                      ),
+                    ],
+                    // Extra space so FABs don't obscure the last item.
+                    const SliverToBoxAdapter(child: SizedBox(height: 88)),
+                  ],
                 );
               },
             ),
@@ -114,6 +142,11 @@ class _SmsRulesScreenState extends ConsumerState<SmsRulesScreen> {
 
   void _navigateToAdd() => context.push('/sms-rules/edit');
   void _navigateToEdit(SmsRule rule) => context.push('/sms-rules/edit', extra: rule);
+
+  Future<void> _restoreSuggestion(String keyword) async {
+    await ref.read(smsSuggestionFeedbackRepositoryProvider).removeRejected(keyword);
+    ref.invalidate(dismissedSuggestionsProvider);
+  }
 
   void _openScanSheet() {
     showSmsScanSheet(
@@ -176,6 +209,69 @@ class _SmsRulesScreenState extends ConsumerState<SmsRulesScreen> {
   }
 }
 
+
+// ---------------------------------------------------------------------------
+// Section header
+// ---------------------------------------------------------------------------
+
+class _SectionHeader extends StatelessWidget {
+  final String label;
+  const _SectionHeader({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 6),
+      child: Text(
+        label.toUpperCase(),
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.8,
+          color: cs.onSurfaceVariant,
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Dismissed suggestion tile
+// ---------------------------------------------------------------------------
+
+class _DismissedTile extends StatelessWidget {
+  final SmsRejectedEntry entry;
+  final VoidCallback onRestore;
+
+  const _DismissedTile({required this.entry, required this.onRestore});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    return ListTile(
+      leading: CircleAvatar(
+        backgroundColor: cs.surfaceContainerHigh,
+        child: Icon(Icons.block_outlined, size: 18, color: cs.onSurfaceVariant.withValues(alpha: 0.4)),
+      ),
+      title: Text(
+        entry.keyword,
+        style: TextStyle(color: cs.onSurfaceVariant, fontWeight: FontWeight.w500),
+      ),
+      subtitle: Text(
+        'Dismissed ${DateFormat('MMM d, y').format(entry.dismissedAt)}',
+        style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant.withValues(alpha: 0.6)),
+      ),
+      trailing: TextButton(
+        onPressed: onRestore,
+        child: const Text('Restore'),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
 
 class _PermissionBanner extends StatelessWidget {
   final VoidCallback onGrant;

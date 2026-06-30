@@ -28,7 +28,7 @@ class DatabaseHelper {
     final dbPath = p.join(docDir.path, AppFlavor.databaseName);
     return openDatabase(
       dbPath,
-      version: 30,
+      version: 31,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -164,6 +164,15 @@ class DatabaseHelper {
         account_id INTEGER NOT NULL,
         FOREIGN KEY (sms_rule_id) REFERENCES sms_rules(id) ON DELETE CASCADE,
         UNIQUE(sms_rule_id, account_id)
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE sms_suggestion_feedback (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        keyword TEXT NOT NULL,
+        action TEXT NOT NULL,
+        created_at INTEGER NOT NULL
       )
     ''');
 
@@ -638,6 +647,17 @@ class DatabaseHelper {
       // categories render their plain icon everywhere.
       await db.update('categories', {'logo_url': null});
       debugPrint('[DB] v30 done: cleared category logo_url values');
+    }
+    if (oldVersion < 31) {
+      await db.execute('''
+        CREATE TABLE sms_suggestion_feedback (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          keyword TEXT NOT NULL,
+          action TEXT NOT NULL,
+          created_at INTEGER NOT NULL
+        )
+      ''');
+      debugPrint('[DB] v31 done: created sms_suggestion_feedback table');
     }
   }
 

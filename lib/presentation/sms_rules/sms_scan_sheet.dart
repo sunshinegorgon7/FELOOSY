@@ -15,6 +15,7 @@ import '../../data/models/transaction.dart';
 import '../../domain/services/sms_parser_service.dart';
 import '../../providers/accounts_provider.dart';
 import '../../providers/categories_provider.dart';
+import '../../providers/database_provider.dart';
 import '../../providers/sms_rules_provider.dart';
 import '../../providers/transactions_provider.dart';
 import '../../services/sms_scan_service.dart';
@@ -260,12 +261,21 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
       // Build rule suggestions from unmatched messages that have extractable amounts.
       // Key by vendor name extracted from the body (e.g. "CAREEM QUIK"), falling
       // back to the bank sender only when no "at VENDOR" pattern is found.
+      final rejectedKeywords = await ref
+          .read(smsSuggestionFeedbackRepositoryProvider)
+          .getRejectedKeywords();
+
       final unmatchedByKeyword = <String, List<SmsMessage>>{};
       for (var i = 0; i < messages.length; i++) {
         if (matchedIndices.contains(i)) continue;
         final msg = messages[i];
+        // AD- prefix denotes promotional/service sender IDs — not transaction SMS.
+        if (msg.sender.toUpperCase().startsWith('AD-')) continue;
         final amount = SmsParserService.extractAmount(msg.body, requireCurrencyCode: true);
         if (amount == null || amount <= 0) continue;
+        // Skip transfers, salary/income, OTPs, and messages without a clear
+        // debit/credit verb — these generate noisy suggestions.
+        if (!SmsParserService.looksLikeTransaction(msg.body)) continue;
         final keyword = SmsParserService.extractVendor(msg.body) ?? msg.sender;
         (unmatchedByKeyword[keyword] ??= []).add(msg);
       }
@@ -276,6 +286,8 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
         final msgs = entry.value;
         // Skip if an existing rule already uses this keyword.
         if (activeRules.any((r) => r.keyword.toLowerCase() == keyword.toLowerCase())) continue;
+        // Skip keywords the user has previously dismissed.
+        if (rejectedKeywords.contains(keyword.toLowerCase())) continue;
         final amounts = msgs
             .map((m) => SmsParserService.extractAmount(m.body, requireCurrencyCode: true))
             .whereType<double>()
@@ -355,6 +367,9 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
   }
 
   void _onCreateRule(_RuleSuggestion suggestion) {
+    ref
+        .read(smsSuggestionFeedbackRepositoryProvider)
+        .insertFeedback(suggestion.keyword, 'accepted');
     final accounts = ref.read(accountsProvider).asData?.value ?? [];
     final fallbackAccountId = accounts.isNotEmpty
         ? (accounts.firstWhere((a) => a.isFavorite, orElse: () => accounts.first).id ?? 1)
@@ -368,6 +383,13 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
     );
     Navigator.of(context).pop();
     widget.onCreateRule?.call(prefilledRule);
+  }
+
+  void _dismissSuggestion(_RuleSuggestion suggestion) {
+    ref
+        .read(smsSuggestionFeedbackRepositoryProvider)
+        .insertFeedback(suggestion.keyword, 'rejected');
+    setState(() => _suggestions.remove(suggestion));
   }
 
   Future<void> _editDescription(int index) async {
@@ -488,6 +510,7 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
             itemBuilder: (_, i) => _SuggestionCard(
               suggestion: _suggestions[i],
               onCreateRule: () => _onCreateRule(_suggestions[i]),
+              onDismiss: () => _dismissSuggestion(_suggestions[i]),
             ),
           ),
         ),
@@ -1019,10 +1042,12 @@ class _CandidateTile extends StatelessWidget {
 class _SuggestionCard extends StatelessWidget {
   final _RuleSuggestion suggestion;
   final VoidCallback onCreateRule;
+  final VoidCallback onDismiss;
 
   const _SuggestionCard({
     required this.suggestion,
     required this.onCreateRule,
+    required this.onDismiss,
   });
 
   @override
@@ -1097,6 +1122,13 @@ class _SuggestionCard extends StatelessWidget {
                 context.l10n.smsScanCreateRule,
                 style: const TextStyle(fontSize: 12),
               ),
+            ),
+            IconButton(
+              onPressed: onDismiss,
+              icon: Icon(Icons.close, size: 16, color: cs.onSurfaceVariant.withValues(alpha: 0.5)),
+              padding: const EdgeInsets.all(6),
+              constraints: const BoxConstraints(),
+              tooltip: 'Dismiss',
             ),
           ],
         ),
