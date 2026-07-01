@@ -1,7 +1,7 @@
 name: feloosy
 description: Personal budget tracker — pocket money only.
 publish_to: 'none'
-version: 1.4.4+277
+version: 1.4.5+284
 
 environment:
   sdk: ^3.11.5
@@ -34,7 +34,7 @@ dependencies:
   crypto: ^3.0.0
 
   # UI
-  lucide_icons: ^0.257.0
+  lucide_icons_flutter: ^3.1.14
   fl_chart: ^1.2.0
   flutter_slidable: ^4.0.3
   gap: ^3.0.1

@@ -10,10 +10,10 @@ FELOOSY is a Flutter personal budgeting app for iOS and Android. Local-first SQL
 |---|---|---|
 | **Language / SDK** | Dart | `^3.11.5` |
 | **Framework** | Flutter | current stable |
-| **App version** | — | `1.4.4+277` (pubspec + app_info.dart must stay in sync) |
+| **App version** | — | `1.4.5+284` (pubspec + app_info.dart must stay in sync) |
 | **State management** | flutter_riverpod | `^3.3.1` |
 | **Codegen** | riverpod_annotation + build_runner + riverpod_generator | `^4.0.2` |
-| **Database** | sqflite (SQLite v31, 31 migrations) | `^2.3.3` |
+| **Database** | sqflite (SQLite v31, 29 migration steps) | `^2.3.3` |
 | **Navigation** | go_router (path-based, 14 routes) | `^17.2.2` |
 | **AI analysis** | local rule-based insights (InsightsService) + on-device Gemma 2 2B GGUF (ModelDownloadService) | — |
 | **Authentication** | google_sign_in | `^7.2.0` |
@@ -212,8 +212,10 @@ final tier = ref.watch(accessTierProvider);  // synchronous, safe
 **Version bumping:**
 - Always update BOTH `pubspec.yaml` (`version: X.Y.Z+BUILD`) AND `lib/core/constants/app_info.dart` (`kAppVersionLabel` + `kAppBuildNumber`).
 - Build number = `git rev-list --count HEAD`.
-- **Patch rollover rule:** The patch version (Z in X.Y.Z) must never reach 10. If a bump would take Z to 10, increment the minor version and reset patch to 0 instead (e.g. `1.4.9` → `1.5.0`, not `1.4.10`).
-- Do not bump major version without explicit instruction from the repo owner.
+- **Version rollover rule:** No octet (X, Y, or Z in X.Y.Z) may ever display as 10 or higher — each octet caps at 9, odometer-style. When a bump would take an octet to 10, reset it to 0 and increment the octet to its left instead:
+  - Patch rolls at Z: **9 → 10** becomes minor+1, patch 0 (e.g. `1.4.9` → `1.5.0`, not `1.4.10`).
+  - This cascades: if that same bump also takes minor (Y) from **9 → 10**, minor resets to 0 and major increments (e.g. `1.9.9` → `2.0.0`, not `1.10.0`).
+- Do not bump major version without explicit instruction from the repo owner — this still applies even when a patch/minor rollover would cascade into one. If a version bump would cascade into the major octet, stop and confirm with the repo owner before applying it; do not auto-bump major.
 
 **Recurring rules — monthly anchor:**
 - Monthly/annual recurrences anchor to the rule's `start_date` day-of-month, not "30 days from last run". See [docs/algorithm-decisions.md](docs/algorithm-decisions.md) for why.
@@ -270,7 +272,7 @@ Currently decided values (do not change without explicit instruction):
 - Max backups retained: 5
 - Pro product: `feloosy_pro_lifetime` / $9.99 (update price in App Store / Play Console)
 - DB name (dev): `feloosy_dev.db` / (prod): `feloosy.db`
-- Patch version cap: 9 (Z in X.Y.Z — roll to next minor at 10, see Version bumping above)
+- Version octet cap: 9 for both minor and patch (X.Y.Z — each rolls to the octet on its left at 10, cascading; see Version bumping above)
 
 ---
 

@@ -14,12 +14,12 @@ class CarryOverService {
   /// Inserts a carry-over transaction for [account] in [period] if one does not
   /// already exist. Returns true when a transaction was inserted.
   ///
-  /// Carry-over is a signed adjustment:
-  ///   surplus (prev budget > prev spend) → income transaction
-  ///   deficit (prev spend > prev budget) → expense transaction
-  ///
-  /// Previous-period carry-overs are excluded from the net calculation to
-  /// prevent compounding (cascade) across multiple months.
+  /// Carry-over tracks a running balance, not a period-to-period delta: it is
+  /// the previous period's own carry-over (if any) plus that period's own
+  /// budget-vs-actual. A deficit therefore persists across periods until
+  /// spending actually catches up, instead of resetting every period.
+  ///   running balance > 0 → income transaction (surplus rolled forward)
+  ///   running balance < 0 → expense transaction (deficit rolled forward)
   static Future<bool> generateIfNeeded({
     required Account account,
     required BudgetPeriod period,
@@ -39,16 +39,31 @@ class CarryOverService {
     if (currentTxs.any((t) => t.isCarryOver)) return false;
 
     final prevPeriod = MonthCalculator.previousPeriod(period, monthStartDay);
-    final prevTxs = (await txRepo.getForPeriod(
+    final allPrevTxs = await txRepo.getForPeriod(
       prevPeriod.start,
       prevPeriod.end,
       accountId: account.id!,
-    )).where((t) => !t.isCarryOver).toList();
+    );
 
-    // No recorded activity in the previous period — nothing to carry over.
-    // This prevents a phantom carry-over when the user just started the app
-    // and the prior period has a default budget but zero transactions.
-    if (prevTxs.isEmpty) return false;
+    // The running balance the previous period itself carried in. Excluded
+    // from prevExpenses/prevIncome below (so it isn't double-counted as a
+    // regular transaction) but re-added as a level so a deficit/surplus
+    // persists across periods instead of resetting to that period's own
+    // delta alone.
+    final prevCarryOverIncome = allPrevTxs
+        .where((t) => t.isCarryOver && t.type == TransactionType.income)
+        .fold(0.0, (s, t) => s + t.amount);
+    final prevCarryOverExpense = allPrevTxs
+        .where((t) => t.isCarryOver && t.type == TransactionType.expense)
+        .fold(0.0, (s, t) => s + t.amount);
+    final prevCarryOverNet = prevCarryOverIncome - prevCarryOverExpense;
+
+    final prevTxs = allPrevTxs.where((t) => !t.isCarryOver).toList();
+
+    // Nothing to carry: no new activity in the previous period AND no
+    // inherited balance from before that. A nonzero inherited balance must
+    // still roll forward even through a period with zero new transactions.
+    if (prevTxs.isEmpty && prevCarryOverNet == 0) return false;
 
     final prevBudget = await budgetRepo.getForPeriod(
       prevPeriod.budgetYear,
@@ -60,7 +75,7 @@ class CarryOverService {
         account.defaultMonthlyBudget ??
         0;
 
-    if (prevBudgetAmount <= 0) return false;
+    if (prevBudgetAmount <= 0 && prevCarryOverNet == 0) return false;
 
     final prevExpenses = prevTxs
         .where((t) => t.type == TransactionType.expense)
@@ -68,7 +83,7 @@ class CarryOverService {
     final prevIncome = prevTxs
         .where((t) => t.type == TransactionType.income)
         .fold(0.0, (s, t) => s + t.amount);
-    final net = prevBudgetAmount - prevExpenses + prevIncome;
+    final net = prevCarryOverNet + prevBudgetAmount - prevExpenses + prevIncome;
 
     if (net == 0) return false;
 

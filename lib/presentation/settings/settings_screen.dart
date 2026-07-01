@@ -183,7 +183,8 @@ class _SettingsBody extends ConsumerWidget {
         ? 'UTC$sign$h'
         : 'UTC$sign$h:${m.toString().padLeft(2, '0')}';
     final name = now.timeZoneName;
-    return (name.isNotEmpty && name != offsetStr && name != 'UTC')
+    final isAlphabeticName = RegExp(r'^[A-Za-z]').hasMatch(name);
+    return (isAlphabeticName && name != 'UTC')
         ? '$offsetStr · $name'
         : offsetStr;
   }

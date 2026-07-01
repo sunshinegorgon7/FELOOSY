@@ -159,8 +159,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeNoTransactionsDay => 'No transactions on this day.';
 
   @override
-  String get homeNoTransactionsCategory =>
-      'No transactions in this\ncategory for this period.';
+  String get homeNoTransactionsCategory => 'No transactions in this\ncategory for this period.';
 
   @override
   String get homeByDay => 'By Day';
@@ -202,8 +201,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get setBudgetHint =>
-      'This is the total amount you want to track this month.';
+  String get setBudgetHint => 'This is the total amount you want to track this month.';
 
   @override
   String get setBudgetAmount => 'Budget amount';
@@ -275,8 +273,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get transactionDeleteRecurringTitle => 'Delete recurring transaction';
 
   @override
-  String get transactionDeleteRecurringQuestion =>
-      'How would you like to delete this?';
+  String get transactionDeleteRecurringQuestion => 'How would you like to delete this?';
 
   @override
   String get transactionDeleteOnlyThis => 'Only this';
@@ -327,8 +324,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get editCategoryIcon => 'Icon';
 
   @override
-  String get editCategoryChartNote =>
-      'Chart bar colour is theme-managed for built-in categories.';
+  String get editCategoryChartNote => 'Chart bar colour is theme-managed for built-in categories.';
 
   @override
   String get settingsAppearance => 'Appearance';
@@ -342,8 +338,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get settingsDaysFebNote =>
-      'Days 29–31 unavailable to ensure February compatibility.';
+  String get settingsDaysFebNote => 'Days 29–31 unavailable to ensure February compatibility.';
 
   @override
   String get settingsTimezone => 'Timezone';
@@ -402,8 +397,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsResetApp => 'Reset App';
 
   @override
-  String get settingsResetAppDesc =>
-      'Erase all transactions and budgets, restore defaults';
+  String get settingsResetAppDesc => 'Erase all transactions and budgets, restore defaults';
 
   @override
   String get settingsSelectCurrency => 'Select Currency';
@@ -415,8 +409,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsResetTitle => 'Reset app?';
 
   @override
-  String get settingsResetMessage =>
-      'This will permanently delete:\n  • All transactions\n  • All budgets\n  • All custom categories\n\nSettings will be restored to defaults and you will be signed out of Google. Sign in again afterwards to restore from a backup.\n\nThis cannot be undone.';
+  String get settingsResetMessage => 'This will permanently delete:\n  • All transactions\n  • All budgets\n  • All custom categories\n\nSettings will be restored to defaults and you will be signed out of Google. Sign in again afterwards to restore from a backup.\n\nThis cannot be undone.';
 
   @override
   String get settingsResetConfirm => 'Reset Everything';
@@ -450,8 +443,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsRestoreFromDrive => 'Restore From Drive';
 
   @override
-  String get settingsRestoreFromDriveDesc =>
-      'Replace local data with Drive backup';
+  String get settingsRestoreFromDriveDesc => 'Replace local data with Drive backup';
 
   @override
   String get settingsSignOut => 'Sign Out';
@@ -460,8 +452,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsBackupSaved => 'Backup saved to Google Drive.';
 
   @override
-  String get settingsBackupNoChanges =>
-      'No changes since last backup — skipped.';
+  String get settingsBackupNoChanges => 'No changes since last backup — skipped.';
 
   @override
   String settingsBackupFailed(String error) {
@@ -480,8 +471,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsReplaceLocalTitle => 'Replace all local data?';
 
   @override
-  String get settingsReplaceLocalMessage =>
-      'Restoring from Google Drive will permanently delete everything currently on this device — all transactions, budgets, and categories — and replace it with the backup.\n\nThis cannot be undone.';
+  String get settingsReplaceLocalMessage => 'Restoring from Google Drive will permanently delete everything currently on this device — all transactions, budgets, and categories — and replace it with the backup.\n\nThis cannot be undone.';
 
   @override
   String get settingsReplaceMyData => 'Replace my data';
@@ -507,8 +497,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsRestoreFromFile => 'Restore From File';
 
   @override
-  String get settingsRestoreFromFileDesc =>
-      'Replace local data with an exported backup';
+  String get settingsRestoreFromFileDesc => 'Replace local data with an exported backup';
 
   @override
   String settingsExportSuccess(String fileName) {
@@ -550,8 +539,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsSmsRules => 'SMS Rules';
 
   @override
-  String get settingsSmsRulesDesc =>
-      'Auto-create transactions from incoming messages';
+  String get settingsSmsRulesDesc => 'Auto-create transactions from incoming messages';
 
   @override
   String get settingsThemeLight => 'Light';
@@ -632,8 +620,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get manageWalletsNoBudget => 'No default budget';
 
   @override
-  String get manageWalletsAlreadyExists =>
-      'A wallet with this name already exists';
+  String get manageWalletsAlreadyExists => 'A wallet with this name already exists';
 
   @override
   String manageWalletsBudgetCarryOver(String budget) {
@@ -653,15 +640,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get smsRulesPermissionTitle => 'SMS permission required';
 
   @override
-  String get smsRulesPermissionMessage =>
-      'Grant access so incoming messages can be matched against your rules.';
+  String get smsRulesPermissionMessage => 'Grant access so incoming messages can be matched against your rules.';
 
   @override
   String get smsRulesNone => 'No rules yet';
 
   @override
-  String get smsRulesNoneMessage =>
-      'Add a rule to automatically create transactions when you receive bank SMS messages.';
+  String get smsRulesNoneMessage => 'Add a rule to automatically create transactions when you receive bank SMS messages.';
 
   @override
   String get smsRulesAddFirst => 'Add first rule';
@@ -695,19 +680,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get smsRuleFormKeywordHint => 'e.g. Carrefour, VODAFONE, Uber';
 
   @override
-  String get smsRuleFormKeywordHelper =>
-      'Case-insensitive match anywhere in the SMS body.';
+  String get smsRuleFormKeywordHelper => 'Case-insensitive match anywhere in the SMS body.';
 
   @override
   String get smsRuleFormLabel => 'Transaction Label';
 
   @override
-  String get smsRuleFormLabelHint =>
-      'e.g. Gas, Coffee, Groceries (leave blank to use keyword)';
+  String get smsRuleFormLabelHint => 'e.g. Gas, Coffee, Groceries (leave blank to use keyword)';
 
   @override
-  String get smsRuleFormLabelHelper =>
-      'Shown as the transaction description. Defaults to the keyword.';
+  String get smsRuleFormLabelHelper => 'Shown as the transaction description. Defaults to the keyword.';
 
   @override
   String get smsRuleFormType => 'Transaction Type';
@@ -725,12 +707,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get smsRuleFormWallets => 'Wallets';
 
   @override
-  String get smsRuleFormWalletsHelper =>
-      'Transactions will be created in all selected wallets.';
+  String get smsRuleFormWalletsHelper => 'Transactions will be created in all selected wallets.';
 
   @override
-  String get smsRuleFormSelectWalletError =>
-      'Please select at least one wallet.';
+  String get smsRuleFormSelectWalletError => 'Please select at least one wallet.';
 
   @override
   String get smsRuleFormAdvanced => 'Advanced';
@@ -742,8 +722,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get smsRuleFormRegexHint => 'Amount regex (optional)';
 
   @override
-  String get smsRuleFormRegexHelper =>
-      'Use capture group 1 to extract the amount. Leave empty to use built-in detection.';
+  String get smsRuleFormRegexHelper => 'Use capture group 1 to extract the amount. Leave empty to use built-in detection.';
 
   @override
   String get smsRuleFormSaveChanges => 'Save Changes';
@@ -772,8 +751,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get smsScanTitle => 'Scan existing SMS';
 
   @override
-  String get smsScanDesc =>
-      'Apply your active rules to messages already in your inbox.';
+  String get smsScanDesc => 'Apply your active rules to messages already in your inbox.';
 
   @override
   String get smsScanDateRange => 'Date range';
@@ -788,8 +766,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get smsScanSelectRange => 'Select date range';
 
   @override
-  String get smsScanPermissionRequired =>
-      'SMS permission is required to scan messages.';
+  String get smsScanPermissionRequired => 'SMS permission is required to scan messages.';
 
   @override
   String get smsScanScanning => 'Scanning messages…';
@@ -798,8 +775,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get smsScanNoMatches => 'No matches found';
 
   @override
-  String get smsScanNoMatchesMessage =>
-      'No messages in this range matched your active rules.\nTry a wider range or check your rule keywords.';
+  String get smsScanNoMatchesMessage => 'No messages in this range matched your active rules.\nTry a wider range or check your rule keywords.';
 
   @override
   String get smsScanTryDifferent => 'Try different range';
@@ -832,8 +808,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get smsScanExists => 'exists';
 
   @override
-  String get smsScanDupWarning =>
-      'Transaction for this amount and category already exists on this day';
+  String get smsScanDupWarning => 'Transaction for this amount and category already exists on this day';
 
   @override
   String get smsScanSuggestedRules => 'Suggested Rules';
@@ -847,8 +822,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get smsScanCreateRule => 'Create Rule';
 
   @override
-  String get smsScanNoMatchesSuggestion =>
-      'No messages matched your rules, but we found senders that might be worth setting up:';
+  String get smsScanNoMatchesSuggestion => 'No messages matched your rules, but we found senders that might be worth setting up:';
 
   @override
   String get paywallTitle => 'FELOOSY PRO';
@@ -882,8 +856,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get paywallDisableTrial => 'Disable Trial';
 
   @override
-  String get paywallTrialDisabledSnack =>
-      'Trial disabled. You\'re now on the free plan.';
+  String get paywallTrialDisabledSnack => 'Trial disabled. You\'re now on the free plan.';
 
   @override
   String get paywallFeatureWallets => 'Unlimited wallets';
@@ -907,8 +880,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get paywallFeatureSms => 'SMS auto-parsing (Android)';
 
   @override
-  String get paywallNoRestoreFound =>
-      'No previous purchase found for this account.';
+  String get paywallNoRestoreFound => 'No previous purchase found for this account.';
 
   @override
   String paywallRestoreFailed(String error) {
@@ -927,50 +899,43 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tutorialWelcomeTitle => 'Welcome to FELOOSY';
 
   @override
-  String get tutorialWelcomeMessage =>
-      'Your personal budget, beautifully simple.\nLet\'s take a quick tour of the key features.';
+  String get tutorialWelcomeMessage => 'Your personal budget, beautifully simple.\nLet\'s take a quick tour of the key features.';
 
   @override
   String get tutorialBudgetTitle => 'Monthly Budget';
 
   @override
-  String get tutorialBudgetMessage =>
-      'This card shows your budget vs. spending for the month. Tap \"Set Budget\" to define your monthly limit.';
+  String get tutorialBudgetMessage => 'This card shows your budget vs. spending for the month. Tap \"Set Budget\" to define your monthly limit.';
 
   @override
   String get tutorialCarryoverTitle => 'Carry Over Surplus';
 
   @override
-  String get tutorialCarryoverMessage =>
-      'Enable carry-over in Settings → Manage Wallets for any wallet. Unused budget from last month rolls into this month automatically.';
+  String get tutorialCarryoverMessage => 'Enable carry-over in Settings → Manage Wallets for any wallet. Unused budget from last month rolls into this month automatically.';
 
   @override
   String get tutorialAddTitle => 'Add a Transaction';
 
   @override
-  String get tutorialAddMessage =>
-      'Tap the + button to record a purchase, bill, or income. Pick a category to see where your money goes.';
+  String get tutorialAddMessage => 'Tap the + button to record a purchase, bill, or income. Pick a category to see where your money goes.';
 
   @override
   String get tutorialBrowseTitle => 'Browse Past Months';
 
   @override
-  String get tutorialBrowseMessage =>
-      'Tap the arrows or swipe left/right on the home screen to review any previous month.';
+  String get tutorialBrowseMessage => 'Tap the arrows or swipe left/right on the home screen to review any previous month.';
 
   @override
   String get tutorialSettingsTitle => 'Settings & More';
 
   @override
-  String get tutorialSettingsMessage =>
-      'Change currency, manage accounts, customise categories, and back up your data from here.';
+  String get tutorialSettingsMessage => 'Change currency, manage accounts, customise categories, and back up your data from here.';
 
   @override
   String get tutorialDoneTitle => 'You\'re all set!';
 
   @override
-  String get tutorialDoneMessage =>
-      'Start by adding your first transaction. FELOOSY will track the rest.';
+  String get tutorialDoneMessage => 'Start by adding your first transaction. FELOOSY will track the rest.';
 
   @override
   String get consentTitle => 'Before you begin';
@@ -979,15 +944,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get consentDataTitle => 'Your data stays on your device';
 
   @override
-  String get consentDataBody =>
-      'Transactions and budgets are stored locally in SQLite. We have no servers and cannot access your financial data.';
+  String get consentDataBody => 'Transactions and budgets are stored locally in SQLite. We have no servers and cannot access your financial data.';
 
   @override
   String get consentBackupTitle => 'Optional cloud backup';
 
   @override
-  String get consentBackupBody =>
-      'You can connect Google Drive to back up your data. It goes to your own Drive folder — we never see it.';
+  String get consentBackupBody => 'You can connect Google Drive to back up your data. It goes to your own Drive folder — we never see it.';
 
   @override
   String get consentReadPolicy => 'Read Policy';
@@ -999,8 +962,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get smsOptInTitle => 'SMS Auto Import';
 
   @override
-  String get smsOptInBody =>
-      'FELOOSY can read bank SMS messages and create transactions automatically. Messages are matched locally — never stored as text or shared.';
+  String get smsOptInBody => 'FELOOSY can read bank SMS messages and create transactions automatically. Messages are matched locally — never stored as text or shared.';
 
   @override
   String get smsOptInEnable => 'Enable SMS';
@@ -1018,8 +980,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get smsTermsTitle => 'Enable SMS Auto-Import?';
 
   @override
-  String get smsTermsBody =>
-      'FELOOSY will read incoming bank SMS messages and match them against your rules to create transactions automatically. Message text is never stored or shared. You can disable this anytime.';
+  String get smsTermsBody => 'FELOOSY will read incoming bank SMS messages and match them against your rules to create transactions automatically. Message text is never stored or shared. You can disable this anytime.';
 
   @override
   String get smsTermsEnable => 'Enable';
@@ -1028,8 +989,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tourOfferTitle => 'Take a Quick Tour?';
 
   @override
-  String get tourOfferBody =>
-      'We can walk you through FELOOSY\'s key features in under a minute.';
+  String get tourOfferBody => 'We can walk you through FELOOSY\'s key features in under a minute.';
 
   @override
   String get tourOfferYes => 'Show Me Around';

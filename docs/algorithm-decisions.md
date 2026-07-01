@@ -32,12 +32,15 @@ Why prediction/destructive logic works the way it does. Not a changelog — this
 - Stable: computed once per period, not recalculated on every load
 - Filterable: `source = 'carryover'` lets analysis exclude it cleanly
 
-**Cascade prevention:** When computing the previous period's net, carry-over transactions in that prior period are excluded. This prevents a chain effect where each month's carry-over compounds the previous month's carry-over.
+**Running balance, not a per-period delta:** `net = prevCarryOverNet + prevBudget - prevExpenses + prevIncome`, where `prevCarryOverNet` is the signed amount of the *previous period's own* carry-over transaction — excluded from `prevExpenses`/`prevIncome` so it isn't double-counted as a regular transaction, but re-added as a level so a deficit or surplus persists across periods until it's actually paid off, instead of resetting to just that period's own delta. This matches standard rollover-budget behavior (e.g. YNAB-style rollover): an outstanding deficit should stay outstanding until spending genuinely catches up.
 
-**Signed carry-over:** `net = prevBudget - prevExpenses + prevIncome`
-- `net > 0` → income transaction (surplus rolled forward, increases available budget)
-- `net < 0` → expense transaction (deficit rolled forward, reduces available budget)
+- `net > 0` → income transaction (net surplus rolled forward, increases available budget)
+- `net < 0` → expense transaction (net deficit rolled forward, reduces available budget)
 - `net == 0` → no transaction created
+
+**Zero-activity guard:** A nonzero inherited balance must persist even through a period with no new transactions, so the early-exit only fires when *both* the previous period had no new transactions *and* its carried-in balance was zero — not on empty transactions alone.
+
+**Bug history:** An earlier version of this formula excluded the previous period's carry-over from the sum (to avoid double-counting it as a regular transaction) but never added it back in — i.e. `net = prevBudget - prevExpenses + prevIncome` with no `prevCarryOverNet` term. This silently erased most of an outstanding deficit the moment a later period performed only slightly better than budget. Example that surfaced it: May ended at -1739.11, June ended at -1644.15 (June's own spending was actually +94.96 better than budget). The old formula carried forward only that +94.96 as an *income* transaction into July, instead of the correct -1644.15 expense — the -1739.11 debt from May just vanished. Fixed by re-adding `prevCarryOverNet` as a persistent level rather than treating it as something to prevent from "compounding." What was documented here as intentional "cascade prevention" was actually the bug.
 
 **Idempotency:** Before generating, `CarryOverService` checks whether a `source = 'carryover'` transaction already exists in the current period. Safe to call on every home screen load.
 

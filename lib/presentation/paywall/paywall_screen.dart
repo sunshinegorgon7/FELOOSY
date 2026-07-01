@@ -8,7 +8,7 @@ import '../../providers/license_provider.dart';
 import '../../providers/purchase_provider.dart';
 import '../../providers/trial_provider.dart';
 import '../../services/license_service.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class PaywallScreen extends ConsumerStatefulWidget {
   const PaywallScreen({super.key});

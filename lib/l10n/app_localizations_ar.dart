@@ -159,8 +159,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get homeNoTransactionsDay => 'لا توجد معاملات في هذا اليوم.';
 
   @override
-  String get homeNoTransactionsCategory =>
-      'لا توجد معاملات في هذه\nالفئة لهذه الفترة.';
+  String get homeNoTransactionsCategory => 'لا توجد معاملات في هذه\nالفئة لهذه الفترة.';
 
   @override
   String get homeByDay => 'حسب اليوم';
@@ -202,8 +201,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get setBudgetHint =>
-      'هذا هو المبلغ الإجمالي الذي تريد تتبعه هذا الشهر.';
+  String get setBudgetHint => 'هذا هو المبلغ الإجمالي الذي تريد تتبعه هذا الشهر.';
 
   @override
   String get setBudgetAmount => 'مبلغ الميزانية';
@@ -326,8 +324,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get editCategoryIcon => 'الأيقونة';
 
   @override
-  String get editCategoryChartNote =>
-      'لون شريط المخطط تديره السمة للفئات المدمجة.';
+  String get editCategoryChartNote => 'لون شريط المخطط تديره السمة للفئات المدمجة.';
 
   @override
   String get settingsAppearance => 'المظهر';
@@ -341,8 +338,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get settingsDaysFebNote =>
-      'الأيام 29-31 غير متاحة لضمان التوافق مع فبراير.';
+  String get settingsDaysFebNote => 'الأيام 29-31 غير متاحة لضمان التوافق مع فبراير.';
 
   @override
   String get settingsTimezone => 'المنطقة الزمنية';
@@ -401,8 +397,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get settingsResetApp => 'إعادة ضبط التطبيق';
 
   @override
-  String get settingsResetAppDesc =>
-      'حذف جميع المعاملات والميزانيات واستعادة الإعدادات الافتراضية';
+  String get settingsResetAppDesc => 'حذف جميع المعاملات والميزانيات واستعادة الإعدادات الافتراضية';
 
   @override
   String get settingsSelectCurrency => 'اختر العملة';
@@ -414,8 +409,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get settingsResetTitle => 'إعادة ضبط التطبيق؟';
 
   @override
-  String get settingsResetMessage =>
-      'سيؤدي هذا إلى الحذف الدائم لـ:\n  • جميع المعاملات\n  • جميع الميزانيات\n  • جميع الفئات المخصصة\n\nستتم استعادة الإعدادات الافتراضية وسيتم تسجيل خروجك من Google. سجّل الدخول مرة أخرى لاستعادة النسخة الاحتياطية.\n\nلا يمكن التراجع عن هذا.';
+  String get settingsResetMessage => 'سيؤدي هذا إلى الحذف الدائم لـ:\n  • جميع المعاملات\n  • جميع الميزانيات\n  • جميع الفئات المخصصة\n\nستتم استعادة الإعدادات الافتراضية وسيتم تسجيل خروجك من Google. سجّل الدخول مرة أخرى لاستعادة النسخة الاحتياطية.\n\nلا يمكن التراجع عن هذا.';
 
   @override
   String get settingsResetConfirm => 'إعادة ضبط كل شيء';
@@ -449,19 +443,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get settingsRestoreFromDrive => 'استعادة من Drive';
 
   @override
-  String get settingsRestoreFromDriveDesc =>
-      'استبدال البيانات المحلية بالنسخة الاحتياطية على Drive';
+  String get settingsRestoreFromDriveDesc => 'استبدال البيانات المحلية بالنسخة الاحتياطية على Drive';
 
   @override
   String get settingsSignOut => 'تسجيل الخروج';
 
   @override
-  String get settingsBackupSaved =>
-      'تم حفظ النسخة الاحتياطية على Google Drive.';
+  String get settingsBackupSaved => 'تم حفظ النسخة الاحتياطية على Google Drive.';
 
   @override
-  String get settingsBackupNoChanges =>
-      'لا توجد تغييرات منذ آخر نسخة احتياطية — تم التخطي.';
+  String get settingsBackupNoChanges => 'لا توجد تغييرات منذ آخر نسخة احتياطية — تم التخطي.';
 
   @override
   String settingsBackupFailed(String error) {
@@ -474,15 +465,13 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get settingsNoBackupFound =>
-      'لم يتم العثور على نسخة احتياطية في Google Drive.';
+  String get settingsNoBackupFound => 'لم يتم العثور على نسخة احتياطية في Google Drive.';
 
   @override
   String get settingsReplaceLocalTitle => 'استبدال جميع البيانات المحلية؟';
 
   @override
-  String get settingsReplaceLocalMessage =>
-      'ستؤدي الاستعادة من Google Drive إلى الحذف الدائم لكل شيء على هذا الجهاز — جميع المعاملات والميزانيات والفئات — واستبدالها بالنسخة الاحتياطية.\n\nلا يمكن التراجع عن هذا.';
+  String get settingsReplaceLocalMessage => 'ستؤدي الاستعادة من Google Drive إلى الحذف الدائم لكل شيء على هذا الجهاز — جميع المعاملات والميزانيات والفئات — واستبدالها بالنسخة الاحتياطية.\n\nلا يمكن التراجع عن هذا.';
 
   @override
   String get settingsReplaceMyData => 'استبدال بياناتي';
@@ -508,8 +497,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get settingsRestoreFromFile => 'استعادة من ملف';
 
   @override
-  String get settingsRestoreFromFileDesc =>
-      'استبدال البيانات المحلية بنسخة احتياطية مُصدَّرة';
+  String get settingsRestoreFromFileDesc => 'استبدال البيانات المحلية بنسخة احتياطية مُصدَّرة';
 
   @override
   String settingsExportSuccess(String fileName) {
@@ -551,8 +539,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get settingsSmsRules => 'قواعد الرسائل القصيرة';
 
   @override
-  String get settingsSmsRulesDesc =>
-      'إنشاء معاملات تلقائياً من الرسائل الواردة';
+  String get settingsSmsRulesDesc => 'إنشاء معاملات تلقائياً من الرسائل الواردة';
 
   @override
   String get settingsThemeLight => 'فاتح';
@@ -604,8 +591,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get manageWalletsName => 'اسم المحفظة';
 
   @override
-  String get manageWalletsDefaultBudget =>
-      'الميزانية الشهرية الافتراضية (اختياري)';
+  String get manageWalletsDefaultBudget => 'الميزانية الشهرية الافتراضية (اختياري)';
 
   @override
   String get manageWalletsLeaveEmpty => 'اتركه فارغاً لتعطيل';
@@ -622,8 +608,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get manageWalletsLeaveAsDefault =>
-      'اتركه كافتراضي للتطبيق إذا لم يُحدَّد';
+  String get manageWalletsLeaveAsDefault => 'اتركه كافتراضي للتطبيق إذا لم يُحدَّد';
 
   @override
   String get manageWalletsDefaultLabel => 'المحفظة الافتراضية';
@@ -655,15 +640,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get smsRulesPermissionTitle => 'مطلوب إذن الرسائل القصيرة';
 
   @override
-  String get smsRulesPermissionMessage =>
-      'امنح الوصول حتى تتمكن الرسائل الواردة من المطابقة مع قواعدك.';
+  String get smsRulesPermissionMessage => 'امنح الوصول حتى تتمكن الرسائل الواردة من المطابقة مع قواعدك.';
 
   @override
   String get smsRulesNone => 'لا توجد قواعد بعد';
 
   @override
-  String get smsRulesNoneMessage =>
-      'أضف قاعدة لإنشاء معاملات تلقائياً عند استلام رسائل SMS من البنك.';
+  String get smsRulesNoneMessage => 'أضف قاعدة لإنشاء معاملات تلقائياً عند استلام رسائل SMS من البنك.';
 
   @override
   String get smsRulesAddFirst => 'إضافة أول قاعدة';
@@ -697,19 +680,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get smsRuleFormKeywordHint => 'مثال: Carrefour، VODAFONE، Uber';
 
   @override
-  String get smsRuleFormKeywordHelper =>
-      'مطابقة غير حساسة لحالة الأحرف في أي مكان بنص الرسالة.';
+  String get smsRuleFormKeywordHelper => 'مطابقة غير حساسة لحالة الأحرف في أي مكان بنص الرسالة.';
 
   @override
   String get smsRuleFormLabel => 'تسمية المعاملة';
 
   @override
-  String get smsRuleFormLabelHint =>
-      'مثال: بنزين، قهوة، بقالة (اتركه فارغاً لاستخدام الكلمة المفتاحية)';
+  String get smsRuleFormLabelHint => 'مثال: بنزين، قهوة، بقالة (اتركه فارغاً لاستخدام الكلمة المفتاحية)';
 
   @override
-  String get smsRuleFormLabelHelper =>
-      'يظهر كوصف للمعاملة. الافتراضي هو الكلمة المفتاحية.';
+  String get smsRuleFormLabelHelper => 'يظهر كوصف للمعاملة. الافتراضي هو الكلمة المفتاحية.';
 
   @override
   String get smsRuleFormType => 'نوع المعاملة';
@@ -727,12 +707,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get smsRuleFormWallets => 'المحافظ';
 
   @override
-  String get smsRuleFormWalletsHelper =>
-      'سيتم إنشاء المعاملات في جميع المحافظ المحددة.';
+  String get smsRuleFormWalletsHelper => 'سيتم إنشاء المعاملات في جميع المحافظ المحددة.';
 
   @override
-  String get smsRuleFormSelectWalletError =>
-      'الرجاء اختيار محفظة واحدة على الأقل.';
+  String get smsRuleFormSelectWalletError => 'الرجاء اختيار محفظة واحدة على الأقل.';
 
   @override
   String get smsRuleFormAdvanced => 'متقدم';
@@ -744,8 +722,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get smsRuleFormRegexHint => 'تعبير نمطي للمبلغ (اختياري)';
 
   @override
-  String get smsRuleFormRegexHelper =>
-      'استخدم مجموعة الالتقاط 1 لاستخراج المبلغ. اتركه فارغاً للاكتشاف التلقائي.';
+  String get smsRuleFormRegexHelper => 'استخدم مجموعة الالتقاط 1 لاستخراج المبلغ. اتركه فارغاً للاكتشاف التلقائي.';
 
   @override
   String get smsRuleFormSaveChanges => 'حفظ التغييرات';
@@ -774,8 +751,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get smsScanTitle => 'مسح الرسائل القصيرة الموجودة';
 
   @override
-  String get smsScanDesc =>
-      'تطبيق قواعدك النشطة على الرسائل الموجودة في صندوق الوارد.';
+  String get smsScanDesc => 'تطبيق قواعدك النشطة على الرسائل الموجودة في صندوق الوارد.';
 
   @override
   String get smsScanDateRange => 'نطاق التاريخ';
@@ -790,8 +766,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get smsScanSelectRange => 'اختر نطاق التاريخ';
 
   @override
-  String get smsScanPermissionRequired =>
-      'مطلوب إذن الرسائل القصيرة لمسح الرسائل.';
+  String get smsScanPermissionRequired => 'مطلوب إذن الرسائل القصيرة لمسح الرسائل.';
 
   @override
   String get smsScanScanning => 'جاري المسح…';
@@ -800,8 +775,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get smsScanNoMatches => 'لا توجد نتائج';
 
   @override
-  String get smsScanNoMatchesMessage =>
-      'لا توجد رسائل في هذا النطاق تتطابق مع قواعدك النشطة.\nجرّب نطاقاً أوسع أو تحقق من كلمات قواعدك.';
+  String get smsScanNoMatchesMessage => 'لا توجد رسائل في هذا النطاق تتطابق مع قواعدك النشطة.\nجرّب نطاقاً أوسع أو تحقق من كلمات قواعدك.';
 
   @override
   String get smsScanTryDifferent => 'جرّب نطاقاً مختلفاً';
@@ -834,8 +808,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get smsScanExists => 'موجودة';
 
   @override
-  String get smsScanDupWarning =>
-      'توجد معاملة بهذا المبلغ والفئة في هذا اليوم بالفعل';
+  String get smsScanDupWarning => 'توجد معاملة بهذا المبلغ والفئة في هذا اليوم بالفعل';
 
   @override
   String get smsScanSuggestedRules => 'قواعد مقترحة';
@@ -849,8 +822,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get smsScanCreateRule => 'إنشاء قاعدة';
 
   @override
-  String get smsScanNoMatchesSuggestion =>
-      'لا توجد رسائل تطابق قواعدك، لكن وجدنا مرسلين يستحق إعداد قواعد لهم:';
+  String get smsScanNoMatchesSuggestion => 'لا توجد رسائل تطابق قواعدك، لكن وجدنا مرسلين يستحق إعداد قواعد لهم:';
 
   @override
   String get paywallTitle => 'FELOOSY PRO';
@@ -884,8 +856,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get paywallDisableTrial => 'تعطيل التجربة';
 
   @override
-  String get paywallTrialDisabledSnack =>
-      'تم تعطيل التجربة. أنت الآن على الخطة المجانية.';
+  String get paywallTrialDisabledSnack => 'تم تعطيل التجربة. أنت الآن على الخطة المجانية.';
 
   @override
   String get paywallFeatureWallets => 'محافظ غير محدودة';
@@ -909,8 +880,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get paywallFeatureSms => 'تحليل الرسائل القصيرة تلقائياً (Android)';
 
   @override
-  String get paywallNoRestoreFound =>
-      'لم يتم العثور على شراء سابق لهذا الحساب.';
+  String get paywallNoRestoreFound => 'لم يتم العثور على شراء سابق لهذا الحساب.';
 
   @override
   String paywallRestoreFailed(String error) {
@@ -929,50 +899,43 @@ class AppLocalizationsAr extends AppLocalizations {
   String get tutorialWelcomeTitle => 'مرحباً بك في FELOOSY';
 
   @override
-  String get tutorialWelcomeMessage =>
-      'ميزانيتك الشخصية، بشكل جميل وبسيط.\nلنأخذ جولة سريعة على الميزات الرئيسية.';
+  String get tutorialWelcomeMessage => 'ميزانيتك الشخصية، بشكل جميل وبسيط.\nلنأخذ جولة سريعة على الميزات الرئيسية.';
 
   @override
   String get tutorialBudgetTitle => 'الميزانية الشهرية';
 
   @override
-  String get tutorialBudgetMessage =>
-      'تعرض هذه البطاقة ميزانيتك مقابل إنفاقك للشهر. اضغط \"تعيين الميزانية\" لتحديد حدك الشهري.';
+  String get tutorialBudgetMessage => 'تعرض هذه البطاقة ميزانيتك مقابل إنفاقك للشهر. اضغط \"تعيين الميزانية\" لتحديد حدك الشهري.';
 
   @override
   String get tutorialCarryoverTitle => 'ترحيل الفائض';
 
   @override
-  String get tutorialCarryoverMessage =>
-      'فعّل الترحيل في الإعدادات ← إدارة المحافظ لأي محفظة. الميزانية غير المستخدمة من الشهر الماضي تُضاف تلقائياً لهذا الشهر.';
+  String get tutorialCarryoverMessage => 'فعّل الترحيل في الإعدادات ← إدارة المحافظ لأي محفظة. الميزانية غير المستخدمة من الشهر الماضي تُضاف تلقائياً لهذا الشهر.';
 
   @override
   String get tutorialAddTitle => 'إضافة معاملة';
 
   @override
-  String get tutorialAddMessage =>
-      'اضغط زر + لتسجيل مشتريات أو فواتير أو دخل. اختر فئة لترى أين يذهب مالك.';
+  String get tutorialAddMessage => 'اضغط زر + لتسجيل مشتريات أو فواتير أو دخل. اختر فئة لترى أين يذهب مالك.';
 
   @override
   String get tutorialBrowseTitle => 'تصفح الأشهر السابقة';
 
   @override
-  String get tutorialBrowseMessage =>
-      'اضغط الأسهم أو اسحب يساراً/يميناً على الشاشة الرئيسية لمراجعة أي شهر سابق.';
+  String get tutorialBrowseMessage => 'اضغط الأسهم أو اسحب يساراً/يميناً على الشاشة الرئيسية لمراجعة أي شهر سابق.';
 
   @override
   String get tutorialSettingsTitle => 'الإعدادات والمزيد';
 
   @override
-  String get tutorialSettingsMessage =>
-      'غيّر العملة، وأدر الحسابات، وخصّص الفئات، وانسخ بياناتك احتياطياً من هنا.';
+  String get tutorialSettingsMessage => 'غيّر العملة، وأدر الحسابات، وخصّص الفئات، وانسخ بياناتك احتياطياً من هنا.';
 
   @override
   String get tutorialDoneTitle => 'أنت جاهز!';
 
   @override
-  String get tutorialDoneMessage =>
-      'ابدأ بإضافة أول معاملة. سيتتبع FELOOSY الباقي.';
+  String get tutorialDoneMessage => 'ابدأ بإضافة أول معاملة. سيتتبع FELOOSY الباقي.';
 
   @override
   String get consentTitle => 'قبل البدء';
@@ -981,15 +944,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get consentDataTitle => 'بياناتك تبقى على جهازك';
 
   @override
-  String get consentDataBody =>
-      'يتم تخزين المعاملات والميزانيات محلياً في SQLite. لا توجد لدينا خوادم ولا يمكننا الوصول إلى بياناتك المالية.';
+  String get consentDataBody => 'يتم تخزين المعاملات والميزانيات محلياً في SQLite. لا توجد لدينا خوادم ولا يمكننا الوصول إلى بياناتك المالية.';
 
   @override
   String get consentBackupTitle => 'النسخ الاحتياطي السحابي (اختياري)';
 
   @override
-  String get consentBackupBody =>
-      'يمكنك ربط Google Drive لنسخ بياناتك احتياطياً. تذهب إلى مجلد Drive الخاص بك فقط — نحن لا نراها.';
+  String get consentBackupBody => 'يمكنك ربط Google Drive لنسخ بياناتك احتياطياً. تذهب إلى مجلد Drive الخاص بك فقط — نحن لا نراها.';
 
   @override
   String get consentReadPolicy => 'قراءة السياسة الكاملة';
@@ -1001,8 +962,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get smsOptInTitle => 'استيراد الرسائل القصيرة تلقائياً';
 
   @override
-  String get smsOptInBody =>
-      'يستطيع FELOOSY قراءة رسائل البنك القصيرة وإنشاء معاملات تلقائياً. تتم المطابقة محلياً — لا يتم تخزين نص الرسائل أو مشاركته.';
+  String get smsOptInBody => 'يستطيع FELOOSY قراءة رسائل البنك القصيرة وإنشاء معاملات تلقائياً. تتم المطابقة محلياً — لا يتم تخزين نص الرسائل أو مشاركته.';
 
   @override
   String get smsOptInEnable => 'تفعيل SMS';
@@ -1020,8 +980,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get smsTermsTitle => 'تفعيل استيراد الرسائل القصيرة؟';
 
   @override
-  String get smsTermsBody =>
-      'سيقرأ FELOOSY رسائل البنك القصيرة الواردة ويطابقها مع قواعدك لإنشاء معاملات تلقائياً. لا يتم تخزين نص الرسائل أو مشاركته. يمكنك تعطيل هذا في أي وقت.';
+  String get smsTermsBody => 'سيقرأ FELOOSY رسائل البنك القصيرة الواردة ويطابقها مع قواعدك لإنشاء معاملات تلقائياً. لا يتم تخزين نص الرسائل أو مشاركته. يمكنك تعطيل هذا في أي وقت.';
 
   @override
   String get smsTermsEnable => 'تفعيل';
@@ -1030,8 +989,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get tourOfferTitle => 'Take a Quick Tour?';
 
   @override
-  String get tourOfferBody =>
-      'We can walk you through FELOOSY\'s key features in under a minute.';
+  String get tourOfferBody => 'We can walk you through FELOOSY\'s key features in under a minute.';
 
   @override
   String get tourOfferYes => 'Show Me Around';

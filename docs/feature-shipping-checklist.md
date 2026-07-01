@@ -20,7 +20,7 @@ Blast-radius playbook for shipping a new feature. Run this top-to-bottom before 
 
 - [ ] If new table: write the `CREATE TABLE` SQL and add a migration in `DatabaseHelper._onUpgrade()`. Increment `_kDbVersion`.
 - [ ] If new column: add an `ALTER TABLE ADD COLUMN` migration. Confirm default value for existing rows.
-- [ ] Update the schema table in `CLAUDE.md` (Section 2).
+- [ ] Update the schema table in `CLAUDE.md` (Section 2) and the schema version noted in `README.md`'s Tech Stack table.
 - [ ] New model: add `toMap()`, `fromMap()`, `copyWith()` — no Freezed annotations needed.
 - [ ] New repository: add to `data/repositories/` and expose via `providers/database_provider.dart`.
 - [ ] If the new table holds user data: add export/import in `GoogleDriveBackupService` (backup JSON + restore transaction).
@@ -105,7 +105,7 @@ Blast-radius playbook for shipping a new feature. Run this top-to-bottom before 
 
 - [ ] Update `docs/algorithm-decisions.md` if a non-obvious calculation or logic was introduced.
 - [ ] Update `docs/feature-gating.md` if a new gate or limit was added.
-- [ ] Update `CLAUDE.md` Section 2 database table if schema changed.
+- [ ] Update `CLAUDE.md` Section 2 database table and `README.md`'s schema version if schema changed.
 - [ ] Add any new lesson to the **Lessons Learned** section below.
 
 ---

@@ -11,8 +11,8 @@ FELOOSY is a local-first personal budgeting app for iOS and Android. The model i
 - **History** - monthly or yearly transaction groups with expandable category charts and filters.
 - **Categories** - built-in expense and income categories, custom colors/icons, and active/inactive management.
 - **Recurring transactions** - daily, weekly, monthly, and annual repeats with single-occurrence or future-occurrence edits.
-- **AI/local insights** - completed periods are summarized with Gemini when available, with a local fallback cached in SQLite.
-- **SMS rules** - Android/dev-facing automation for matching bank SMS messages, scanning past SMS, and importing matched transactions.
+- **AI/local insights** - completed periods are summarized with local rule-based insights, with an optional on-device Gemma 2 2B model for deeper analysis, all cached in SQLite.
+- **SMS rules** - Android automation for matching bank SMS messages, scanning past SMS, and importing matched transactions.
 - **Backups** - Google Drive `appDataFolder` backup/restore plus local JSON export/import.
 - **Home screen widgets** - native Android and iOS budget summary widgets kept in sync from Flutter.
 - **Themes and settings** - light, dark, or system theme, currency selection, custom month start, reset, and developer snapshot mode.
@@ -24,10 +24,10 @@ FELOOSY is a local-first personal budgeting app for iOS and Android. The model i
 | --- | --- |
 | App | Flutter / Dart |
 | State | Riverpod manual `Provider`, `NotifierProvider`, and `AsyncNotifierProvider` |
-| Database | SQLite via `sqflite` (schema v18) |
+| Database | SQLite via `sqflite` (schema v31) |
 | Navigation | GoRouter |
 | Charts | `fl_chart` |
-| AI | `google_generative_ai` / Gemini |
+| AI | Local rule-based insights (`InsightsService`) + on-device Gemma 2 2B GGUF (`ModelDownloadService`) |
 | Cloud backup | Google Sign-In + Google Drive `appDataFolder` |
 | Purchases | `in_app_purchase` + `flutter_secure_storage` |
 | Home widget bridge | `home_widget` plus native Android/iOS widget code |
@@ -39,13 +39,6 @@ Install dependencies:
 
 ```bash
 flutter pub get
-```
-
-Create the local Gemini key file if it is not present. This file is gitignored:
-
-```dart
-// lib/core/constants/api_keys.dart
-const kGeminiApiKey = 'YOUR_GEMINI_API_KEY';
 ```
 
 Run the app on Android:
@@ -114,24 +107,26 @@ Android also defines matching Gradle product flavors, `dev` and `prod`, in `andr
 
 ## Database
 
-The SQLite schema is currently version 17. Main tables:
+The SQLite schema is currently version 31. Main tables:
 
 | Table | Purpose |
 | --- | --- |
 | `accounts` | Wallets, currencies, default budgets, favorites, month-start overrides |
-| `transactions` | Expenses/income, account link, category link, date, and source (`manual`, `recurring:*`, `sms_rule:*`) |
+| `transactions` | Expenses/income, account link, category link, date, and source (`manual`, `recurring:*`, `sms_rule:*`, `carryover`) |
 | `budgets` | Per-account monthly budget rows, unique by account/year/month |
 | `categories` | Built-in and custom categories, icon/color metadata, income/expense type |
 | `app_settings` | Global settings, theme, backup timestamp, tutorial completion |
-| `ai_analysis_cache` | Cached Gemini/local period summaries and retry metadata |
+| `ai_analysis_cache` | Cached local period summaries and retry metadata |
 | `sms_rules` | Keyword/regex rules for SMS transaction creation |
+| `sms_rule_accounts` | Many-to-many junction linking SMS rules to accounts |
+| `sms_suggestion_feedback` | Accept/reject tracking for SMS rule suggestions |
 | `recurring_rules` | Repeat transaction definitions and generation cursor |
 
 ## Native Integrations
 
 - **Google Drive backup** stores private JSON backups in Drive `appDataFolder`, keeps a manifest hash to skip unchanged backups, and retains the five newest backup files.
 - **Local export/import** shares or restores a FELOOSY JSON backup file.
-- **Android SMS automation** uses `RECEIVE_SMS`, `READ_SMS`, `SmsReceiver`, and inbox scanning through `MainActivity`. The settings tile is currently only exposed in dev flavor.
+- **Android SMS automation** uses `RECEIVE_SMS`, `READ_SMS`, `SmsReceiver`, and inbox scanning through `MainActivity`.
 - **Home widgets** live in `android/app/src/main/kotlin/com/feloosy/app/widget/` and `ios/FeloosyWidget/`. `FeloosyApp` listens to account, transaction, budget, and settings changes and schedules widget sync.
 - **Purchases** use store products plus secure storage. Pro product ID: `feloosy_pro_lifetime`. Dev flavor returns purchased by default.
 
@@ -144,4 +139,4 @@ The SQLite schema is currently version 17. Main tables:
 
 ## Version
 
-**1.4.1** (build 70)
+**1.4.5** (build 284)
