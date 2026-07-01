@@ -29,8 +29,8 @@ Why prediction/destructive logic works the way it does. Not a changelog — this
 
 **Why persistent transaction (not a display-only number):**
 - Transparent: the user sees exactly where the adjustment came from in the transaction list
-- Stable: computed once per period, not recalculated on every load
 - Filterable: `source = 'carryover'` lets analysis exclude it cleanly
+- Recalculated every load but self-correcting in place (see Self-healing below) rather than being purely ephemeral — still gives a stable row to point at (same `uuid` persists across corrections) while never going stale
 
 **Running balance, not a per-period delta:** `net = prevCarryOverNet + prevBudget - prevExpenses + prevIncome`, where `prevCarryOverNet` is the signed amount of the *previous period's own* carry-over transaction — excluded from `prevExpenses`/`prevIncome` so it isn't double-counted as a regular transaction, but re-added as a level so a deficit or surplus persists across periods until it's actually paid off, instead of resetting to just that period's own delta. This matches standard rollover-budget behavior (e.g. YNAB-style rollover): an outstanding deficit should stay outstanding until spending genuinely catches up.
 
@@ -42,13 +42,13 @@ Why prediction/destructive logic works the way it does. Not a changelog — this
 
 **Bug history:** An earlier version of this formula excluded the previous period's carry-over from the sum (to avoid double-counting it as a regular transaction) but never added it back in — i.e. `net = prevBudget - prevExpenses + prevIncome` with no `prevCarryOverNet` term. This silently erased most of an outstanding deficit the moment a later period performed only slightly better than budget. Example that surfaced it: May ended at -1739.11, June ended at -1644.15 (June's own spending was actually +94.96 better than budget). The old formula carried forward only that +94.96 as an *income* transaction into July, instead of the correct -1644.15 expense — the -1739.11 debt from May just vanished. Fixed by re-adding `prevCarryOverNet` as a persistent level rather than treating it as something to prevent from "compounding." What was documented here as intentional "cascade prevention" was actually the bug.
 
-**Idempotency:** Before generating, `CarryOverService` checks whether a `source = 'carryover'` transaction already exists in the current period. Safe to call on every home screen load.
+**Self-healing:** Every call to `CarryOverService.generateIfNeeded()` recomputes `net` from scratch and calls `TransactionRepository.syncCarryOver()`, which atomically inserts the row if absent, corrects it in place if the stored amount/type has drifted from the fresh calculation, or deletes it if `net` is now zero — all in one DB transaction, so concurrent builds can't race each other. This means a stale carry-over (from a formula fix, or from editing a transaction in an already-completed period) self-corrects the next time that period's summary loads, with no manual intervention needed. The prior design only inserted once and then skipped forever if a row already existed — that's what let a formula bug's bad output persist indefinitely; it's why this was changed to always-recompute-and-sync.
 
 **Budget math:** `budgetSummaryProvider` passes carry-over transactions as `carryOverAmount` (signed) and excludes them from `regularTxs` sent to `BudgetService.computeSummary`. This avoids double-counting: the transaction is in the DB (visible in the list) but the budget formula uses the dedicated field.
 
 **Excluded from analysis:** `LocalAnalysisService` filters `isCarryOver` before aggregating category totals or building AI insights. Carry-over is a system adjustment, not real spending.
 
-**Triggered in:** `budget_summary_provider.dart` — calls `CarryOverService.generateIfNeeded()` on every build. Idempotency makes repeated calls harmless; first call for a new period triggers the insertion.
+**Triggered in:** `budget_summary_provider.dart` — calls `CarryOverService.generateIfNeeded()` on every build. Self-healing makes repeated calls harmless and self-correcting; only visiting a period actually re-syncs it, so a stale value in a period the user hasn't opened since a formula fix won't update until they view it (and, if a later period's carry-over was computed from that stale value, that later period needs a visit too to pick up the correction).
 
 **Implemented in:** `lib/services/carry_over_service.dart`, `lib/providers/budget_summary_provider.dart`.
 
@@ -59,7 +59,7 @@ Why prediction/destructive logic works the way it does. Not a changelog — this
 
 **Rejected alternative:** Global carry-over toggle in `app_settings`. Rejected because different wallets may have different preferences.
 
-**Rejected alternative:** Display-only `carryOverAmount` field with no DB transaction. Rejected because it recalculated on every load (fragile), couldn't be excluded from analysis cleanly, and gave the user no transaction-level transparency.
+**Rejected alternative:** Display-only `carryOverAmount` field with no DB transaction. Rejected because it couldn't be excluded from analysis cleanly and gave the user no transaction-level transparency — even though both approaches now recalculate on every load, only the persistent-transaction approach is filterable and visible in the ledger.
 
 ---
 
