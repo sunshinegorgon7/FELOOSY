@@ -37,7 +37,7 @@ final budgetSummaryProvider = FutureProvider<BudgetSummary>((ref) async {
 
   if (account != null && account.carryOverEnabled) {
     final monthStartDay = ref.read(effectiveMonthStartDayProvider);
-    final inserted = await CarryOverService.generateIfNeeded(
+    final changed = await CarryOverService.generateIfNeeded(
       account: account,
       period: period,
       monthStartDay: monthStartDay,
@@ -45,13 +45,13 @@ final budgetSummaryProvider = FutureProvider<BudgetSummary>((ref) async {
       budgetRepo: budgetRepo,
       settings: settings,
     );
-    if (inserted) {
-      // Refresh the transaction list so carry-over appears there too.
+    if (changed) {
+      // Refresh the transaction list so the synced carry-over appears there too.
       ref.invalidate(transactionsProvider);
     }
   }
 
-  // Fetch fresh from the repo (includes any just-inserted carry-over).
+  // Fetch fresh from the repo (includes any just-synced carry-over).
   final transactions = await txRepo.getForPeriod(
     period.start,
     period.end,

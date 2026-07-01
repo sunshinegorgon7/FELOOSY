@@ -125,23 +125,25 @@ class TransactionRepository {
         .toList();
   }
 
-  /// Atomically checks that no carry-over transaction exists for [accountId]
-  /// within [[periodStart], [periodEnd]], then inserts [tx] if clear.
-  /// Returns true when the insert happened; false when one already existed.
+  /// Atomically ensures the carry-over transaction for [accountId] within
+  /// [[periodStart], [periodEnd]] matches [tx]: inserts if absent, updates
+  /// the existing row in place if its amount/type has drifted from a
+  /// fresher calculation (e.g. after a formula fix or an edit to a past
+  /// period's transactions), and deletes it if [tx].amount is now zero.
   /// Using a DB transaction prevents the race condition where two concurrent
   /// provider builds both pass an in-memory check before either write commits.
-  Future<bool> insertCarryOverIfAbsent({
+  /// Returns true when the DB was actually changed.
+  Future<bool> syncCarryOver({
     required model.Transaction tx,
     required int accountId,
     required DateTime periodStart,
     required DateTime periodEnd,
   }) async {
     final db = await _db.database;
-    bool inserted = false;
+    bool changed = false;
     await db.transaction((txn) async {
-      final existing = await txn.query(
+      final existingRows = await txn.query(
         'transactions',
-        columns: ['id'],
         where:
             "account_id = ? AND source = 'carryover' "
             'AND transaction_date >= ? AND transaction_date <= ?',
@@ -152,12 +154,40 @@ class TransactionRepository {
         ],
         limit: 1,
       );
-      if (existing.isEmpty) {
+
+      if (tx.amount == 0) {
+        if (existingRows.isNotEmpty) {
+          await txn.delete('transactions',
+              where: 'id = ?', whereArgs: [existingRows.first['id']]);
+          changed = true;
+        }
+        return;
+      }
+
+      if (existingRows.isEmpty) {
         await txn.insert('transactions', tx.toMap());
-        inserted = true;
+        changed = true;
+        return;
+      }
+
+      final existing = model.Transaction.fromMap(existingRows.first);
+      final upToDate =
+          existing.amount == tx.amount && existing.type == tx.type;
+      if (!upToDate) {
+        await txn.update(
+          'transactions',
+          {
+            'amount': tx.amount,
+            'type': tx.type.name,
+            'updated_at': tx.updatedAt.millisecondsSinceEpoch,
+          },
+          where: 'id = ?',
+          whereArgs: [existing.id],
+        );
+        changed = true;
       }
     });
-    return inserted;
+    return changed;
   }
 
   Future<int> deleteCarryOversForAccount(int accountId) async {

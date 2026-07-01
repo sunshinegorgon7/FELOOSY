@@ -11,8 +11,11 @@ import '../domain/entities/budget_period.dart';
 class CarryOverService {
   static const _uuid = Uuid();
 
-  /// Inserts a carry-over transaction for [account] in [period] if one does not
-  /// already exist. Returns true when a transaction was inserted.
+  /// Ensures the carry-over transaction for [account] in [period] matches a
+  /// fresh calculation — self-healing: inserts if missing, corrects in place
+  /// if a stale value is found (e.g. after a formula fix or an edit to a past
+  /// period's transactions), removes it if no longer needed. Returns true
+  /// when the DB was actually changed.
   ///
   /// Carry-over tracks a running balance, not a period-to-period delta: it is
   /// the previous period's own carry-over (if any) plus that period's own
@@ -29,14 +32,6 @@ class CarryOverService {
     required AppSettings settings,
   }) async {
     if (!account.carryOverEnabled || account.id == null) return false;
-
-    // Quick non-atomic pre-check (avoids the prev-period DB query on most calls).
-    final currentTxs = await txRepo.getForPeriod(
-      period.start,
-      period.end,
-      accountId: account.id!,
-    );
-    if (currentTxs.any((t) => t.isCarryOver)) return false;
 
     final prevPeriod = MonthCalculator.previousPeriod(period, monthStartDay);
     final allPrevTxs = await txRepo.getForPeriod(
@@ -63,34 +58,34 @@ class CarryOverService {
     // Nothing to carry: no new activity in the previous period AND no
     // inherited balance from before that. A nonzero inherited balance must
     // still roll forward even through a period with zero new transactions.
-    if (prevTxs.isEmpty && prevCarryOverNet == 0) return false;
+    var net = 0.0;
+    if (prevTxs.isNotEmpty || prevCarryOverNet != 0) {
+      final prevBudget = await budgetRepo.getForPeriod(
+        prevPeriod.budgetYear,
+        prevPeriod.budgetMonth,
+        accountId: account.id!,
+      );
+      final prevBudgetAmount =
+          prevBudget?.amount ??
+          account.defaultMonthlyBudget ??
+          0;
 
-    final prevBudget = await budgetRepo.getForPeriod(
-      prevPeriod.budgetYear,
-      prevPeriod.budgetMonth,
-      accountId: account.id!,
-    );
-    final prevBudgetAmount =
-        prevBudget?.amount ??
-        account.defaultMonthlyBudget ??
-        0;
-
-    if (prevBudgetAmount <= 0 && prevCarryOverNet == 0) return false;
-
-    final prevExpenses = prevTxs
-        .where((t) => t.type == TransactionType.expense)
-        .fold(0.0, (s, t) => s + t.amount);
-    final prevIncome = prevTxs
-        .where((t) => t.type == TransactionType.income)
-        .fold(0.0, (s, t) => s + t.amount);
-    final net = prevCarryOverNet + prevBudgetAmount - prevExpenses + prevIncome;
-
-    if (net == 0) return false;
+      if (prevBudgetAmount > 0 || prevCarryOverNet != 0) {
+        final prevExpenses = prevTxs
+            .where((t) => t.type == TransactionType.expense)
+            .fold(0.0, (s, t) => s + t.amount);
+        final prevIncome = prevTxs
+            .where((t) => t.type == TransactionType.income)
+            .fold(0.0, (s, t) => s + t.amount);
+        net = prevCarryOverNet + prevBudgetAmount - prevExpenses + prevIncome;
+      }
+    }
 
     final now = DateTime.now();
-    // Atomic check-and-insert: prevents a second concurrent build from
-    // inserting a duplicate before the first write is visible.
-    return txRepo.insertCarryOverIfAbsent(
+    // Atomic sync: inserts, corrects, or removes the stored carry-over so it
+    // always reflects the latest calculation, and prevents a second
+    // concurrent build from racing the first write.
+    return txRepo.syncCarryOver(
       tx: Transaction(
         uuid: _uuid.v4(),
         accountId: account.id!,
