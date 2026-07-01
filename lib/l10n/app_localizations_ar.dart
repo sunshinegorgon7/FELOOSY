@@ -345,6 +345,9 @@ class AppLocalizationsAr extends AppLocalizations {
       'الأيام 29-31 غير متاحة لضمان التوافق مع فبراير.';
 
   @override
+  String get settingsTimezone => 'المنطقة الزمنية';
+
+  @override
   String get settingsNotSet => 'غير محددة';
 
   @override

@@ -1,7 +1,9 @@
+import 'package:flutter/material.dart' show DateUtils;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/utils/month_calculator.dart';
 import '../domain/entities/budget_period.dart';
 import 'accounts_provider.dart';
+import 'current_date_provider.dart';
 import 'settings_provider.dart';
 
 /// Resolves the month-start day to use for the currently selected wallet.
@@ -15,9 +17,13 @@ final effectiveMonthStartDayProvider = Provider<int>((ref) {
 });
 
 /// The period that contains today, computed with the effective start day.
+/// Depends on [currentDateProvider] so it switches at local midnight
+/// automatically, even when the app is open across a day or month boundary.
 final currentBudgetPeriodProvider = Provider<BudgetPeriod>((ref) {
   final day = ref.watch(effectiveMonthStartDayProvider);
-  return MonthCalculator.periodContaining(DateTime.now(), day);
+  final today = ref.watch(currentDateProvider).asData?.value
+      ?? DateUtils.dateOnly(DateTime.now());
+  return MonthCalculator.periodContaining(today, day);
 });
 
 /// How many months to offset from the current period.

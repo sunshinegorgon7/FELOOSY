@@ -346,6 +346,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Days 29–31 unavailable to ensure February compatibility.';
 
   @override
+  String get settingsTimezone => 'Timezone';
+
+  @override
   String get settingsNotSet => 'Not Set';
 
   @override

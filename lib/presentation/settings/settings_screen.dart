@@ -107,6 +107,10 @@ class _SettingsBody extends ConsumerWidget {
             style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
           ),
         ),
+        _InfoRow(
+          title: l10n.settingsTimezone,
+          value: _timezoneLabel(),
+        ),
         _SectionHeader(l10n.categories),
         _SettingsRow(
           title: l10n.settingsManageCategories,
@@ -167,6 +171,21 @@ class _SettingsBody extends ConsumerWidget {
   String _ordinal(int n) {
     if (n >= 11 && n <= 13) return 'th';
     return switch (n % 10) { 1 => 'st', 2 => 'nd', 3 => 'rd', _ => 'th' };
+  }
+
+  String _timezoneLabel() {
+    final now = DateTime.now();
+    final offset = now.timeZoneOffset;
+    final sign = offset.isNegative ? '−' : '+';
+    final h = offset.inHours.abs();
+    final m = offset.inMinutes.abs() % 60;
+    final offsetStr = m == 0
+        ? 'UTC$sign$h'
+        : 'UTC$sign$h:${m.toString().padLeft(2, '0')}';
+    final name = now.timeZoneName;
+    return (name.isNotEmpty && name != offsetStr && name != 'UTC')
+        ? '$offsetStr · $name'
+        : offsetStr;
   }
 
   void _showLanguagePicker(

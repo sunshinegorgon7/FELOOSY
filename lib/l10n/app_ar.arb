@@ -111,6 +111,7 @@
   "settingsMonthStartsOn": "يبدأ الشهر في",
   "settingsMonthStartDay": "{day}{ordinal}",
   "settingsDaysFebNote": "الأيام 29-31 غير متاحة لضمان التوافق مع فبراير.",
+  "settingsTimezone": "المنطقة الزمنية",
   "settingsNotSet": "غير محددة",
   "settingsManageCategories": "إدارة الفئات",
   "settingsWallets": "المحافظ",
