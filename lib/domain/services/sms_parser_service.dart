@@ -1,23 +1,36 @@
 import '../../data/models/sms_rule.dart';
 
 class SmsParserService {
-  // Full ISO codes first, then regional shorthands used in local bank SMS.
+  // ISO 4217 codes covering every major currency worldwide, plus regional
+  // shorthands commonly found in local bank SMS.
   //
-  // Shorthands by country:
-  //   UAE     → AED or Dh/Dhs (e.g. "Dhs 1,500.00")
-  //   KSA     → SAR or SR (e.g. "SR 250.00")
-  //   Kuwait  → KWD or KD  (e.g. "KD 25.000" — 3 d.p. / fils)
-  //   Bahrain → BHD or BD  (e.g. "BD 12.500" — 3 d.p. / fils)
-  //   Jordan  → JOD or JD  (e.g. "JD 45.000" — 3 d.p. / fils)
-  //   Egypt   → EGP or LE  (e.g. "LE 500", "LE500.00")
-  //   India   → INR or Rs./Rs (e.g. "Rs 5,000.00")
-  //   Pakistan→ PKR or Rs./Rs (overlaps INR — context-dependent)
-  //
-  // Note: MAD (Morocco) sometimes appears as "DH" or "Dhs" locally, but those
-  // shorthands collide with UAE usage, so we rely on MAD here.
+  // Shorthands by country/region:
+  //   UAE      → AED or Dh/Dhs    KSA     → SAR or SR
+  //   Kuwait   → KWD or KD        Bahrain → BHD or BD
+  //   Jordan   → JOD or JD        Egypt   → EGP or LE
+  //   India    → INR or Rs./Rs    Pakistan→ PKR or Rs./Rs
+  //   Kenya    → KES or KSh       Nigeria → NGN or ₦
+  //   S.Africa → ZAR              Malaysia→ MYR or RM
+  //   Indonesia→ IDR or Rp        B'desh  → BDT or Tk
+  //   Turkey   → TRY or TL        Brazil  → BRL or R$
+  //   Philippines → PHP or ₱
   static const _currencyCodes =
-      r'EGP|AED|USD|EUR|GBP|SAR|KWD|QAR|BHD|OMR|JOD|MAD|TND|LBP|IQD|INR|PKR'
-      r'|LE|SR|KD|BD|JD|Dhs?|Rs\.?';
+      // Middle East & North Africa
+      r'EGP|AED|USD|EUR|GBP|SAR|KWD|QAR|BHD|OMR|JOD|MAD|TND|LBP|IQD|DZD|LYD|SYP|YER'
+      // South Asia
+      r'|INR|PKR|BDT|LKR|NPR'
+      // Sub-Saharan Africa
+      r'|KES|NGN|ZAR|GHS|TZS|UGX|RWF|XOF|XAF|ETB|MWK|ZMW'
+      // Southeast Asia & East Asia
+      r'|PHP|MYR|THB|IDR|SGD|VND|MMK|KHR|JPY|KRW|CNY|HKD|TWD'
+      // Americas
+      r'|CAD|MXN|BRL|ARS|COP|CLP|PEN|UYU'
+      // Oceania
+      r'|AUD|NZD'
+      // Europe (non-EUR)
+      r'|CHF|SEK|NOK|DKK|PLN|CZK|HUF|TRY|RON|BGN|HRK|RSD|UAH|RUB|GEL'
+      // Regional shorthands (case-insensitive matching)
+      r'|LE|SR|KD|BD|JD|Dhs?|Rs\.?|KSh|RM|Rp|Tk|TL|R\$';
 
   // Amounts may carry commas as thousands separators (e.g. "16,000.00").
   // Decimal part is 1–3 digits: KWD, BHD, JOD, TND denominate to 3 d.p. (fils).
@@ -126,16 +139,53 @@ class SmsParserService {
   // transfers, balance alerts, salary credits, and OTP messages.
   //
   // Positive gate: must contain at least one debit/credit/purchase verb.
+  // Covers global bank SMS formats including:
+  //   UAE/GCC  → "Trx. of", "Payment of", "spent", "charged"
+  //   India    → "debited", "txn", "txn amt", "A/c debited"
+  //   Africa   → M-Pesa "Confirmed" + amount, "bought", "Withdraw"
+  //   SE Asia  → GCash/GrabPay "You have paid", "You have sent"
+  //   LatAm    → "compra", "pago", "cobro", "débito"
+  //   Europe   → "Zahlung", "paiement", "pagamento", "betaling"
+  //   Turkey   → "harcama", "ödeme", "işlem"
+  //   Arabic   → "خصم", "سحب", "شراء", "دفع"
   static final _transactionVerbPattern = RegExp(
-    r'\b(debited?|credited?|spent|paid|payment\s+of|charged|deducted|withdrawn|purchase[d]?)\b',
+    // English verbs — core
+    r'\b(debited?|credited?|spent|paid|payment\s+of|charged|deducted|withdrawn'
+    r'|purchase[d]?|refund(?:ed)?|settled|processed|reversed|approved'
+    // English abbreviations
+    r'|trx\.?\s+of|txn\.?\s*(?:of|amt|alert)?|transaction|trans\.?\s+amt'
+    // DR/CR shorthand (bank statements: "DR 500", "CR 200")
+    r'|(?:DR|CR)(?=\s*[\d,])'
+    // English action phrases
+    r'|payment\s+received|payment\s+made|payment\s+sent'
+    r'|bill\s+payment|auto[\s\-]?pay|direct\s+debit|standing\s+order'
+    r'|cash\s+(?:withdrawal|advance)|pos\s+(?:purchase|txn|trx|transaction)'
+    r'|atm\s+(?:withdrawal|w/?d)|card\s+(?:payment|charge|txn|transaction)'
+    r'|online\s+(?:payment|purchase|txn)|e[\s\-]?commerce'
+    // M-Pesa / mobile money (East Africa)
+    r'|confirmed\.?\s+[\w\d]+\s+(?:Ksh|KES|UGX|TZS)'
+    r'|bought\s+(?:airtime|data|goods)'
+    // Spanish
+    r'|compra(?:\s+con)?|pago|cobro|d[eé]bito|cargo|retiro|transferencia'
+    // Portuguese (Brazil)
+    r'|compra\s+(?:no|aprovada)|pagamento|d[eé]bito|saque'
+    // French
+    r'|paiement|achat|d[eé]bit[eé]?|retrait|pr[eé]l[eè]vement'
+    // German
+    r'|zahlung|abbuchung|lastschrift|kartenzahlung|auszahlung'
+    // Turkish
+    r'|harcama|[oö]deme|i[sş]lem|kartla\s+[oö]deme|nakit\s+[cç]ekim'
+    // Arabic (bank SMS in MENA)
+    r'|خصم|سحب|شراء|دفع|عملية|مبلغ)\b',
     caseSensitive: false,
   );
 
-  // Negative gate: bank-to-bank transfer signals.
-  // "sent to" is included because peer-to-peer UPI/mobile transfers say
-  // "Rs X sent to 9876@ybl" — not a merchant purchase worth a rule.
+  // Negative gate: bank-to-bank / peer-to-peer transfer signals.
   static final _transferExclusionPattern = RegExp(
-    r'\b(NEFT|IMPS|RTGS|SWIFT|transfer(?:red)?\s+to|to\s+(?:a\/c|account|card|mobile)|sent\s+to)\b',
+    r'\b(NEFT|IMPS|RTGS|SWIFT|UPI|SEPA|ACH|EFT|IBAN'
+    r'|transfer(?:red)?\s+to|to\s+(?:a\/c|account|card|mobile)|sent\s+to'
+    r'|wire\s+transfer|fund\s+transfer|bank\s+transfer'
+    r'|transferencia\s+a|virement|[uü]berweisung)\b',
     caseSensitive: false,
   );
 
