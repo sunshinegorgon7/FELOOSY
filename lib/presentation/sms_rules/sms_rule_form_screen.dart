@@ -30,7 +30,7 @@ class _SmsRuleFormScreenState extends ConsumerState<SmsRuleFormScreen> {
   Set<int> _selectedAccountIds = {};
   bool _saving = false;
 
-  bool get _isEditing => widget.rule != null;
+  bool get _isEditing => widget.rule?.id != null;
 
   @override
   void initState() {
@@ -39,7 +39,8 @@ class _SmsRuleFormScreenState extends ConsumerState<SmsRuleFormScreen> {
     _keywordCtrl = TextEditingController(text: rule?.keyword ?? '');
     _regexCtrl = TextEditingController(text: rule?.amountRegex ?? '');
     _type = rule?.transactionType ?? 'expense';
-    _categoryUuid = rule?.categoryUuid;
+    final catUuid = rule?.categoryUuid;
+    _categoryUuid = (catUuid != null && catUuid.isNotEmpty) ? catUuid : null;
     if (rule != null) {
       _selectedAccountIds = rule.accountIds.toSet();
     }
@@ -67,7 +68,7 @@ class _SmsRuleFormScreenState extends ConsumerState<SmsRuleFormScreen> {
       _showError(l10n.smsRuleFormEnterKeyword);
       return;
     }
-    if (_categoryUuid == null) {
+    if (_categoryUuid == null || _categoryUuid!.isEmpty) {
       _showError(l10n.smsRuleFormSelectCategoryError);
       return;
     }
