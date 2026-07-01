@@ -127,7 +127,7 @@ class SmsParserService {
   //
   // Positive gate: must contain at least one debit/credit/purchase verb.
   static final _transactionVerbPattern = RegExp(
-    r'\b(debited?|credited?|spent|paid|payment\s+of|charged|deducted|withdrawn|purchase[d]?)\b',
+    r'\b(debited?|credited?|spent|paid|payment\s+of|charged|deducted|withdrawn|purchase[d]?|trx\.?\s+of|transaction)\b',
     caseSensitive: false,
   );
 
