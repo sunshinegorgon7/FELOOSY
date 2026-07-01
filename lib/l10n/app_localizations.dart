@@ -710,6 +710,12 @@ abstract class AppLocalizations {
   /// **'Days 29–31 unavailable to ensure February compatibility.'**
   String get settingsDaysFebNote;
 
+  /// No description provided for @settingsTimezone.
+  ///
+  /// In en, this message translates to:
+  /// **'Timezone'**
+  String get settingsTimezone;
+
   /// No description provided for @settingsNotSet.
   ///
   /// In en, this message translates to:

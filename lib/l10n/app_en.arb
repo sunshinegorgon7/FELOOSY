@@ -177,6 +177,7 @@
     }
   },
   "settingsDaysFebNote": "Days 29–31 unavailable to ensure February compatibility.",
+  "settingsTimezone": "Timezone",
   "settingsNotSet": "Not Set",
   "settingsManageCategories": "Manage Categories",
   "settingsWallets": "Wallets",
