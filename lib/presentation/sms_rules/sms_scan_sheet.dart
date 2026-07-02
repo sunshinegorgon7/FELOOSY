@@ -185,7 +185,14 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
 
       final rules = ref.read(smsRulesProvider).asData?.value ?? [];
       final cats = ref.read(categoriesProvider).asData?.value ?? [];
-      final existing = ref.read(transactionsProvider).asData?.value ?? [];
+      // Query the DB directly (padded by the duplicate-check window) instead
+      // of the currently-selected-period transactionsProvider, so duplicates
+      // are still caught when the SMS falls in a different budget period than
+      // whatever the user currently has open.
+      final existing = await ref.read(transactionRepositoryProvider).getForPeriod(
+        range.start.subtract(const Duration(days: 3)),
+        range.end.add(const Duration(days: 3)),
+      );
       final accounts = ref.read(accountsProvider).asData?.value ?? [];
       final fallbackAccountId = accounts.isNotEmpty
           ? (accounts.firstWhere((a) => a.isFavorite, orElse: () => accounts.first).id ?? 1)
