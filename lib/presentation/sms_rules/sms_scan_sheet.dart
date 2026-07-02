@@ -183,8 +183,11 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
         to: range.end,
       );
 
-      final rules = ref.read(smsRulesProvider).asData?.value ?? [];
-      final cats = ref.read(categoriesProvider).asData?.value ?? [];
+      // Await .future (not ref.read(...).asData?.value ?? []) so a scan run
+      // right after cold start / sign-in — before these providers' first DB
+      // load resolves — waits for real data instead of silently seeing [].
+      final rules = await ref.read(smsRulesProvider.future);
+      final cats = await ref.read(categoriesProvider.future);
       // Query the DB directly (padded by the duplicate-check window) instead
       // of the currently-selected-period transactionsProvider, so duplicates
       // are still caught when the SMS falls in a different budget period than
@@ -193,7 +196,7 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
         range.start.subtract(const Duration(days: 3)),
         range.end.add(const Duration(days: 3)),
       );
-      final accounts = ref.read(accountsProvider).asData?.value ?? [];
+      final accounts = await ref.read(accountsProvider.future);
       final fallbackAccountId = accounts.isNotEmpty
           ? (accounts.firstWhere((a) => a.isFavorite, orElse: () => accounts.first).id ?? 1)
           : 1;
