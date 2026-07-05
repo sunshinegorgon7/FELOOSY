@@ -22,7 +22,7 @@ class LicenseService {
   // Open the dev app → Settings → Developer Tools → License Keys
   // Tap "Generate Keypair", copy the displayed bytes, paste them here,
   // then rebuild and redeploy both dev and prod.
-  static const List<int> _publicKeyBytes = [];
+  static const List<int> _publicKeyBytes = [1, 192, 124, 70, 63, 224, 177, 189, 25, 15, 17, 132, 9, 45, 163, 10, 68, 59, 161, 91, 211, 19, 28, 108, 123, 63, 142, 8, 78, 71, 151, 252];
 
   // ── Legacy public keys (after keypair rotation) ───────────────────────────
   // After rotating: copy the OLD public key literal here so keys signed by
