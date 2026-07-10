@@ -6,6 +6,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../core/utils/battery_optimization.dart';
 import '../../app/app_theme.dart';
 import '../../core/extensions/localizations_extension.dart';
 import '../../l10n/app_localizations.dart';
@@ -200,10 +201,13 @@ class _ConsentFlowState extends State<_ConsentFlow> {
               flex: 2,
               child: FilledButton(
                 onPressed: () async {
-                  await Permission.sms.request();
+                  final status = await Permission.sms.request();
                   _smsEnabled = true;
                   if (mounted) {
                     setState(() => _step = _ConsentStep.tourOffer);
+                  }
+                  if (status.isGranted && mounted) {
+                    BatteryOptimization.promptIfNeeded(context);
                   }
                 },
                 child: Text(l10n.smsOptInEnable),

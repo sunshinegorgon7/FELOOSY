@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import '../../core/utils/battery_optimization.dart';
 import '../../app/app_theme.dart';
 import '../../core/extensions/localizations_extension.dart';
 import '../../data/models/category.dart';
@@ -36,6 +37,9 @@ class _SmsRulesScreenState extends ConsumerState<SmsRulesScreen> {
   Future<void> _checkPermission() async {
     final status = await Permission.sms.status;
     if (mounted) setState(() => _smsPermission = status);
+    if (status.isGranted && mounted) {
+      BatteryOptimization.promptIfNeeded(context);
+    }
   }
 
   Future<void> _requestPermission() async {

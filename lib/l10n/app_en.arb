@@ -529,6 +529,11 @@
   "tourOfferYes": "Show Me Around",
   "tourOfferSkip": "Skip",
 
+  "batteryOptTitle": "Disable Battery Optimization?",
+  "batteryOptBody": "Android may stop SMS auto-import when the app is in the background. Disabling battery optimization for Feloosy ensures incoming bank messages are always processed.",
+  "batteryOptAllow": "Allow",
+  "batteryOptNotNow": "Not now",
+
   "cloudData": "Cloud & Data",
   "cloudGoogleDrive": "Google Drive",
   "cloudLocal": "Local",

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
+import '../../core/utils/battery_optimization.dart';
 import '../../app/app_flavor.dart';
 import '../../app/app_theme.dart';
 import '../../core/constants/app_info.dart';
@@ -506,6 +507,8 @@ class _SmsToggleTile extends ConsumerWidget {
             final status = await Permission.sms.request();
             if (status.isPermanentlyDenied && context.mounted) {
               openAppSettings();
+            } else if (status.isGranted && context.mounted) {
+              BatteryOptimization.promptIfNeeded(context);
             }
           }
         } else {
