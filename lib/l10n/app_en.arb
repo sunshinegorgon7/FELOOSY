@@ -529,8 +529,8 @@
   "tourOfferYes": "Show Me Around",
   "tourOfferSkip": "Skip",
 
-  "batteryOptTitle": "Disable Battery Optimization?",
-  "batteryOptBody": "Android may stop SMS auto-import when the app is in the background. Disabling battery optimization for Feloosy ensures incoming bank messages are always processed. Some phone brands (Xiaomi, Huawei, Oppo, Vivo, etc.) also have a separate \"autostart\" or \"protected apps\" setting worth checking if messages still get missed after allowing this.",
+  "batteryOptTitle": "Don't miss transactions",
+  "batteryOptBody": "Without this, some bank texts may not import until you reopen the app.",
   "batteryOptAllow": "Allow",
   "batteryOptNotNow": "Not now",
 

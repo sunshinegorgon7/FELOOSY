@@ -1040,11 +1040,11 @@ class AppLocalizationsAr extends AppLocalizations {
   String get tourOfferSkip => 'Skip';
 
   @override
-  String get batteryOptTitle => 'تعطيل تحسين البطارية؟';
+  String get batteryOptTitle => 'لا تفوّت المعاملات';
 
   @override
   String get batteryOptBody =>
-      'قد يوقف أندرويد الاستيراد التلقائي للرسائل القصيرة عندما يكون التطبيق في الخلفية. تعطيل تحسين البطارية لـ Feloosy يضمن معالجة رسائل البنك الواردة دائماً. بعض الشركات المصنعة للهواتف (شاومي، هواوي، أوبو، فيفو، وغيرها) لديها أيضاً إعداد منفصل باسم \"بدء التشغيل التلقائي\" أو \"التطبيقات المحمية\" يستحق التحقق منه إذا استمر فقدان الرسائل بعد السماح بهذا.';
+      'بدون هذا، قد لا يتم استيراد بعض رسائل البنك حتى تفتح التطبيق مجدداً.';
 
   @override
   String get batteryOptAllow => 'السماح';

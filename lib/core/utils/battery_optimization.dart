@@ -1,12 +1,16 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../l10n/app_localizations.dart';
 
 abstract final class BatteryOptimization {
   static bool _promptedThisSession = false;
+  static const _storage = FlutterSecureStorage();
+  static const _lastDismissedKey = 'feloosy_battery_opt_last_dismissed_ms';
+  static const _reprompt = Duration(days: 3);
 
   static Future<void> promptIfNeeded(BuildContext context) async {
     if (!Platform.isAndroid) return;
@@ -14,6 +18,16 @@ abstract final class BatteryOptimization {
 
     final status = await Permission.ignoreBatteryOptimizations.status;
     if (status.isGranted) return;
+
+    final raw = await _storage.read(key: _lastDismissedKey);
+    final lastMs = raw != null ? int.tryParse(raw) : null;
+    if (lastMs != null &&
+        DateTime.now().difference(
+              DateTime.fromMillisecondsSinceEpoch(lastMs),
+            ) <
+            _reprompt) {
+      return;
+    }
 
     _promptedThisSession = true;
     if (!context.mounted) return;
@@ -43,6 +57,11 @@ abstract final class BatteryOptimization {
 
     if (accepted == true) {
       await Permission.ignoreBatteryOptimizations.request();
+    } else {
+      await _storage.write(
+        key: _lastDismissedKey,
+        value: '${DateTime.now().millisecondsSinceEpoch}',
+      );
     }
   }
 }

@@ -1038,11 +1038,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tourOfferSkip => 'Skip';
 
   @override
-  String get batteryOptTitle => 'Disable Battery Optimization?';
+  String get batteryOptTitle => 'Don\'t miss transactions';
 
   @override
   String get batteryOptBody =>
-      'Android may stop SMS auto-import when the app is in the background. Disabling battery optimization for Feloosy ensures incoming bank messages are always processed. Some phone brands (Xiaomi, Huawei, Oppo, Vivo, etc.) also have a separate \"autostart\" or \"protected apps\" setting worth checking if messages still get missed after allowing this.';
+      'Without this, some bank texts may not import until you reopen the app.';
 
   @override
   String get batteryOptAllow => 'Allow';
