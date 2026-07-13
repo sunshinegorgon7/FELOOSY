@@ -379,6 +379,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _isSearching = false;
   bool _accountInitialized = false;
+  bool _batteryPromptChecked = false;
   String _searchQuery = '';
   final _searchCtrl = TextEditingController();
   List<_DayGroup> _visibleGroups = const [];
@@ -532,6 +533,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         settingsAsync.value!.privacyAcceptedAt == null;
     final smsOptIn = settingsAsync.value?.smsOptIn ?? false;
     final discreetMode = settingsAsync.value?.discreetMode ?? false;
+
+    if (!_batteryPromptChecked &&
+        Platform.isAndroid &&
+        settingsAsync.value != null &&
+        smsOptIn) {
+      _batteryPromptChecked = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) BatteryOptimization.promptIfNeeded(context);
+      });
+    }
 
     final scaffold = Scaffold(
       backgroundColor: cs.surface,

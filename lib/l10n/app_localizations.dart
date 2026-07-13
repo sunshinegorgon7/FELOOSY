@@ -1925,7 +1925,7 @@ abstract class AppLocalizations {
   /// No description provided for @batteryOptBody.
   ///
   /// In en, this message translates to:
-  /// **'Android may stop SMS auto-import when the app is in the background. Disabling battery optimization for Feloosy ensures incoming bank messages are always processed.'**
+  /// **'Android may stop SMS auto-import when the app is in the background. Disabling battery optimization for Feloosy ensures incoming bank messages are always processed. Some phone brands (Xiaomi, Huawei, Oppo, Vivo, etc.) also have a separate \"autostart\" or \"protected apps\" setting worth checking if messages still get missed after allowing this.'**
   String get batteryOptBody;
 
   /// No description provided for @batteryOptAllow.
@@ -1939,6 +1939,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Not now'**
   String get batteryOptNotNow;
+
+  /// No description provided for @settingsBatteryOptimization.
+  ///
+  /// In en, this message translates to:
+  /// **'Battery optimization'**
+  String get settingsBatteryOptimization;
+
+  /// No description provided for @settingsBatteryOptimizationOn.
+  ///
+  /// In en, this message translates to:
+  /// **'On — tap to fix'**
+  String get settingsBatteryOptimizationOn;
+
+  /// No description provided for @settingsBatteryOptimizationOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Disabled'**
+  String get settingsBatteryOptimizationOff;
 
   /// No description provided for @cloudData.
   ///

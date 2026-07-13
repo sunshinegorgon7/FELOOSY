@@ -128,6 +128,7 @@ class _SettingsBody extends ConsumerWidget {
           _SectionHeader(l10n.settingsAutomations),
           const _SmsToggleTile(),
           if (settings.smsOptIn) const _SmsRulesTile(),
+          if (settings.smsOptIn) const _BatteryOptimizationTile(),
         ],
 
         _SectionHeader(l10n.settingsAbout),
@@ -563,6 +564,68 @@ class _SmsRulesTile extends ConsumerWidget {
       title: context.l10n.settingsSmsRules,
       subtitle: context.l10n.settingsSmsRulesDesc,
       onTap: () => _navigate(context, ref),
+    );
+  }
+}
+
+// ── Battery optimization status tile ────────────────────────────────────────────
+
+class _BatteryOptimizationTile extends StatefulWidget {
+  const _BatteryOptimizationTile();
+
+  @override
+  State<_BatteryOptimizationTile> createState() =>
+      _BatteryOptimizationTileState();
+}
+
+class _BatteryOptimizationTileState extends State<_BatteryOptimizationTile>
+    with WidgetsBindingObserver {
+  PermissionStatus? _status;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _refresh();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _refresh();
+  }
+
+  Future<void> _refresh() async {
+    final status = await Permission.ignoreBatteryOptimizations.status;
+    if (mounted) setState(() => _status = status);
+  }
+
+  Future<void> _onTap() async {
+    if (_status?.isGranted ?? false) return;
+    if (_status?.isPermanentlyDenied ?? false) {
+      await openAppSettings();
+    } else {
+      await Permission.ignoreBatteryOptimizations.request();
+    }
+    _refresh();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final isGranted = _status?.isGranted ?? false;
+    return _SettingsRow(
+      title: l10n.settingsBatteryOptimization,
+      value: isGranted
+          ? l10n.settingsBatteryOptimizationOff
+          : l10n.settingsBatteryOptimizationOn,
+      danger: !isGranted,
+      onTap: _onTap,
     );
   }
 }
