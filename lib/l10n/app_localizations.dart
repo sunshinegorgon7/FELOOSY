@@ -1958,6 +1958,30 @@ abstract class AppLocalizations {
   /// **'Disabled'**
   String get settingsBatteryOptimizationOff;
 
+  /// No description provided for @backupReminderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Back up your data?'**
+  String get backupReminderTitle;
+
+  /// No description provided for @backupReminderBody.
+  ///
+  /// In en, this message translates to:
+  /// **'It\'s been over a week since your last Google Drive backup. Back up now to keep your data safe.'**
+  String get backupReminderBody;
+
+  /// No description provided for @backupReminderLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get backupReminderLater;
+
+  /// No description provided for @backupReminderNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Back up now'**
+  String get backupReminderNow;
+
   /// No description provided for @cloudData.
   ///
   /// In en, this message translates to:

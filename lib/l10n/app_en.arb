@@ -538,6 +538,11 @@
   "settingsBatteryOptimizationOn": "On — tap to fix",
   "settingsBatteryOptimizationOff": "Disabled",
 
+  "backupReminderTitle": "Back up your data?",
+  "backupReminderBody": "It's been over a week since your last Google Drive backup. Back up now to keep your data safe.",
+  "backupReminderLater": "Later",
+  "backupReminderNow": "Back up now",
+
   "cloudData": "Cloud & Data",
   "cloudGoogleDrive": "Google Drive",
   "cloudLocal": "Local",

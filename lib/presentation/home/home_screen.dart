@@ -6,6 +6,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../core/utils/backup_reminder.dart';
 import '../../core/utils/battery_optimization.dart';
 import '../../app/app_theme.dart';
 import '../../core/extensions/localizations_extension.dart';
@@ -379,7 +380,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _isSearching = false;
   bool _accountInitialized = false;
-  bool _batteryPromptChecked = false;
+  bool _launchPromptsChecked = false;
   String _searchQuery = '';
   final _searchCtrl = TextEditingController();
   List<_DayGroup> _visibleGroups = const [];
@@ -534,13 +535,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final smsOptIn = settingsAsync.value?.smsOptIn ?? false;
     final discreetMode = settingsAsync.value?.discreetMode ?? false;
 
-    if (!_batteryPromptChecked &&
-        Platform.isAndroid &&
-        settingsAsync.value != null &&
-        smsOptIn) {
-      _batteryPromptChecked = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) BatteryOptimization.promptIfNeeded(context);
+    if (!_launchPromptsChecked && settingsAsync.value != null) {
+      _launchPromptsChecked = true;
+      final settingsValue = settingsAsync.value!;
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+        if (Platform.isAndroid && settingsValue.smsOptIn) {
+          await BatteryOptimization.promptIfNeeded(context);
+        }
+        if (!mounted) return;
+        await BackupReminder.promptIfNeeded(context, settingsValue);
       });
     }
 

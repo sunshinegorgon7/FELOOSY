@@ -337,6 +337,11 @@
   "settingsBatteryOptimizationOn": "مفعّل — اضغط للإصلاح",
   "settingsBatteryOptimizationOff": "معطّل",
 
+  "backupReminderTitle": "نسخ بياناتك احتياطياً؟",
+  "backupReminderBody": "مرّ أكثر من أسبوع منذ آخر نسخة احتياطية على Google Drive. قم بالنسخ الاحتياطي الآن للحفاظ على بياناتك.",
+  "backupReminderLater": "لاحقاً",
+  "backupReminderNow": "نسخ احتياطي الآن",
+
   "cloudData": "السحابة والبيانات",
   "cloudGoogleDrive": "Google Drive",
   "cloudLocal": "محلي",

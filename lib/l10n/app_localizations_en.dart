@@ -1060,6 +1060,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsBatteryOptimizationOff => 'Disabled';
 
   @override
+  String get backupReminderTitle => 'Back up your data?';
+
+  @override
+  String get backupReminderBody =>
+      'It\'s been over a week since your last Google Drive backup. Back up now to keep your data safe.';
+
+  @override
+  String get backupReminderLater => 'Later';
+
+  @override
+  String get backupReminderNow => 'Back up now';
+
+  @override
   String get cloudData => 'Cloud & Data';
 
   @override

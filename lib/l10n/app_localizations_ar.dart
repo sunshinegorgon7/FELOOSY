@@ -1062,6 +1062,19 @@ class AppLocalizationsAr extends AppLocalizations {
   String get settingsBatteryOptimizationOff => 'معطّل';
 
   @override
+  String get backupReminderTitle => 'نسخ بياناتك احتياطياً؟';
+
+  @override
+  String get backupReminderBody =>
+      'مرّ أكثر من أسبوع منذ آخر نسخة احتياطية على Google Drive. قم بالنسخ الاحتياطي الآن للحفاظ على بياناتك.';
+
+  @override
+  String get backupReminderLater => 'لاحقاً';
+
+  @override
+  String get backupReminderNow => 'نسخ احتياطي الآن';
+
+  @override
   String get cloudData => 'السحابة والبيانات';
 
   @override
