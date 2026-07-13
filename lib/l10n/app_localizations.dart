@@ -1916,6 +1916,30 @@ abstract class AppLocalizations {
   /// **'Skip'**
   String get tourOfferSkip;
 
+  /// No description provided for @batteryOptTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Disable Battery Optimization?'**
+  String get batteryOptTitle;
+
+  /// No description provided for @batteryOptBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Android may stop SMS auto-import when the app is in the background. Disabling battery optimization for Feloosy ensures incoming bank messages are always processed.'**
+  String get batteryOptBody;
+
+  /// No description provided for @batteryOptAllow.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow'**
+  String get batteryOptAllow;
+
+  /// No description provided for @batteryOptNotNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get batteryOptNotNow;
+
   /// No description provided for @cloudData.
   ///
   /// In en, this message translates to:

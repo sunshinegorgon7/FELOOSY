@@ -1040,6 +1040,18 @@ class AppLocalizationsAr extends AppLocalizations {
   String get tourOfferSkip => 'Skip';
 
   @override
+  String get batteryOptTitle => 'تعطيل تحسين البطارية؟';
+
+  @override
+  String get batteryOptBody => 'قد يوقف أندرويد الاستيراد التلقائي للرسائل القصيرة عندما يكون التطبيق في الخلفية. تعطيل تحسين البطارية لـ Feloosy يضمن معالجة رسائل البنك الواردة دائماً.';
+
+  @override
+  String get batteryOptAllow => 'السماح';
+
+  @override
+  String get batteryOptNotNow => 'ليس الآن';
+
+  @override
   String get cloudData => 'السحابة والبيانات';
 
   @override
