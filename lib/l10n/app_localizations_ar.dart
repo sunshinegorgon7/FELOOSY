@@ -1043,7 +1043,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get batteryOptTitle => 'تعطيل تحسين البطارية؟';
 
   @override
-  String get batteryOptBody => 'قد يوقف أندرويد الاستيراد التلقائي للرسائل القصيرة عندما يكون التطبيق في الخلفية. تعطيل تحسين البطارية لـ Feloosy يضمن معالجة رسائل البنك الواردة دائماً.';
+  String get batteryOptBody =>
+      'قد يوقف أندرويد الاستيراد التلقائي للرسائل القصيرة عندما يكون التطبيق في الخلفية. تعطيل تحسين البطارية لـ Feloosy يضمن معالجة رسائل البنك الواردة دائماً.';
 
   @override
   String get batteryOptAllow => 'السماح';

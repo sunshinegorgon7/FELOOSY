@@ -1041,7 +1041,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get batteryOptTitle => 'Disable Battery Optimization?';
 
   @override
-  String get batteryOptBody => 'Android may stop SMS auto-import when the app is in the background. Disabling battery optimization for Feloosy ensures incoming bank messages are always processed.';
+  String get batteryOptBody =>
+      'Android may stop SMS auto-import when the app is in the background. Disabling battery optimization for Feloosy ensures incoming bank messages are always processed.';
 
   @override
   String get batteryOptAllow => 'Allow';
