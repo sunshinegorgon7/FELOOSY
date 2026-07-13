@@ -1949,7 +1949,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsBatteryOptimizationOn.
   ///
   /// In en, this message translates to:
-  /// **'On — tap to fix'**
+  /// **'Enabled'**
   String get settingsBatteryOptimizationOn;
 
   /// No description provided for @settingsBatteryOptimizationOff.

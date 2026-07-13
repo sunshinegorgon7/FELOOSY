@@ -535,7 +535,7 @@
   "batteryOptNotNow": "Not now",
 
   "settingsBatteryOptimization": "Battery optimization",
-  "settingsBatteryOptimizationOn": "On — tap to fix",
+  "settingsBatteryOptimizationOn": "Enabled",
   "settingsBatteryOptimizationOff": "Disabled",
 
   "backupReminderTitle": "Back up your data?",

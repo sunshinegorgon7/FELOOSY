@@ -1054,7 +1054,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsBatteryOptimization => 'Battery optimization';
 
   @override
-  String get settingsBatteryOptimizationOn => 'On — tap to fix';
+  String get settingsBatteryOptimizationOn => 'Enabled';
 
   @override
   String get settingsBatteryOptimizationOff => 'Disabled';

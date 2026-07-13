@@ -618,14 +618,17 @@ class _BatteryOptimizationTileState extends State<_BatteryOptimizationTile>
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final cs = Theme.of(context).colorScheme;
     final isGranted = _status?.isGranted ?? false;
     return _SettingsRow(
       title: l10n.settingsBatteryOptimization,
       value: isGranted
           ? l10n.settingsBatteryOptimizationOff
           : l10n.settingsBatteryOptimizationOn,
+      valueColor: isGranted ? AppTheme.incomeText(cs) : null,
       danger: !isGranted,
-      onTap: _onTap,
+      showChevron: !isGranted,
+      onTap: isGranted ? null : _onTap,
     );
   }
 }
@@ -707,6 +710,8 @@ class _SettingsRow extends StatelessWidget {
   final String? value;
   final bool busy;
   final bool danger;
+  final Color? valueColor;
+  final bool showChevron;
   final VoidCallback? onTap;
 
   const _SettingsRow({
@@ -715,6 +720,8 @@ class _SettingsRow extends StatelessWidget {
     this.value,
     this.busy = false,
     this.danger = false,
+    this.valueColor,
+    this.showChevron = true,
     this.onTap,
   });
 
@@ -762,7 +769,7 @@ class _SettingsRow extends StatelessWidget {
               child: Text(
                 value!,
                 style: tt.bodySmall?.copyWith(
-                  color: danger ? cs.error : accentColor,
+                  color: valueColor ?? (danger ? cs.error : accentColor),
                   fontFamily: 'DM Mono',
                   fontWeight: FontWeight.w500,
                   fontSize: 13,
@@ -780,7 +787,7 @@ class _SettingsRow extends StatelessWidget {
               height: 18,
               child: CircularProgressIndicator(strokeWidth: 2),
             )
-          else
+          else if (showChevron)
             Icon(
               Icons.chevron_right,
               size: 14,

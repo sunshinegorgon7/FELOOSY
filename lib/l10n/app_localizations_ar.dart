@@ -1056,7 +1056,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get settingsBatteryOptimization => 'تحسين البطارية';
 
   @override
-  String get settingsBatteryOptimizationOn => 'مفعّل — اضغط للإصلاح';
+  String get settingsBatteryOptimizationOn => 'مفعّل';
 
   @override
   String get settingsBatteryOptimizationOff => 'معطّل';
