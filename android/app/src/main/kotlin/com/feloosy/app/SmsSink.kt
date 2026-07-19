@@ -10,6 +10,7 @@ object SmsSink {
     private const val PREFS_KEY  = "pending_sms"
 
     private var sink: EventChannel.EventSink? = null
+    val isActive: Boolean get() = sink != null
     // In-memory buffer for SMS that arrive after push() but before register() in the same process.
     private val pending = mutableListOf<Map<String, String>>()
 
@@ -34,9 +35,32 @@ object SmsSink {
         if (s != null) {
             s.success(data)
         } else {
-            // Persist immediately so the message survives process death.
             appendPersisted(data, context)
             pending.add(data)
+        }
+    }
+
+    fun markProcessed(data: Map<String, String>, context: Context) {
+        pending.removeAll { it["body"] == data["body"] && it["sender"] == data["sender"] }
+        removeFromPersisted(data, context)
+    }
+
+    private fun removeFromPersisted(data: Map<String, String>, context: Context) {
+        val prefs = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val raw = prefs.getString(PREFS_KEY, null) ?: return
+        val array = JSONArray(raw)
+        val body = data["body"] ?: ""
+        val sender = data["sender"] ?: ""
+        val filtered = JSONArray()
+        for (i in 0 until array.length()) {
+            val obj = array.getJSONObject(i)
+            if (obj.optString("body") == body && obj.optString("sender") == sender) continue
+            filtered.put(obj)
+        }
+        if (filtered.length() == 0) {
+            prefs.edit().remove(PREFS_KEY).apply()
+        } else {
+            prefs.edit().putString(PREFS_KEY, filtered.toString()).apply()
         }
     }
 

@@ -39,7 +39,7 @@ class SmsTransactionService {
     final body = event['body'] as String? ?? '';
     if (body.isEmpty) return;
 
-    final rules = ref.read(smsRulesProvider).asData?.value ?? [];
+    final rules = await ref.read(smsRulesProvider.future);
     final activeRules = rules.where((r) => r.isActive).toList();
 
     final matched = SmsParserService.matchRule(body, activeRules);
@@ -51,7 +51,7 @@ class SmsTransactionService {
     );
     if (amount == null || amount <= 0) return;
 
-    final accounts = ref.read(accountsProvider).asData?.value ?? [];
+    final accounts = await ref.read(accountsProvider.future);
     final fallbackAccountId = accounts.isNotEmpty
         ? (accounts.firstWhere((a) => a.isFavorite, orElse: () => accounts.first).id ?? 1)
         : 1;
