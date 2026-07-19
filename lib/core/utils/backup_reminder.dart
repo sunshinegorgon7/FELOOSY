@@ -23,7 +23,7 @@ abstract final class BackupReminder {
     _promptedThisSession = true;
     if (!context.mounted) return;
 
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final wantsBackup = await showDialog<bool>(
       context: context,
       builder: (ctx) {

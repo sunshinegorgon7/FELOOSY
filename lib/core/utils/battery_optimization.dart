@@ -32,7 +32,7 @@ abstract final class BatteryOptimization {
     _promptedThisSession = true;
     if (!context.mounted) return;
 
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final accepted = await showDialog<bool>(
       context: context,
       builder: (ctx) {
