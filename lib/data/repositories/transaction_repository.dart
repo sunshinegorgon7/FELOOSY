@@ -42,6 +42,34 @@ class TransactionRepository {
     return rows.isEmpty ? null : model.Transaction.fromMap(rows.first);
   }
 
+  /// True when a transaction with the same account, amount and category already
+  /// exists within ±[window] of [around]. Used to stop SMS auto-creation from
+  /// duplicating a transaction the user already entered manually (or one that
+  /// was already auto-created). Mirrors the ±3-day duplicate rule used by the
+  /// bulk SMS scan importer so both paths behave consistently.
+  Future<bool> hasSimilarRecent({
+    required int accountId,
+    required double amount,
+    required String categoryUuid,
+    required DateTime around,
+    Duration window = const Duration(days: 3),
+  }) async {
+    final db = await _db.database;
+    final rows = await db.rawQuery(
+      'SELECT COUNT(*) as c FROM transactions '
+      'WHERE account_id = ? AND amount = ? AND category_uuid = ? '
+      'AND transaction_date >= ? AND transaction_date <= ?',
+      [
+        accountId,
+        amount,
+        categoryUuid,
+        around.subtract(window).millisecondsSinceEpoch,
+        around.add(window).millisecondsSinceEpoch,
+      ],
+    );
+    return (rows.first['c'] as int? ?? 0) > 0;
+  }
+
   Future<model.Transaction> insert(model.Transaction tx) async {
     final db = await _db.database;
     final id = await db.insert('transactions', tx.toMap());

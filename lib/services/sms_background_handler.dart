@@ -6,9 +6,13 @@ import '../app/app_flavor.dart';
 import '../data/database/database_helper.dart';
 import '../data/models/transaction.dart';
 import '../data/repositories/account_repository.dart';
+import '../data/repositories/budget_repository.dart';
+import '../data/repositories/category_repository.dart';
+import '../data/repositories/settings_repository.dart';
 import '../data/repositories/sms_rule_repository.dart';
 import '../data/repositories/transaction_repository.dart';
 import '../domain/services/sms_parser_service.dart';
+import 'home_widget_sync_service.dart';
 
 const _uuid = Uuid();
 const _channel = MethodChannel('com.feloosy/sms_background');
@@ -66,7 +70,17 @@ Future<void> _processSms(String body) async {
   }
 
   final now = DateTime.now();
+  var inserted = false;
   for (final accountId in resolvedAccountIds) {
+    // Skip if the user already entered this (or it was already auto-created).
+    final isDuplicate = await txRepo.hasSimilarRecent(
+      accountId: accountId,
+      amount: amount,
+      categoryUuid: matched.categoryUuid,
+      around: now,
+    );
+    if (isDuplicate) continue;
+
     final tx = Transaction(
       uuid: _uuid.v4(),
       accountId: accountId,
@@ -82,5 +96,18 @@ Future<void> _processSms(String body) async {
       source: 'sms_rule:${matched.id}',
     );
     await txRepo.insert(tx);
+    inserted = true;
+  }
+
+  // Refresh the home widget so it reflects the new transaction even though the
+  // app process is dead — otherwise the widget stays stale until next open.
+  if (inserted) {
+    await syncWidgetFromRepos(
+      accounts: accounts,
+      settingsRepo: SettingsRepository(db),
+      txRepo: txRepo,
+      budgetRepo: BudgetRepository(db),
+      categoryRepo: CategoryRepository(db),
+    );
   }
 }

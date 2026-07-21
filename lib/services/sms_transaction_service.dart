@@ -8,6 +8,7 @@ import 'package:uuid/uuid.dart';
 import '../data/models/transaction.dart';
 import '../domain/services/sms_parser_service.dart';
 import '../providers/accounts_provider.dart';
+import '../providers/database_provider.dart';
 import '../providers/sms_rules_provider.dart';
 import '../providers/transactions_provider.dart';
 
@@ -64,7 +65,17 @@ class SmsTransactionService {
     }
 
     final now = DateTime.now();
+    final txRepo = ref.read(transactionRepositoryProvider);
     for (final accountId in resolvedAccountIds) {
+      // Skip if the user already entered this (or it was already auto-created).
+      final isDuplicate = await txRepo.hasSimilarRecent(
+        accountId: accountId,
+        amount: amount,
+        categoryUuid: matched.categoryUuid,
+        around: now,
+      );
+      if (isDuplicate) continue;
+
       final tx = Transaction(
         uuid: _uuid.v4(),
         accountId: accountId,
