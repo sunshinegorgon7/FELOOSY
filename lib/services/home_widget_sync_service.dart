@@ -1,11 +1,19 @@
 import 'dart:convert';
 
+import 'package:flutter/material.dart' show DateUtils;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:home_widget/home_widget.dart';
 
 import '../app/app_theme.dart';
 import '../core/constants/default_categories.dart';
+import '../core/utils/month_calculator.dart';
+import '../data/models/account.dart';
 import '../data/models/transaction.dart';
+import '../data/repositories/budget_repository.dart';
+import '../data/repositories/category_repository.dart';
+import '../data/repositories/settings_repository.dart';
+import '../data/repositories/transaction_repository.dart';
+import '../domain/entities/budget_period.dart';
 import '../providers/accounts_provider.dart';
 import '../providers/budget_period_provider.dart';
 import '../providers/database_provider.dart';
@@ -15,36 +23,80 @@ const _androidProvider = 'com.feloosy.app.widget.FeloosyWidgetProvider';
 const _iOSKind = 'FeloosyWidget';
 const _appGroup = 'group.com.feloosy.feloosy';
 
-/// Syncs widget data for the favourite account.
+/// Syncs widget data for the favourite account (called from the running app).
 /// Header: available = monthlyBudget − totalSpentThisMonth.
 /// Bar/legend: top-3 expense categories for the current budget month + Other.
 Future<void> syncWidget(WidgetRef ref) async {
   try {
     await HomeWidget.setAppGroupId(_appGroup);
-    await _sync(ref);
+
+    final themeMode = ref.read(settingsProvider)
+        .whenOrNull(data: (s) => s.themeMode) ?? 'system';
+    final accounts = ref.read(accountsProvider).value ?? const [];
+    final account =
+        accounts.where((a) => a.isFavorite).firstOrNull ?? accounts.firstOrNull;
+
+    await _writeWidget(
+      account: account,
+      period: ref.read(currentBudgetPeriodProvider),
+      themeMode: themeMode,
+      txRepo: ref.read(transactionRepositoryProvider),
+      budgetRepo: ref.read(budgetRepositoryProvider),
+      categoryRepo: ref.read(categoryRepositoryProvider),
+    );
   } catch (_) {}
 }
 
-Future<void> _sync(WidgetRef ref) async {
+/// Provider-free variant for the SMS background isolate, where there is no
+/// `WidgetRef`. Resolves the favourite account and its budget period directly
+/// from repositories so the launcher widget updates even while the app process
+/// is dead.
+Future<void> syncWidgetFromRepos({
+  required List<Account> accounts,
+  required SettingsRepository settingsRepo,
+  required TransactionRepository txRepo,
+  required BudgetRepository budgetRepo,
+  required CategoryRepository categoryRepo,
+}) async {
+  try {
+    await HomeWidget.setAppGroupId(_appGroup);
+
+    final settings = await settingsRepo.get();
+    final account =
+        accounts.where((a) => a.isFavorite).firstOrNull ?? accounts.firstOrNull;
+    final day = account?.monthStartDay ?? settings.monthStartDay;
+    final period = MonthCalculator.periodContaining(
+      DateUtils.dateOnly(DateTime.now()),
+      day,
+    );
+
+    await _writeWidget(
+      account: account,
+      period: period,
+      themeMode: settings.themeMode,
+      txRepo: txRepo,
+      budgetRepo: budgetRepo,
+      categoryRepo: categoryRepo,
+    );
+  } catch (_) {}
+}
+
+Future<void> _writeWidget({
+  required Account? account,
+  required BudgetPeriod period,
+  required String themeMode,
+  required TransactionRepository txRepo,
+  required BudgetRepository budgetRepo,
+  required CategoryRepository categoryRepo,
+}) async {
   // Sync the app's theme preference so the widget can match it exactly,
   // even when the user has overridden the system default.
-  final themeMode = ref.read(settingsProvider)
-      .whenOrNull(data: (s) => s.themeMode) ?? 'system';
   await HomeWidget.saveWidgetData<String>('fw_theme_mode', themeMode);
-
-  final accounts = ref.read(accountsProvider).value ?? const [];
-  final account =
-      accounts.where((a) => a.isFavorite).firstOrNull ?? accounts.firstOrNull;
 
   if (account?.id == null) {
     await _writeEmpty('Wallet', 'AED');
     return;
   }
-
-  final period = ref.read(currentBudgetPeriodProvider);
-  final txRepo = ref.read(transactionRepositoryProvider);
-  final budgetRepo = ref.read(budgetRepositoryProvider);
-  final categoryRepo = ref.read(categoryRepositoryProvider);
 
   // --- Header: month-to-date available balance ---
   final monthTxs = await txRepo.getForPeriod(

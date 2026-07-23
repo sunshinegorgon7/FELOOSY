@@ -11,23 +11,19 @@ object SmsSink {
 
     private var sink: EventChannel.EventSink? = null
     val isActive: Boolean get() = sink != null
-    // In-memory buffer for SMS that arrive after push() but before register() in the same process.
-    private val pending = mutableListOf<Map<String, String>>()
 
     fun register(sink: EventChannel.EventSink?, context: Context) {
         this.sink = sink
         if (sink == null) return
 
-        // Drain persisted queue from previous process death first.
+        // Drain the persisted queue (messages that arrived while no Flutter
+        // engine was listening). Clearing after draining guarantees each queued
+        // message is delivered to Dart exactly once per app launch.
         val stored = loadPersisted(context)
         if (stored.isNotEmpty()) {
             stored.forEach { sink.success(it) }
             clearPersisted(context)
         }
-
-        // Then drain the in-memory buffer for same-process arrivals.
-        pending.forEach { sink.success(it) }
-        pending.clear()
     }
 
     fun push(data: Map<String, String>, context: Context) {
@@ -35,13 +31,15 @@ object SmsSink {
         if (s != null) {
             s.success(data)
         } else {
+            // No live listener — persist so the message survives process death
+            // and is replayed on next open. The persisted store is the single
+            // source of truth; there is no separate in-memory copy, so a message
+            // can never be delivered twice from one push.
             appendPersisted(data, context)
-            pending.add(data)
         }
     }
 
     fun markProcessed(data: Map<String, String>, context: Context) {
-        pending.removeAll { it["body"] == data["body"] && it["sender"] == data["sender"] }
         removeFromPersisted(data, context)
     }
 
