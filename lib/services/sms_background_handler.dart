@@ -3,12 +3,14 @@ import 'package:flutter/widgets.dart';
 import 'package:uuid/uuid.dart';
 
 import '../app/app_flavor.dart';
+import '../core/utils/dev_log.dart';
 import '../data/database/database_helper.dart';
 import '../data/models/transaction.dart';
 import '../data/repositories/account_repository.dart';
 import '../data/repositories/budget_repository.dart';
 import '../data/repositories/category_repository.dart';
 import '../data/repositories/settings_repository.dart';
+import '../data/repositories/sms_ledger_repository.dart';
 import '../data/repositories/sms_rule_repository.dart';
 import '../data/repositories/transaction_repository.dart';
 import '../domain/services/sms_parser_service.dart';
@@ -28,8 +30,10 @@ void smsBackgroundHandler() {
       await AppFlavor.initialize(isDev ? Flavor.dev : Flavor.prod);
 
       final body = args['body'] as String? ?? '';
+      final sender = args['sender'] as String? ?? '';
+      await DevLog.log('BG', 'engine started, body="${_preview(body)}"');
       if (body.isNotEmpty) {
-        await _processSms(body);
+        await _processSms(sender: sender, body: body);
       }
       _channel.invokeMethod('processed', null);
     }
@@ -38,23 +42,37 @@ void smsBackgroundHandler() {
   _channel.invokeMethod('ready', null);
 }
 
-Future<void> _processSms(String body) async {
+Future<void> _processSms({required String sender, required String body}) async {
   final db = DatabaseHelper.instance;
   final ruleRepo = SmsRuleRepository(db);
   final txRepo = TransactionRepository(db);
   final accountRepo = AccountRepository(db);
+  final ledger = SmsLedgerRepository(db);
 
   final rules = await ruleRepo.getAll();
   final activeRules = rules.where((r) => r.isActive).toList();
 
   final matched = SmsParserService.matchRule(body, activeRules);
-  if (matched == null) return;
+  if (matched == null) {
+    await DevLog.log('BG', 'no rule matched');
+    return;
+  }
 
   final amount = SmsParserService.extractAmount(
     body,
     customRegex: matched.amountRegex,
   );
-  if (amount == null || amount <= 0) return;
+  if (amount == null || amount <= 0) {
+    await DevLog.log('BG', 'rule "${matched.keyword}" matched but no amount');
+    return;
+  }
+
+  // Atomic claim: the foreground replay may be processing this same SMS.
+  final hash = SmsLedgerRepository.hashFor(sender: sender, body: body);
+  final claimed = await ledger.claim(hash);
+  await DevLog.log('BG',
+      'rule="${matched.keyword}" amount=$amount claim=$claimed hash=${hash.substring(0, 8)}');
+  if (!claimed) return;
 
   final accounts = await accountRepo.getAll();
   if (accounts.isEmpty) return;
@@ -72,14 +90,17 @@ Future<void> _processSms(String body) async {
   final now = DateTime.now();
   var inserted = false;
   for (final accountId in resolvedAccountIds) {
-    // Skip if the user already entered this (or it was already auto-created).
+    // Second layer: skip if the user already entered this manually.
     final isDuplicate = await txRepo.hasSimilarRecent(
       accountId: accountId,
       amount: amount,
       categoryUuid: matched.categoryUuid,
       around: now,
     );
-    if (isDuplicate) continue;
+    if (isDuplicate) {
+      await DevLog.log('BG', 'account $accountId: amount-dup, skipped');
+      continue;
+    }
 
     final tx = Transaction(
       uuid: _uuid.v4(),
@@ -97,6 +118,7 @@ Future<void> _processSms(String body) async {
     );
     await txRepo.insert(tx);
     inserted = true;
+    await DevLog.log('BG', 'account $accountId: inserted $amount');
   }
 
   // Refresh the home widget so it reflects the new transaction even though the
@@ -109,5 +131,9 @@ Future<void> _processSms(String body) async {
       budgetRepo: BudgetRepository(db),
       categoryRepo: CategoryRepository(db),
     );
+    await DevLog.log('BG', 'widget synced');
   }
 }
+
+String _preview(String body) =>
+    body.length <= 40 ? body : '${body.substring(0, 40)}…';

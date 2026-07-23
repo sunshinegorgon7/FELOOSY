@@ -21,12 +21,19 @@ class SmsReceiver : BroadcastReceiver() {
         val sender = messages.firstOrNull()?.originatingAddress ?: ""
         val data = mapOf("body" to body, "sender" to sender)
 
+        val active = SmsSink.isActive
+        DevLog.log(context, "NATIVE",
+            "receiver fired, sink active=$active, body=\"${preview(body)}\"")
+
         SmsSink.push(data, context)
 
-        if (!SmsSink.isActive) {
+        if (!active) {
             processInBackground(context.applicationContext, data)
         }
     }
+
+    private fun preview(body: String): String =
+        if (body.length <= 40) body else body.substring(0, 40) + "…"
 
     private fun processInBackground(appContext: Context, data: Map<String, String>) {
         val pendingResult = goAsync()
@@ -34,6 +41,7 @@ class SmsReceiver : BroadcastReceiver() {
         val handler = Handler(Looper.getMainLooper())
 
         handler.post {
+            DevLog.log(appContext, "NATIVE", "background engine starting")
             val loader = FlutterInjector.instance().flutterLoader()
             if (!loader.initialized()) {
                 loader.startInitialization(appContext)
@@ -61,6 +69,7 @@ class SmsReceiver : BroadcastReceiver() {
                     "processed" -> {
                         result.success(null)
                         SmsSink.markProcessed(data, appContext)
+                        DevLog.log(appContext, "NATIVE", "background engine finished")
                         engine.destroy()
                         pendingResult.finish()
                     }

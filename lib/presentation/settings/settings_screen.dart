@@ -1,11 +1,16 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../core/utils/battery_optimization.dart';
+import '../../core/utils/dev_log.dart';
 import '../../app/app_flavor.dart';
 import '../../app/app_theme.dart';
 import '../../core/constants/app_info.dart';
@@ -142,6 +147,7 @@ class _SettingsBody extends ConsumerWidget {
         if (AppFlavor.isDev) ...[
           _SectionHeader(l10n.settingsDeveloperTools),
           const _DevSnapshotTile(),
+          const _DevExportLogsTile(),
           _SettingsRow(
             title: 'License Keys',
             subtitle: 'Generate and manage Ed25519 license keys',
@@ -881,6 +887,56 @@ class _DevSnapshotTileState extends ConsumerState<_DevSnapshotTile> {
           : 'Seed 3 wallets × 90 days of sample transactions',
       busy: _busy,
       onTap: _busy ? null : (snapshotActive ? _exit : _enter),
+    );
+  }
+}
+
+class _DevExportLogsTile extends StatefulWidget {
+  const _DevExportLogsTile();
+
+  @override
+  State<_DevExportLogsTile> createState() => _DevExportLogsTileState();
+}
+
+class _DevExportLogsTileState extends State<_DevExportLogsTile> {
+  bool _busy = false;
+
+  Future<void> _export() async {
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _busy = true);
+    try {
+      final content = await DevLog.combined();
+      if (content.isEmpty) {
+        messenger.showSnackBar(
+          const SnackBar(content: Text('No SMS logs yet — trigger an SMS first.')),
+        );
+        return;
+      }
+      final ts = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+      final saved = await FilePicker.saveFile(
+        dialogTitle: 'Export SMS logs',
+        fileName: 'feloosy_sms_logs_$ts.txt',
+        type: FileType.custom,
+        allowedExtensions: ['txt'],
+        bytes: Uint8List.fromList(utf8.encode(content)),
+      );
+      if (saved != null) {
+        messenger.showSnackBar(
+          const SnackBar(content: Text('SMS logs exported.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _SettingsRow(
+      title: 'Export SMS logs',
+      subtitle: 'Save the SMS diagnostic log to share for debugging',
+      busy: _busy,
+      onTap: _busy ? null : _export,
     );
   }
 }

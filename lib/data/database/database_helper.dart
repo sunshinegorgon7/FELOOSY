@@ -28,7 +28,7 @@ class DatabaseHelper {
     final dbPath = p.join(docDir.path, AppFlavor.databaseName);
     return openDatabase(
       dbPath,
-      version: 31,
+      version: 32,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -190,6 +190,13 @@ class DatabaseHelper {
         is_active INTEGER NOT NULL DEFAULT 1,
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE processed_sms (
+        hash TEXT PRIMARY KEY,
+        created_at INTEGER NOT NULL
       )
     ''');
 
@@ -658,6 +665,18 @@ class DatabaseHelper {
         )
       ''');
       debugPrint('[DB] v31 done: created sms_suggestion_feedback table');
+    }
+    if (oldVersion < 32) {
+      // Idempotency ledger for SMS auto-transactions: records a hash of each
+      // processed SMS so the foreground replay and the headless background
+      // engine can never both create a transaction for the same message.
+      await db.execute('''
+        CREATE TABLE processed_sms (
+          hash TEXT PRIMARY KEY,
+          created_at INTEGER NOT NULL
+        )
+      ''');
+      debugPrint('[DB] v32 done: created processed_sms table');
     }
   }
 
