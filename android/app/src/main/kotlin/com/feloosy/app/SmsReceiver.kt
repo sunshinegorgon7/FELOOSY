@@ -13,17 +13,37 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugins.GeneratedPluginRegistrant
 
 class SmsReceiver : BroadcastReceiver() {
+    companion object {
+        // Mirrors SmsParserService.isIgnoredSender() in
+        // lib/domain/services/sms_parser_service.dart — keep the two in sync.
+        //
+        // This is a performance pre-filter, not the enforcement point: dropping
+        // ads here avoids starting a whole headless Flutter engine for every
+        // promotional SMS that arrives while the app is closed. Dart re-checks
+        // on both paths, so a divergence here can only cost battery, never let
+        // an ad through.
+        //
+        // Anchored and dash-required so ADCB / ADIB are not caught.
+        private val IGNORED_SENDER = Regex("^AD[-‐‑‒–—]", RegexOption.IGNORE_CASE)
+    }
+
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != Telephony.Sms.Intents.SMS_RECEIVED_ACTION) return
         val messages = Telephony.Sms.Intents.getMessagesFromIntent(intent)
         if (messages.isNullOrEmpty()) return
         val body = messages.joinToString("") { it.messageBody ?: "" }
         val sender = messages.firstOrNull()?.originatingAddress ?: ""
+
+        if (IGNORED_SENDER.containsMatchIn(sender.trim())) {
+            DevLog.log(context, "NATIVE", "ignored promotional sender \"$sender\"")
+            return
+        }
+
         val data = mapOf("body" to body, "sender" to sender)
 
         val active = SmsSink.isActive
         DevLog.log(context, "NATIVE",
-            "receiver fired, sink active=$active, body=\"${preview(body)}\"")
+            "receiver fired, sink active=$active, from=\"$sender\", body=\"${preview(body)}\"")
 
         SmsSink.push(data, context)
 

@@ -105,11 +105,17 @@ Why prediction/destructive logic works the way it does. Not a changelog — this
 
 **Filtering happens before the dedup ledger claim** so an ad never occupies a hash slot in `sms_ledger`.
 
-**Implemented in:** `SmsParserService.isIgnoredSender()`, called from `SmsTransactionService._onSms()`, `sms_background_handler._processSms()`, and `sms_scan_sheet` (filters the inbox list once, up front, so both the matched-rule pass and the suggestion pass inherit it).
+**Implemented in two layers:**
+
+1. **Enforcement (Dart)** — `SmsParserService.isIgnoredSender()`, called from `SmsTransactionService._onSms()`, `sms_background_handler._processSms()`, and `sms_scan_sheet` (which filters the inbox list once, up front, so both the matched-rule pass and the suggestion pass inherit it). This layer is what actually keeps ads out of the ledger.
+2. **Pre-filter (Kotlin)** — `SmsReceiver.IGNORED_SENDER` drops the broadcast before `SmsSink.push()` and before `processInBackground()`. Purely a battery optimisation: without it, every promotional SMS arriving while the app is closed spins up a full headless `FlutterEngine` just to be discarded in Dart a moment later.
+
+The duplication is deliberate and asymmetric. Because layer 1 runs on every path regardless, drift in layer 2 can only ever cost battery — it can never let an ad through. Do not invert this by removing a Dart check on the grounds that Kotlin already filters.
 
 **Don't break this if you…**
 - Add a fourth SMS entry point — it must call `isIgnoredSender()` before `matchRule()`, or ads land in the ledger. This was the original bug: the check existed only in the scan sheet's suggestion branch, so live SMS and matched-rule scans still created transactions from ads.
-- Broaden the prefix list — verify against `ADCB`/`ADIB` first; a bare `AD` prefix without the dash would silently drop two major UAE banks.
+- Broaden the prefix list — verify against `ADCB`/`ADIB` first; a bare `AD` prefix without the dash would silently drop two major UAE banks. Update both layers.
+- Port to iOS — there is no `SmsReceiver` there, and no SMS ingestion at all; layer 1 is the only one that exists.
 
 ---
 

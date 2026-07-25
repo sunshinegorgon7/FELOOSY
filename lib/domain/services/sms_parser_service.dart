@@ -117,11 +117,16 @@ class SmsParserService {
   /// Returns true when [sender] is a promotional sender ID whose messages must
   /// never create a transaction or a rule suggestion.
   ///
-  /// This is the single source of truth for sender-level filtering — apply it
-  /// at every SMS entry point (live foreground stream, headless background
+  /// This is the enforcement point for sender-level filtering — apply it at
+  /// every SMS entry point (live foreground stream, headless background
   /// handler, and inbox scan). A keyword rule can easily match the body of a
   /// bank's own marketing SMS ("Spend 500 EGP at …"), so matching on the rule
   /// keyword alone is not enough to keep ads out of the ledger.
+  ///
+  /// `SmsReceiver.kt` mirrors this pattern as a pre-filter so an ad arriving
+  /// while the app is closed never starts a headless Flutter engine. Keep the
+  /// two in sync; if they drift, the Kotlin side can only cost battery, since
+  /// this check still runs on every path.
   static bool isIgnoredSender(String sender) =>
       _ignoredSenderPattern.hasMatch(sender.trim());
 
