@@ -1,6 +1,6 @@
-﻿const kAppVersionLabel = '1.4.7 (300)';
+﻿const kAppVersionLabel = '1.4.8 (301)';
 
-const kAppBuildNumber = 300;
+const kAppBuildNumber = 301;
 
 // Paste your GitHub Gist raw URL here after creating the config file.
 // Format: https://gist.githubusercontent.com/USERNAME/GIST_ID/raw/FILE.json

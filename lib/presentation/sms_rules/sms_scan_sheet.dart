@@ -178,10 +178,15 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
 
     try {
       final range = _computeRange();
-      final messages = await SmsScanService.readInbox(
+      final rawMessages = await SmsScanService.readInbox(
         from: range.start,
         to: range.end,
       );
+      // Drop promotional senders once, up front, so neither the matched-rule
+      // pass nor the suggestion pass below can turn an ad into a transaction.
+      final messages = rawMessages
+          .where((m) => !SmsParserService.isIgnoredSender(m.sender))
+          .toList();
 
       // Await .future (not ref.read(...).asData?.value ?? []) so a scan run
       // right after cold start / sign-in — before these providers' first DB
@@ -278,8 +283,6 @@ class _SmsScanSheetState extends ConsumerState<_SmsScanSheet> {
       for (var i = 0; i < messages.length; i++) {
         if (matchedIndices.contains(i)) continue;
         final msg = messages[i];
-        // AD- prefix denotes promotional/service sender IDs — not transaction SMS.
-        if (msg.sender.toUpperCase().startsWith('AD-')) continue;
         final amount = SmsParserService.extractAmount(msg.body, requireCurrencyCode: true);
         if (amount == null || amount <= 0) continue;
         // Skip transfers, salary/income, OTPs, and messages without a clear

@@ -31,7 +31,8 @@ void smsBackgroundHandler() {
 
       final body = args['body'] as String? ?? '';
       final sender = args['sender'] as String? ?? '';
-      await DevLog.log('BG', 'engine started, body="${_preview(body)}"');
+      await DevLog.log(
+          'BG', 'engine started, from="$sender" body="${_preview(body)}"');
       if (body.isNotEmpty) {
         await _processSms(sender: sender, body: body);
       }
@@ -43,6 +44,13 @@ void smsBackgroundHandler() {
 }
 
 Future<void> _processSms({required String sender, required String body}) async {
+  // Promotional sender IDs never create transactions, even when a rule
+  // keyword appears in the ad copy.
+  if (SmsParserService.isIgnoredSender(sender)) {
+    await DevLog.log('BG', 'ignored promotional sender "$sender"');
+    return;
+  }
+
   final db = DatabaseHelper.instance;
   final ruleRepo = SmsRuleRepository(db);
   final txRepo = TransactionRepository(db);

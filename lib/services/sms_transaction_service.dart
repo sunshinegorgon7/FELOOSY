@@ -43,7 +43,14 @@ class SmsTransactionService {
     final sender = event['sender'] as String? ?? '';
     if (body.isEmpty) return;
 
-    await DevLog.log('FG', 'received body="${_preview(body)}"');
+    await DevLog.log('FG', 'received from="$sender" body="${_preview(body)}"');
+
+    // Promotional sender IDs never create transactions, even when a rule
+    // keyword appears in the ad copy.
+    if (SmsParserService.isIgnoredSender(sender)) {
+      await DevLog.log('FG', 'ignored promotional sender "$sender"');
+      return;
+    }
 
     final rules = await ref.read(smsRulesProvider.future);
     final activeRules = rules.where((r) => r.isActive).toList();

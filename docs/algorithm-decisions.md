@@ -97,6 +97,22 @@ Why prediction/destructive logic works the way it does. Not a changelog — this
 
 ---
 
+## SMS Promotional Sender Filtering (`AD-` prefix)
+
+**Decision:** Any SMS whose sender ID begins with `AD-` (case-insensitive, after trimming) is discarded before rule matching, at **every** SMS entry point: the live foreground stream, the headless background handler, and the inbox scan. `SmsParserService.isIgnoredSender()` is the single source of truth.
+
+**Why:** Carriers across MENA and South Asia prefix marketing sender IDs with `AD-`, so the sender — not the body — is the reliable ad signal. Banks send promotional SMS from these IDs using the same vocabulary as real alerts ("Spend 500 EGP at …", "Get 10% off your next purchase"), which means keyword rules match them and `looksLikeTransaction()` cannot filter them out. The check is anchored at the start of the string so legitimate senders that merely begin with the letters `AD` — notably **ADCB** and **ADIB** — are never dropped. The hyphen class also accepts the non-ASCII dash variants (`‐ ‑ ‒ – —`) some aggregators emit.
+
+**Filtering happens before the dedup ledger claim** so an ad never occupies a hash slot in `sms_ledger`.
+
+**Implemented in:** `SmsParserService.isIgnoredSender()`, called from `SmsTransactionService._onSms()`, `sms_background_handler._processSms()`, and `sms_scan_sheet` (filters the inbox list once, up front, so both the matched-rule pass and the suggestion pass inherit it).
+
+**Don't break this if you…**
+- Add a fourth SMS entry point — it must call `isIgnoredSender()` before `matchRule()`, or ads land in the ledger. This was the original bug: the check existed only in the scan sheet's suggestion branch, so live SMS and matched-rule scans still created transactions from ads.
+- Broaden the prefix list — verify against `ADCB`/`ADIB` first; a bare `AD` prefix without the dash would silently drop two major UAE banks.
+
+---
+
 ## SMS Amount Extraction (currency-agnostic regex)
 
 **Decision:** Amount extraction strips currency symbols and thousands separators before parsing, using a currency-agnostic numeric extraction pass. A custom regex per rule (`amount_regex`) can override this for non-standard SMS formats.

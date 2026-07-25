@@ -103,6 +103,28 @@ class SmsParserService {
     return null;
   }
 
+  // Promotional / marketing sender IDs. Carriers across MENA and South Asia
+  // prefix advertising sender IDs with "AD-" (e.g. "AD-CIB", "AD-EMIRATESNBD"),
+  // so the prefix — not the body — is the reliable signal that a message is an
+  // ad rather than a transaction alert. Matched after trimming and
+  // case-folding; the hyphen class covers the ASCII hyphen plus the non-ASCII
+  // dash variants that some aggregators emit.
+  static final _ignoredSenderPattern = RegExp(
+    r'^AD[-‐‑‒–—]',
+    caseSensitive: false,
+  );
+
+  /// Returns true when [sender] is a promotional sender ID whose messages must
+  /// never create a transaction or a rule suggestion.
+  ///
+  /// This is the single source of truth for sender-level filtering — apply it
+  /// at every SMS entry point (live foreground stream, headless background
+  /// handler, and inbox scan). A keyword rule can easily match the body of a
+  /// bank's own marketing SMS ("Spend 500 EGP at …"), so matching on the rule
+  /// keyword alone is not enough to keep ads out of the ledger.
+  static bool isIgnoredSender(String sender) =>
+      _ignoredSenderPattern.hasMatch(sender.trim());
+
   /// Returns the first active rule whose keyword appears in [body]
   /// (case-insensitive). Normalises whitespace before matching so that
   /// multi-word keywords like "HAWA ELSHAM" are not broken by double spaces,
